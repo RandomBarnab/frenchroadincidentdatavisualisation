@@ -57,7 +57,7 @@
         #heatmapControls { display: none; flex-direction: column; gap: 8px; background: #fdfdfd; padding: 10px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; flex: 1 1 100%; }
         #heatmapControls label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 130px; display: inline-block;}
         .heatmap-slider-row { display: flex; align-items: center; gap: 10px; width: 100%; }
-        .heatmap-slider-row input { flex: 1; }
+        .heatmap-slider-row input[type="range"] { flex: 1; }
         .heatmap-slider-row span { font-size: 0.8em; font-weight: bold; width: 30px; text-align: right; }
 
         .content { padding: 20px; }
@@ -100,7 +100,6 @@
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f1f1; color: #333; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
         
-        /* Styles des beaux Popups (Restaurés) */
         .leaflet-popup-content { margin: 13px 15px; }
         .accident-report { line-height: 1.6; font-size: 0.95em; }
         .accident-report h2 { color: #1e3c72; margin-bottom: 15px; padding-right: 30px; font-size: 1.4em;}
@@ -237,7 +236,6 @@
                 
                 <div id="map"></div>
                 
-                <!-- LES OUTILS COLLÉS À LA CARTE -->
                 <div class="map-tools" id="mapTools">
                     <div class="map-view-controls">
                         <button class="view-btn active" id="btnViewPoints" onclick="setMapView('points')">📍 Afficher en Points</button>
@@ -251,11 +249,14 @@
                     
                     <!-- LE LABORATOIRE DE LA HEATMAP -->
                     <div id="heatmapControls">
-                        <div style="font-size: 0.9em; font-weight: bold; color: #1e3c72; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px;">🎛️ Paramètres de la Densité (Heatmap)</div>
+                        <div style="font-size: 0.9em; font-weight: bold; color: #1e3c72; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between;">
+                            <span>🎛️ Paramètres de la Densité</span>
+                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Auto-ajuster au zoom</label>
+                        </div>
                         <div class="heatmap-slider-row">
                             <label for="heatRadius">Taille du point :</label>
-                            <input type="range" id="heatRadius" min="2" max="50" value="10">
-                            <span id="valRadius">10</span>
+                            <input type="range" id="heatRadius" min="2" max="50" value="12">
+                            <span id="valRadius">12</span>
                         </div>
                         <div class="heatmap-slider-row">
                             <label for="heatBlur">Flou (Diffusion) :</label>
@@ -272,7 +273,6 @@
                             <input type="range" id="heatMinOp" min="0" max="100" value="20">
                             <span id="valMinOp">0.2</span>
                         </div>
-                        <p style="font-size: 0.75em; color: #666; margin-top: 5px; font-style: italic;">Astuce : Pour voir les axes routiers, baissez la "Taille" et le "Flou". Pour voir les points chauds isolés, montez le "Seuil d'alerte".</p>
                     </div>
                 </div>
             </div>
@@ -315,7 +315,7 @@
                 </div>
             </div>
 
-            <!-- GROUPE 2 : VÉHICULES (TOUS EN BARRES HORIZONTALES) -->
+            <!-- GROUPE 2 : VÉHICULES -->
             <h2 class="section-title">🚗 Véhicules & Collisions</h2>
             <div class="charts-grid-3">
                 <div class="chart-container">
@@ -441,7 +441,7 @@
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
             pointsLayer = L.featureGroup().addTo(map);
             
-            // GESTION DU LABORATOIRE HEATMAP (Mise à jour en temps réel via les sliders)
+            // GESTION DU LABORATOIRE HEATMAP MANUEL & AUTO
             function updateHeatmapFromSliders() {
                 if(!heatLayer) return;
                 let r = parseInt(document.getElementById('heatRadius').value);
@@ -459,7 +459,18 @@
 
             ['heatRadius', 'heatBlur', 'heatMax', 'heatMinOp'].forEach(id => {
                 let el = document.getElementById(id);
-                if(el) el.addEventListener('input', updateHeatmapFromSliders);
+                if(el) el.addEventListener('input', function() {
+                    document.getElementById('autoHeatmap').checked = false; // Désactive l'auto si on touche un slider
+                    updateHeatmapFromSliders();
+                });
+            });
+
+            // L'algorithme Radar Thermique Intelligent au déplacement
+            map.on('moveend', function() { if(currentMapView === 'heatmap' && document.getElementById('autoHeatmap').checked) calculateAutoHeatmap(); });
+            map.on('zoomend', function() { if(currentMapView === 'heatmap' && document.getElementById('autoHeatmap').checked) calculateAutoHeatmap(); });
+
+            document.getElementById('autoHeatmap').addEventListener('change', function(e) {
+                if(e.target.checked) calculateAutoHeatmap();
             });
 
             loadInitialData();
@@ -468,6 +479,43 @@
             document.getElementById('citySearch')?.addEventListener('keypress', function(e) { if (e.key === 'Enter') searchCityMap(); });
             document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
         });
+
+        // ALGORITHME DE CALCUL DU ROUGE PARFAIT
+        function calculateAutoHeatmap() {
+            if (!heatLayer || currentHeatData.length === 0) return;
+            const bounds = map.getBounds();
+            
+            // 1. On regroupe les points visibles dans une grille pour trouver la plus forte concentration locale
+            const gridSize = 0.01; // Approx 1km carré
+            let grid = {};
+            let localMax = 1;
+
+            currentHeatData.forEach(pt => {
+                if (bounds.contains([pt[0], pt[1]])) {
+                    let cellX = Math.floor(pt[0] / gridSize);
+                    let cellY = Math.floor(pt[1] / gridSize);
+                    let key = cellX + ',' + cellY;
+                    grid[key] = (grid[key] || 0) + pt[2]; // pt[2] = le poids (1, 2 ou 4)
+                    if (grid[key] > localMax) localMax = grid[key];
+                }
+            });
+
+            // 2. On ajuste la taille selon le niveau de zoom
+            const z = map.getZoom();
+            let r = z <= 7 ? 6 : (z <= 10 ? 10 : 15);
+            let b = z <= 7 ? 8 : (z <= 10 ? 15 : 20);
+
+            // 3. On défini le max de la heatmap comme 80% de la densité max trouvée (pour que le centre soit bien rouge)
+            let calculatedMax = Math.max(3, Math.floor(localMax * 0.8));
+
+            // Mise à jour des sliders visuels pour refléter le calcul
+            document.getElementById('heatRadius').value = r; document.getElementById('valRadius').innerText = r;
+            document.getElementById('heatBlur').value = b; document.getElementById('valBlur').innerText = b;
+            document.getElementById('heatMax').value = calculatedMax; document.getElementById('valMax').innerText = calculatedMax;
+
+            heatLayer.setOptions({ radius: r, blur: b, max: calculatedMax });
+        }
+
 
         function loadInitialData() {
             let processed = 0;
@@ -643,7 +691,6 @@
             renderDashboard(mainAccidents, mainUsagers);
         }
 
-        // --- FILTRE CROISÉ MULTIPLE ---
         function handleCrossFilterClick(e, title, label, validAccIdsSet) {
             let isMulti = e && (e.ctrlKey || e.metaKey);
             let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
@@ -704,6 +751,7 @@
                 document.getElementById('btnViewHeatmap').classList.add('active'); 
                 document.getElementById('heatmapControls').style.display = 'flex';
                 heatLayer.addTo(map); 
+                if(document.getElementById('autoHeatmap').checked) calculateAutoHeatmap();
             }
         }
 
@@ -767,7 +815,7 @@
                 let rad = gravMax === 2 ? 8 : (gravMax === 3 ? 6 : 4);
                 
                 const m = L.circleMarker([lat, long], { radius: rad, color: 'white', weight: 1, fillColor: color, fillOpacity: 0.8 });
-                // CLIC DIRECT SUR LA CARTE (Pop-up détaillé)
+                
                 m.on('click', function(e) {
                     const content = generateDetailedPopup(acc, victimes);
                     L.popup({ maxWidth: 350 }).setLatLng(e.latlng).setContent(content).openOn(map);
@@ -775,19 +823,17 @@
                 pointsLayer.addLayer(m);
             });
 
-            // Initialisation avec les valeurs des sliders HTML
-            let hr = parseInt(document.getElementById('heatRadius').value) || 10;
-            let hb = parseInt(document.getElementById('heatBlur').value) || 15;
-            let hm = parseInt(document.getElementById('heatMax').value) || 15;
-            let hmo = (parseInt(document.getElementById('heatMinOp').value) || 20) / 100;
-
+            // Initialisation avec des valeurs par défaut douces
             heatLayer = L.heatLayer(currentHeatData, { 
-                radius: hr, blur: hb, maxZoom: 15, max: hm, minOpacity: hmo,
+                radius: 12, blur: 15, maxZoom: 15, max: 15, minOpacity: 0.2,
                 gradient: { 0.2: 'blue', 0.4: 'cyan', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red' } 
             });
             
             if (currentMapView === 'points') pointsLayer.addTo(map);
-            else if (currentMapView === 'heatmap') heatLayer.addTo(map); 
+            else if (currentMapView === 'heatmap') { 
+                heatLayer.addTo(map); 
+                if(document.getElementById('autoHeatmap').checked) calculateAutoHeatmap();
+            } 
 
             Object.values(charts).forEach(c => { if(c) c.destroy() }); charts = {};
             
@@ -867,7 +913,6 @@
             charts.agg = createHorizontalBarChart('chartAgglomeration', sortDict(aggCount), '#4caf50', (e, l) => handleCrossFilterClick(e, 'Agglo', l, new Set(aggAcc[l])));
         }
 
-        // --- CHART.JS FACTORIES ---
         const cOpts = (cb) => ({
             responsive: true, maintainAspectRatio: false,
             onClick: cb ? (e, els) => { if(els.length>0) cb(e.native, e.chart.data.labels[els[0].index]); } : null,
@@ -900,7 +945,7 @@
             return new Chart(document.getElementById(id), { type: 'pie', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: Object.keys(dict).map(k=>colorMap[k]||'#ccc') }] }, options: o });
         }
 
-        // --- POPUPS DÉTAILLÉS & RECHERCHE GOOGLE ---
+        // --- POPUPS & RECHERCHE GOOGLE ---
         function generateDetailedPopup(acc, victimes) {
             const l = lieuxIndex.get(acc.Num_Acc); const meteo = NOMENCLATURES.meteo[acc.atm]||'?';
             let c = `<div style="max-width:350px; font-family:sans-serif; font-size:13px;">`;
@@ -966,36 +1011,29 @@
                 h += `</div>`;
                 
                 const victimes = usgs.filter(u => u.grav !== '1');
-                h += `<div class="info-section"><h3>📊 Bilan humain</h3><p><strong>Total impliqués :</strong> ${usgs.length}</p>`;
-                if (victimes.filter(u => u.grav === '2').length > 0) h += `<p><strong>💀 Tués :</strong> ${victimes.filter(u => u.grav === '2').length}</p>`;
-                if (victimes.filter(u => u.grav === '3').length > 0) h += `<p><strong>🏥 Blessés hospitalisés :</strong> ${victimes.filter(u => u.grav === '3').length}</p>`;
-                if (victimes.filter(u => u.grav === '4').length > 0) h += `<p><strong>🩹 Blessés légers :</strong> ${victimes.filter(u => u.grav === '4').length}</p>`;
-                h += `</div><h3>👥 Détail des personnes impliquées</h3>`;
+                h += `<div class="info-section"><h3>📊 Bilan humain</h3><p>Total impliqués : ${usgs.length} | Tués : ${victimes.filter(u => u.grav === '2').length} | Hosp. : ${victimes.filter(u => u.grav === '3').length} | Légers : ${victimes.filter(u => u.grav === '4').length}</p></div>`;
                 
+                h += `<h3>👥 Personnes impliquées</h3>`;
                 usgs.forEach((u, index) => {
                     const className = u.grav !== '1' ? 'victim-card' : 'victim-card indemne';
-                    h += `<div class="${className}"><p><strong>Personne ${index + 1}</strong></p>`;
+                    h += `<div class="${className}"><strong>Personne ${index + 1}</strong>`;
                     const age = acc.an && u.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(u.an_nais) : null;
                     const sexe = u.sexe === '1' ? 'Homme' : (u.sexe === '2' ? 'Femme' : 'Non précisé');
-                    h += `<p><strong>Sexe :</strong> ${sexe}${age ? ` | <strong>Âge :</strong> ${age} ans` : ''}</p>`;
-                    
-                    let typeVehicule = '';
-                    if (u.catu === '3' || u.catu === '4') typeVehicule = '🚶 Piéton';
-                    else { const vInfo = vMap.get(u.id_vehicule); if (vInfo) typeVehicule = `${vInfo.idText} (${vInfo.type})`; }
-                    const role = NOMENCLATURES.catu[u.catu] || 'Occupant';
-                    h += `<p><strong>Rôle :</strong> ${role.charAt(0).toUpperCase() + role.slice(1)} ${typeVehicule ? ' - ' + typeVehicule : ''}</p>`;
-                    h += `<p><strong>État : ${NOMENCLATURES.gravite[u.grav] || 'Inconnu'}</strong></p></div>`;
+                    h += `<br>Sexe: ${sexe}${age ? ` | Âge: ${age} ans` : ''}`;
+                    let typeVehicule = (u.catu === '3' || u.catu === '4') ? '🚶 Piéton' : (vMap.get(u.id_vehicule) ? `${vMap.get(u.id_vehicule).idText} (${vMap.get(u.id_vehicule).type})` : '');
+                    h += `<br>Rôle: ${NOMENCLATURES.catu[u.catu] || 'Occupant'} ${typeVehicule ? ' - ' + typeVehicule : ''}`;
+                    h += `<br>État: <strong>${NOMENCLATURES.gravite[u.grav] || 'Inconnu'}</strong></div>`;
                 });
 
                 if (vehs.length > 0) {
-                    h += `<h3>🚗 Véhicules impliqués</h3>`;
+                    h += `<h3>🚗 Véhicules</h3>`;
                     vehs.forEach((v, index) => {
-                        const conducteur = usgs.find(u => u.id_vehicule === v.id_vehicule && u.catu === '1');
-                        h += `<div class="info-section"><p><strong>Véhicule ${index + 1} :</strong> ${NOMENCLATURES.vehicules[v.catv] || 'Type inconnu'}</p>`;
-                        if (conducteur) {
-                            const ageCond = acc.an && conducteur.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(conducteur.an_nais) : null;
-                            const sexeCond = conducteur.sexe === '1' ? 'un homme' : (conducteur.sexe === '2' ? 'une femme' : 'conducteur');
-                            h += `<p>Conduit par ${sexeCond}${ageCond ? ` de ${ageCond} ans` : ''} (voir Personne ci-dessus)</p>`;
+                        const cond = usgs.find(u => u.id_vehicule === v.id_vehicule && u.catu === '1');
+                        h += `<div class="info-section"><strong>Véhicule ${index + 1} :</strong> ${NOMENCLATURES.vehicules[v.catv] || 'Type inconnu'}`;
+                        if (cond) {
+                            const ageCond = acc.an && cond.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(cond.an_nais) : null;
+                            const sexeCond = cond.sexe === '1' ? 'un homme' : (cond.sexe === '2' ? 'une femme' : 'conducteur');
+                            h += `<br>Conduit par ${sexeCond}${ageCond ? ` de ${ageCond} ans` : ''}`;
                         }
                         h += `</div>`;
                     });
