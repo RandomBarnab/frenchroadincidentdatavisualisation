@@ -62,6 +62,7 @@
         #btnToggleHeatmap { display: none; background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; padding: 6px 12px; border-radius: 15px; font-size: 0.85em; cursor: pointer; font-weight: bold; }
         #btnToggleHeatmap:hover { background: #ffe0b2; }
 
+        /* Laboratoire Heatmap */
         #heatmapAdvancedControls { display: none; flex-direction: column; gap: 10px; background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; flex: 1 1 100%; margin-top: 10px; }
         .heatmap-slider-row { display: flex; align-items: center; gap: 10px; width: 100%; }
         .heatmap-slider-row label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 140px; display: inline-block;}
@@ -71,15 +72,10 @@
 
         .content { padding: 20px; }
         .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid; }
-        
-        #crossFilterBanner { display: none; }
-        #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; font-size: 1.05em; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        /* Le bandeau collant optimisé : cliquable et wrapping propre */
-        #stickySummary { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 114, 0.95); color: white; padding: 12px 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 10000; display: none; align-items: center; justify-content: center; gap: 8px; font-size: 0.85em; width: 95vw; max-width: 1000px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); flex-direction: column; text-align: center; max-height: 40vh; overflow-y: auto; pointer-events: auto; }
+        /* BANDEAU FLOTTANT UNIQUE EN BAS (Regroupe tout proprement) */
+        #stickySummary { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 114, 0.95); color: white; padding: 10px 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 10000; display: none; align-items: center; justify-content: center; gap: 8px; font-size: 0.85em; width: 95vw; max-width: 1000px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); flex-direction: column; text-align: center; max-height: 40vh; overflow-y: auto; pointer-events: auto; }
         @media (min-width: 768px) { #stickySummary { font-size: 0.9em; border-radius: 30px; width: auto; max-width: 90vw; padding: 12px 25px; flex-direction: row; text-align: left; } }
-        #stickySummary strong { color: #ffd93d; }
         
         .sticky-cross-filters { display: none; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); width: 100%;}
         @media (min-width: 768px) { .sticky-cross-filters { border-top: none; padding-top: 0; padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); width: auto;} }
@@ -142,7 +138,7 @@
 
         .age-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
         .age-controls button { padding: 4px 10px; border-radius: 15px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.8em;}
-        .age-controls button.active { background: #4A90E2; color: white; border-color: #4A90E2; }
+        .age-controls button.active { background: #34495E; color: white; border-color: #34495E; }
     </style>
 </head>
 <body>
@@ -157,10 +153,9 @@
     <div id="stickySummary">
         <div id="stickyBaseText">🔍 Base : -</div>
         <div id="stickyCrossFilters" class="sticky-cross-filters">
-            <span style="color: #ffd93d; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center;">
-                🎯 <strong id="stickyFiltersList" style="font-size: 0.95em;"></strong>
+            <span style="color: #ffd93d; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center;" id="stickyFiltersList">
             </span>
-            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.9em; margin-left: 10px;">
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.9em; margin-left: 5px;">
                 <input type="checkbox" id="modeVictimeOnly" checked onchange="window.reapplyCrossFilters()">
                 Mode strict
             </label>
@@ -180,8 +175,7 @@
             <h1>🚗 Analyse de la Sécurité Routière en France</h1>
             <p class="desc">
                 Cet outil interactif a pour vocation de rendre les données de l'accidentalité routière parfaitement intelligibles et exploitables.<br>
-                Que vous soyez un usager de la route ou un décideur public élaborant une politique de mobilité,<br>
-                vous pouvez générer en quelques clics des statistiques précises à l'échelle nationale, régionale ou locale.
+                Que vous soyez un usager de la route ou un décideur public élaborant une politique de mobilité, vous pouvez générer en quelques clics des statistiques précises à l'échelle nationale, régionale ou locale.
             </p>
         </header>
 
@@ -204,12 +198,16 @@
             <div class="filter-grid">
                 <div class="filter-group">
                     <label>Années</label>
-                    <select id="annee" multiple size="5">
-                        <option value="all" selected>Toutes les années</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                        <option value="2022">2022</option>
+                    <select id="annee" multiple size="6">
+                        <option value="all">Toutes les années</option>
+                        <option value="2024" selected>2024</option>
+                        <option value="2023" selected>2023</option>
+                        <option value="2022" selected>2022</option>
                         <option value="2021">2021</option>
+                        <option value="2020">2020</option>
+                        <option value="2019">2019</option>
+                        <option value="2018">2018</option>
+                        <option value="2017">2017</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -485,10 +483,26 @@
             { year: 2021, type: 'caracteristiques', url: 'data/caracteristiques-2021.csv' },
             { year: 2021, type: 'lieux', url: 'data/lieux-2021.csv' },
             { year: 2021, type: 'vehicules', url: 'data/vehicules-2021.csv' },
-            { year: 2021, type: 'usagers', url: 'data/usagers-2021.csv' }
+            { year: 2021, type: 'usagers', url: 'data/usagers-2021.csv' },
+            { year: 2020, type: 'caracteristiques', url: 'data/caracteristiques-2020.csv' },
+            { year: 2020, type: 'lieux', url: 'data/lieux-2020.csv' },
+            { year: 2020, type: 'vehicules', url: 'data/vehicules-2020.csv' },
+            { year: 2020, type: 'usagers', url: 'data/usagers-2020.csv' },
+            { year: 2019, type: 'caracteristiques', url: 'data/caracteristiques-2019.csv' },
+            { year: 2019, type: 'lieux', url: 'data/lieux-2019.csv' },
+            { year: 2019, type: 'vehicules', url: 'data/vehicules-2019.csv' },
+            { year: 2019, type: 'usagers', url: 'data/usagers-2019.csv' },
+            { year: 2018, type: 'caracteristiques', url: 'data/caracteristiques-2018.csv' },
+            { year: 2018, type: 'lieux', url: 'data/lieux-2018.csv' },
+            { year: 2018, type: 'vehicules', url: 'data/vehicules-2018.csv' },
+            { year: 2018, type: 'usagers', url: 'data/usagers-2018.csv' },
+            { year: 2017, type: 'caracteristiques', url: 'data/caracteristiques-2017.csv' },
+            { year: 2017, type: 'lieux', url: 'data/lieux-2017.csv' },
+            { year: 2017, type: 'vehicules', url: 'data/vehicules-2017.csv' },
+            { year: 2017, type: 'usagers', url: 'data/usagers-2017.csv' }
         ];
 
-        let allData = { 2021: {}, 2022: {}, 2023: {}, 2024: {} };
+        let allData = { 2017: {}, 2018: {}, 2019: {}, 2020: {}, 2021: {}, 2022: {}, 2023: {}, 2024: {} };
         let map, pointsLayer = null, heatLayer = null;
         let currentMapView = 'points';
         
@@ -497,7 +511,7 @@
         let currentAgeInterval = 5;
         let lastRenderedUsgs = [], lastRenderedAccs = []; 
         let currentHeatData = []; 
-        let isMultiSelectEnabled = true; // ALLUMÉ PAR DÉFAUT
+        let isMultiSelectEnabled = true; 
         
         let currentZ = 5, currentP = 0, currentRatio = 0;
         let currentSearchedCityMap = null;
@@ -520,7 +534,6 @@
             typeRoute: { '1': '🛣️ Autoroute', '2': '🛣️ Nationale', '3': '🛤️ Départementale', '4': '🏘️ Communale', '5': '🏠 Hors réseau', '6': '🅿️ Parking', '7': '🏙️ Urbain' }
         };
 
-        // --- DEFENSIVE PROGRAMMING HELPERS ---
         const DOM = {
             show: (id) => { const el = document.getElementById(id); if(el) el.style.display = 'block'; },
             hide: (id) => { const el = document.getElementById(id); if(el) el.style.display = 'none'; },
@@ -612,7 +625,6 @@
             const west = bounds.getWest();
             
             currentP = 0;
-            // Optimisation stricte de la mémoire : pas de création d'objet L.latLng
             for(let i=0; i<currentHeatData.length; i++) {
                 let lat = currentHeatData[i][0];
                 let lon = currentHeatData[i][1];
@@ -875,8 +887,11 @@
             if (currentSearchedCityMap) parts.push(`📍 ${currentSearchedCityMap}`);
             else parts.push(`📍 Zone visible`);
 
-            if (years.includes('all') || years.length === 4) parts.push(`📅 2021-2024`);
-            else parts.push(`📅 ` + years.join(','));
+            if (years.includes('all') || years.length === 8) parts.push(`📅 2017-2024`);
+            else {
+                let sortedY = [...years].sort((a,b)=>a-b);
+                parts.push(`📅 ` + sortedY.join(','));
+            }
 
             if (!vType.some(t => t.includes('Tous') || t.includes('Toutes'))) parts.push(`👤 ` + vType.join('/'));
             if (!vAdv.some(t => t.includes('Tous') || t.includes('Toutes') || t.includes('Sans'))) parts.push(`🚙 Adv:` + vAdv.join('/'));
@@ -898,7 +913,7 @@
             vehiculesByAccidentIndex.clear(); accidentsByIdIndex.clear(); victimesFiltreesIndex.clear();
 
             let years = getFilterValues('annee');
-            if(years.includes('all')) years = ['2024', '2023', '2022', '2021'];
+            if(years.includes('all')) years = ['2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017'];
             
             const vType = getFilterValues('typeVictime');
             const vAdv  = getFilterValues('vehiculeAdverse');
@@ -923,10 +938,10 @@
 
             let allCarac = [], allLieux = [], allVeh = [], allUsg = [];
             years.forEach(y => {
-                if(allData[y].caracteristiques) { for(let i=0;i<allData[y].caracteristiques.length;i++) allCarac.push(allData[y].caracteristiques[i]); }
-                if(allData[y].lieux) { for(let i=0;i<allData[y].lieux.length;i++) allLieux.push(allData[y].lieux[i]); }
-                if(allData[y].vehicules) { for(let i=0;i<allData[y].vehicules.length;i++) allVeh.push(allData[y].vehicules[i]); }
-                if(allData[y].usagers) { for(let i=0;i<allData[y].usagers.length;i++) allUsg.push(allData[y].usagers[i]); }
+                if(allData[y] && allData[y].caracteristiques) { for(let i=0;i<allData[y].caracteristiques.length;i++) allCarac.push(allData[y].caracteristiques[i]); }
+                if(allData[y] && allData[y].lieux) { for(let i=0;i<allData[y].lieux.length;i++) allLieux.push(allData[y].lieux[i]); }
+                if(allData[y] && allData[y].vehicules) { for(let i=0;i<allData[y].vehicules.length;i++) allVeh.push(allData[y].vehicules[i]); }
+                if(allData[y] && allData[y].usagers) { for(let i=0;i<allData[y].usagers.length;i++) allUsg.push(allData[y].usagers[i]); }
             });
 
             allVeh.forEach(v => vehiculesIndex.set(v.id_vehicule, v));
@@ -999,7 +1014,7 @@
         }
 
         function handleCrossFilterClick(e, title, label, validAccIdsSet, victimFilterFn = null) {
-            let isMulti = window.isMultiSelectEnabled === true;
+            let isMulti = isMultiSelectEnabled;
             let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
 
             if (isMulti) {
@@ -1018,7 +1033,7 @@
             if(!baseTextEl) return;
             
             if (activeCrossFilters.length > 0) {
-                let text = activeCrossFilters.map(f => f.label).join(' <span style="color:white; font-weight:normal; margin:0 3px;">+</span> ');
+                let text = activeCrossFilters.map(f => `<span style="background:rgba(255,255,255,0.2); padding: 3px 8px; border-radius: 12px; white-space: nowrap;">${f.label}</span>`).join(' <span style="font-weight:normal; margin:0 2px;">+</span> ');
                 DOM.html('stickyFiltersList', text);
                 DOM.flex('stickyCrossFilters');
             } else {
@@ -1129,7 +1144,7 @@
             let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
             let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
             
-            charts.age = createBarChart('chartAge', aData, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
+            charts.age = createBarChart('chartAge', aData, '#34495E', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
                 const acc = accidentsByIdIndex.get(u.Num_Acc);
                 if(acc && u.an_nais && acc.an) {
                     let a=parseInt(acc.an); if(a<100) a+=2000;
@@ -1185,7 +1200,6 @@
             `);
         }
 
-        // --- SINGLE DELEGATED LISTENER POUR LA CARTE ---
         function handleMarkerClick(e) {
             if(e.layer && e.layer.accidentId) {
                 const accId = e.layer.accidentId;
@@ -1260,7 +1274,7 @@
             // --- GR 1 : Profil ---
             let sCount = {'👨 Hommes':0, '👩 Femmes':0}; let sAcc = {'👨 Hommes':[], '👩 Femmes':[]};
             usgs.forEach(u => { if(u.sexe==='1'){ sCount['👨 Hommes']++; sAcc['👨 Hommes'].push(u.Num_Acc); } else if(u.sexe==='2'){ sCount['👩 Femmes']++; sAcc['👩 Femmes'].push(u.Num_Acc); } });
-            charts.sexe = createSingleStackedBar('chartSexe', sCount, {'👨 Hommes':'#4A90E2', '👩 Femmes':'#E53935'}, 
+            charts.sexe = createSingleStackedBar('chartSexe', sCount, {'👨 Hommes':'#34495E', '👩 Femmes':'#E53935'}, 
                 (e, l) => handleCrossFilterClick(e, 'Sexe', l, new Set(sAcc[l]), (u) => (l === '👨 Hommes' ? u.sexe === '1' : u.sexe === '2'))
             );
 
