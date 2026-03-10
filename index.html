@@ -2,238 +2,131 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Analyse des Accidents de la Route - France</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚗</text></svg>">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>Mode Diagnostic</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 10px; }
-        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
-        header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 15px; text-align: center; }
-        
-        /* -- LE PANNEAU DE DIAGNOSTIC -- */
-        #diagnosticPanel { background: #fff3cd; border: 3px solid #ffc107; color: #856404; padding: 20px; margin: 15px; border-radius: 10px; display: none; font-size: 1.1em; line-height: 1.5; }
-        #diagnosticPanel h3 { margin-bottom: 10px; color: #d39e00; }
-        
-        .filters { background: #f8f9fa; padding: 15px; border-bottom: 3px solid #e9ecef; display: none; }
-        .filter-group { margin-bottom: 15px; }
-        .filter-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #2c3e50; font-size: 0.95em; }
-        .filter-group select { width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; background: white; min-height: 100px; }
-        .filter-group input[type="date"], .filter-group input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
-        @media (min-width: 768px) { .filter-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
-        
-        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border: none; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; }
-        .search-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        @media (min-width: 500px) { .search-box { flex-direction: row; } }
-        .search-box input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; }
-        .search-box button { padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; }
-        
-        #map { height: 50vh; min-height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ddd; z-index: 1; }
-        @media (min-width: 768px) { #map { height: 600px; } }
-        .content { padding: 15px; }
-        .section-title { font-size: 1.5em; color: #2c3e50; margin: 20px 0 10px 0; border-bottom: 3px solid #667eea; }
-        
-        .stats-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
-        @media (min-width: 600px) { .stats-summary { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); } }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; }
-        .stat-card .number { font-size: 1.8em; font-weight: 700; margin-bottom: 5px; }
-        
-        .charts-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
-        @media (min-width: 768px) { .charts-grid { grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); } }
-        .chart-container { background: white; padding: 15px; border-radius: 12px; border: 1px solid #eee; }
-        
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        body { font-family: sans-serif; padding: 20px; background: #f0f0f0; margin: 0; }
+        #debugBox { width: 100%; height: 85vh; background: #1e1e1e; color: #00ff00; font-family: monospace; padding: 15px; border-radius: 8px; border: none; font-size: 15px; resize: none; }
+        h1 { color: #333; margin-top: 0; }
+        .instruction { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #667eea; }
     </style>
 </head>
 <body>
-    <div class="loading-overlay" id="loadingOverlay">
-        <h2>🚗 Chargement des Données</h2>
-        <div class="spinner"></div>
-        <p id="loadingText">Téléchargement en cours...</p>
+    <div class="instruction">
+        <h1>🛠️ Mode Diagnostic Auto</h1>
+        <p>Veuillez patienter pendant l'analyse... Une fois terminée, <b>sélectionnez tout le texte dans le cadre noir, copiez-le et envoyez-le moi !</b></p>
     </div>
-
-    <div class="container">
-        <header>
-            <h1>🚗 Accidents de la Route en France</h1>
-        </header>
-
-        <!-- ZONE DE DIAGNOSTIC CRÉÉE SPÉCIALEMENT POUR VOIR LE BUG SUR GITHUB -->
-        <div id="diagnosticPanel"></div>
-        
-        <div class="filters" id="filtersSection">
-            <div class="filter-grid">
-                <div class="filter-group">
-                    <label for="annee">Années</label>
-                    <select id="annee" multiple size="4"><option value="2024" selected>2024</option></select>
-                </div>
-                <div class="filter-group">
-                    <label for="typeVictime">Type de victime</label>
-                    <select id="typeVictime" multiple size="4"><option value="all" selected>Tous les types</option><option value="3">🚶 Piéton</option></select>
-                </div>
-                <div class="filter-group">
-                    <label for="gravite">Gravité</label>
-                    <select id="gravite" multiple size="4"><option value="all" selected>Toutes</option><option value="2">💀 Tué</option></select>
-                </div>
-                <div class="filter-group">
-                    <label for="localisation">Localisation</label>
-                    <select id="localisation" multiple size="3"><option value="all" selected>Toutes</option><option value="1">Hors agglomération</option></select>
-                </div>
-                <div class="filter-group">
-                    <label for="vehiculeAdverse">Véhicule adverse</label>
-                    <select id="vehiculeAdverse" multiple size="3"><option value="all" selected>Tous</option></select>
-                </div>
-                <div class="filter-group">
-                    <label for="lumiere">Lumière</label>
-                    <select id="lumiere" multiple size="3"><option value="all" selected>Toutes</option></select>
-                </div>
-            </div>
-            <button class="btn" id="analyzeBtn">🔍 Appliquer les filtres et Analyser</button>
-        </div>
-        
-        <div class="content" id="results" style="display: none;">
-            <div class="stats-summary" id="statsSummary"></div>
-            <div id="map"></div>
-            <div class="charts-grid">
-                <div class="chart-container" id="container-chartGravite"><canvas id="chartGravite"></canvas></div>
-                <div class="chart-container" id="container-chartMois"><canvas id="chartMois"></canvas></div>
-                <div class="chart-container" id="container-chartVehicules"><canvas id="chartVehicules"></canvas></div>
-            </div>
-        </div>
-    </div>
+    <textarea id="debugBox" readonly>Initialisation du diagnostic...\n</textarea>
     
     <script>
-        // LIENS DES FICHIERS (avec le ./ pour forcer le chemin relatif sur GitHub Pages)
-        const FILES_TO_LOAD = [
-            { year: 2024, type: 'caracteristiques', url: './data/caracteristiques-2024.csv' },
-            { year: 2024, type: 'lieux', url: './data/lieux-2024.csv' },
-            { year: 2024, type: 'vehicules', url: './data/vehicules-2024.csv' },
-            { year: 2024, type: 'usagers', url: './data/usagers-2024.csv' }
+        function log(msg) {
+            const box = document.getElementById('debugBox');
+            box.value += msg + "\n";
+            box.scrollTop = box.scrollHeight;
+        }
+
+        // On ne teste que 2024 pour que le diagnostic soit rapide
+        const FILES = [
+            { type: 'caracteristiques', url: 'data/caracteristiques-2024.csv' },
+            { type: 'usagers', url: 'data/usagers-2024.csv' }
         ];
 
-        let allData = { 2024: { caracteristiques: [], lieux: [], vehicules: [], usagers: [] } };
-        let map, charts = {};
-        
-        // --- 1. CHARGEMENT AUTOMATIQUE ET DIAGNOSTIC ---
-        function loadInitialData() {
-            let processed = 0;
-            FILES_TO_LOAD.forEach(fileObj => {
-                Papa.parse(fileObj.url, {
-                    download: true,
-                    header: true,
-                    delimiter: ';', // On remet le ; par sécurité comme sur votre locale
-                    skipEmptyLines: true,
-                    transformHeader: h => h.replace(/^\uFEFF/, '').replace(/^"|"$/g, '').trim(),
-                    complete: function(results) {
-                        allData[fileObj.year][fileObj.type] = results.data;
-                        processed++;
-                        if (processed === FILES_TO_LOAD.length) {
-                            hideLoading();
-                            runDiagnostic(); // Vérification avant l'affichage
+        let allData = {};
+        let processed = 0;
+
+        log("Début du téléchargement des fichiers 2024...");
+
+        FILES.forEach(f => {
+            Papa.parse(f.url, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                transformHeader: h => h.replace(/^\uFEFF/, '').replace(/^"|"$/g, '').trim(),
+                transform: v => v ? v.trim() : v,
+                complete: function(res) {
+                    allData[f.type] = res.data;
+                    log(`\n[OK] Fichier: ${f.url}`);
+                    log(` -> Lignes lues : ${res.data.length}`);
+                    if(res.data.length > 0) {
+                        let cols = Object.keys(res.data[0]);
+                        log(` -> Colonnes trouvées (${cols.length}) : ${cols.slice(0, 5).join(', ')}...`);
+                        
+                        // Détection d'une erreur 404 cachée (page HTML renvoyée au lieu du CSV)
+                        if (cols[0] && cols[0].toLowerCase().includes('<html')) {
+                            log(` ❌ ALERTE : Ce n'est pas un CSV ! GitHub a renvoyé une page d'erreur 404. Le fichier n'existe pas à ce chemin.`);
                         }
-                    },
-                    error: function(err) {
-                        processed++;
-                        if (processed === FILES_TO_LOAD.length) { hideLoading(); runDiagnostic(); }
+                    } else {
+                        log(` ❌ ALERTE : Le fichier est vide !`);
                     }
-                });
+                    checkDone();
+                },
+                error: function(err) {
+                    log(`\n[ERREUR RESEAU] Impossible de trouver ${f.url}`);
+                    checkDone();
+                }
             });
-        }
-
-        // C'EST ICI QU'ON VA COMPRENDRE POURQUOI GITHUB PLANTE VOS DONNÉES
-        function runDiagnostic() {
-            let diagDiv = document.getElementById('diagnosticPanel');
-            let dataCheck = allData[2024].caracteristiques;
-            
-            if (!dataCheck || dataCheck.length === 0) {
-                diagDiv.style.display = 'block';
-                diagDiv.innerHTML = `<h3>🚨 Erreur Critique</h3><p>Aucune donnée n'a été chargée. Les fichiers CSV sont introuvables. Vérifiez que le dossier s'appelle bien <b>data</b> (sans majuscule) sur GitHub.</p>`;
-                return;
-            }
-
-            let firstRow = dataCheck[0];
-            let columns = Object.keys(firstRow);
-            let firstCellContent = String(firstRow[columns[0]]).toLowerCase();
-            let firstColName = String(columns[0]).toLowerCase();
-
-            let errorHtml = "";
-
-            // Cas 1 : GitHub a renvoyé une page d'erreur 404 HTML cachée
-            if (firstColName.includes("<!doctype html>") || firstCellContent.includes("<!doctype html>") || firstColName.includes("<html")) {
-                errorHtml = `<h3>🚨 Fichiers Introuvables (Erreur 404 cachée)</h3>
-                <p>GitHub n'a pas trouvé vos fichiers CSV et a renvoyé une page d'erreur Web à la place. Le code a essayé de lire du HTML comme si c'était un tableau !</p>
-                <p><b>Solution :</b> Vérifiez la casse exacte sur GitHub. Si votre dossier s'appelle <code>Data</code>, le code qui cherche <code>data/</code> ne marchera pas.</p>`;
-            }
-            // Cas 2 : Problème Git LFS
-            else if (firstColName.includes("git-lfs") || firstCellContent.includes("git-lfs")) {
-                errorHtml = `<h3>🚨 Fichiers Git LFS Détectés</h3>
-                <p>Vous avez utilisé Git LFS pour héberger vos CSV car ils sont trop lourds. <b>GitHub Pages ne peut pas lire le contenu des fichiers Git LFS.</b> Il télécharge juste le pointeur LFS (3 lignes de texte) au lieu de vos milliers de lignes.</p>
-                <p><b>Solution :</b> Réduisez vos CSV pour qu'ils fassent moins de 50Mo et pushez-les normalement, OU hébergez vos CSV sur un serveur externe.</p>`;
-            }
-            // Cas 3 : Problème de Point-virgule / Délimiteur
-            else if (!columns.some(c => c.toLowerCase() === 'num_acc')) {
-                errorHtml = `<h3>🚨 Problème de Séparateur CSV</h3>
-                <p>Le fichier a bien été téléchargé, mais il n'a pas été découpé correctement. Il a vu <b>${columns.length}</b> colonnes au lieu des dizaines prévues.<br>Colonnes lues : <i>${columns.slice(0,3).join(', ')}</i></p>
-                <p><b>Solution :</b> Vos CSV ont probablement été sauvegardés avec des virgules (,) au lieu de points-virgules (;). Modifiez le paramètre <code>delimiter</code> dans PapaParse.</p>`;
-            }
-
-            // Si on a trouvé une erreur, on bloque et on affiche l'aide
-            if (errorHtml !== "") {
-                diagDiv.style.display = 'block';
-                diagDiv.innerHTML = errorHtml;
-                return; // On arrête le script pour ne pas afficher des zéros
-            }
-
-            // Si tout va bien, on affiche les filtres et on clique "Analyser"
-            document.getElementById('filtersSection').style.display = 'block';
-            document.getElementById('analyzeBtn').click();
-        }
-        
-        document.addEventListener('DOMContentLoaded', loadInitialData);
-
-        // --- 2. TRAITEMENT ET AFFICHAGE SIMPLIFIÉS ---
-        document.getElementById('analyzeBtn').addEventListener('click', function() {
-            let dataCarac = allData[2024].caracteristiques;
-            let dataUsagers = allData[2024].usagers;
-
-            // Filtre hyper basique juste pour voir si ça marche
-            let filteredAccidents = dataCarac.filter(a => a.Num_Acc);
-            let filteredUsagers = dataUsagers.filter(u => u.grav && u.grav !== '1');
-
-            document.getElementById('results').style.display = 'block';
-            
-            // Stats
-            document.getElementById('statsSummary').innerHTML = `
-                <div class="stat-card"><div class="number">${filteredAccidents.length.toLocaleString()}</div><div class="label">Accidents</div></div>
-                <div class="stat-card"><div class="number">${filteredUsagers.length.toLocaleString()}</div><div class="label">Victimes</div></div>
-            `;
-
-            // Carte
-            if (map) { map.off(); map.remove(); }
-            map = L.map('map').setView([46.6, 1.8], 5);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-
-            // Graphiques simplifiés
-            Object.values(charts).forEach(c => c.destroy());
-            
-            // Gravité
-            let gCount = {};
-            filteredUsagers.forEach(u => { gCount[u.grav === '2' ? 'Tué' : 'Blessé'] = (gCount[u.grav === '2' ? 'Tué' : 'Blessé'] || 0) + 1; });
-            charts.grav = new Chart(document.getElementById('chartGravite'), { type: 'pie', data: { labels: Object.keys(gCount), datasets: [{data: Object.values(gCount), backgroundColor: ['#8b0000', '#ff6b35']}] }});
-            
-            // Mois
-            let mCount = {};
-            filteredAccidents.forEach(a => { mCount[a.mois] = (mCount[a.mois] || 0) + 1; });
-            charts.mois = new Chart(document.getElementById('chartMois'), { type: 'bar', data: { labels: Object.keys(mCount), datasets: [{data: Object.values(mCount), backgroundColor: '#667eea'}] }});
         });
+
+        function checkDone() {
+            processed++;
+            if(processed === FILES.length) {
+                log("\n" + "=".repeat(50));
+                log("--- DÉBUT DE LA SIMULATION DU FILTRAGE ---");
+                log("=".repeat(50) + "\n");
+                runSimulation();
+            }
+        }
+
+        function runSimulation() {
+            let carac = allData['caracteristiques'] || [];
+            let usagers = allData['usagers'] || [];
+            
+            log(`Total Usagers bruts : ${usagers.length}`);
+            
+            // Étape 1 : Filtre des blessés
+            let usagersFiltres = usagers.filter(u => u.grav !== '1');
+            log(`Usagers après retrait des indemnes : ${usagersFiltres.length}`);
+            
+            if (usagers.length > 0 && usagersFiltres.length === 0) {
+                log(`\n⚠️ CRITIQUE : Tous les usagers ont disparu. Exemple de valeur u.grav lue : '${usagers[0].grav}'`);
+                log(`(Si c'est 'undefined', c'est que la colonne 'grav' n'a pas été reconnue)`);
+            }
+
+            // Étape 2 : Récupération des Num_Acc
+            let accidentsIdsSet = new Set(usagersFiltres.map(u => u.Num_Acc));
+            log(`IDs d'accidents uniques retenus : ${accidentsIdsSet.size}`);
+            
+            // Étape 3 : Croisement avec les caractéristiques
+            let accidentsFiltres = carac.filter(acc => accidentsIdsSet.has(acc.Num_Acc));
+            log(`Accidents correspondants trouvés dans caractéristiques : ${accidentsFiltres.length}`);
+            
+            if (accidentsIdsSet.size > 0 && accidentsFiltres.length === 0) {
+                let sampleUsagerId = Array.from(accidentsIdsSet)[0];
+                let sampleAccId = carac.length > 0 ? carac[0].Num_Acc : 'aucun';
+                log(`\n⚠️ CRITIQUE : Les IDs ne matchent pas entre les 2 fichiers !`);
+                log(` -> ID cherché (Usager) : '${sampleUsagerId}'`);
+                log(` -> ID disponible (Carac) : '${sampleAccId}'`);
+            }
+
+            // Étape 4 : Coordonnées GPS
+            let accWithCoords = accidentsFiltres.filter(acc => {
+                if (!acc.lat || !acc.long) return false;
+                const lat = parseFloat(acc.lat.replace(',', '.'));
+                const long = parseFloat(acc.long.replace(',', '.'));
+                return !isNaN(lat) && !isNaN(long) && lat !== 0;
+            });
+            
+            log(`Accidents avec coordonnées GPS valides pour la carte : ${accWithCoords.length}`);
+            
+            if (accidentsFiltres.length > 0 && accWithCoords.length === 0) {
+                let sampleLat = accidentsFiltres[0].lat;
+                let sampleLong = accidentsFiltres[0].long;
+                log(`\n⚠️ CRITIQUE : Coordonnées invalides !`);
+                log(` -> Exemple lu : lat='${sampleLat}', long='${sampleLong}'`);
+            }
+
+            log("\n✅ DIAGNOSTIC TERMINÉ.");
+        }
     </script>
 </body>
 </html>
