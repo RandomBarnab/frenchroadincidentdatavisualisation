@@ -339,22 +339,22 @@
         // --- NOUVEAUTÉ : DÉCLARATION DES FICHIERS À TÉLÉCHARGER AUTOMATIQUEMENT ---
         // Le script ira chercher ces fichiers dans le dossier "data" sur ton hébergement web
         const FILES_TO_LOAD = [
-            { year: 2024, type: 'caracteristiques', url: 'data/caracteristiques-2024.csv' },
-            { year: 2024, type: 'lieux', url: 'data/lieux-2024.csv' },
-            { year: 2024, type: 'vehicules', url: 'data/vehicules-2024.csv' },
-            { year: 2024, type: 'usagers', url: 'data/usagers-2024.csv' },
-            { year: 2023, type: 'caracteristiques', url: 'data/caracteristiques-2023.csv' },
-            { year: 2023, type: 'lieux', url: 'data/lieux-2023.csv' },
-            { year: 2023, type: 'vehicules', url: 'data/vehicules-2023.csv' },
-            { year: 2023, type: 'usagers', url: 'data/usagers-2023.csv' },
-            { year: 2022, type: 'caracteristiques', url: 'data/caracteristiques-2022.csv' },
-            { year: 2022, type: 'lieux', url: 'data/lieux-2022.csv' },
-            { year: 2022, type: 'vehicules', url: 'data/vehicules-2022.csv' },
-            { year: 2022, type: 'usagers', url: 'data/usagers-2022.csv' },
-            { year: 2021, type: 'caracteristiques', url: 'data/caracteristiques-2021.csv' },
-            { year: 2021, type: 'lieux', url: 'data/lieux-2021.csv' },
-            { year: 2021, type: 'vehicules', url: 'data/vehicules-2021.csv' },
-            { year: 2021, type: 'usagers', url: 'data/usagers-2021.csv' }
+            { year: 2024, type: 'caracteristiques', url: './data/caracteristiques-2024.csv' },
+            { year: 2024, type: 'lieux', url: './data/lieux-2024.csv' },
+            { year: 2024, type: 'vehicules', url: './data/vehicules-2024.csv' },
+            { year: 2024, type: 'usagers', url: './data/usagers-2024.csv' },
+            { year: 2023, type: 'caracteristiques', url: './data/caracteristiques-2023.csv' },
+            { year: 2023, type: 'lieux', url: './data/lieux-2023.csv' },
+            { year: 2023, type: 'vehicules', url: './data/vehicules-2023.csv' },
+            { year: 2023, type: 'usagers', url: './data/usagers-2023.csv' },
+            { year: 2022, type: 'caracteristiques', url: './data/caracteristiques-2022.csv' },
+            { year: 2022, type: 'lieux', url: './data/lieux-2022.csv' },
+            { year: 2022, type: 'vehicules', url: './data/vehicules-2022.csv' },
+            { year: 2022, type: 'usagers', url: './data/usagers-2022.csv' },
+            { year: 2021, type: 'caracteristiques', url: './data/caracteristiques-2021.csv' },
+            { year: 2021, type: 'lieux', url: './data/lieux-2021.csv' },
+            { year: 2021, type: 'vehicules', url: './data/vehicules-2021.csv' },
+            { year: 2021, type: 'usagers', url: './data/usagers-2021.csv' }
         ];
 
         let allData = {
@@ -416,7 +416,7 @@
             updateProgress(0);
             let missingFiles = [];
 
-            function checkFinish() {
+           function checkFinish() {
                 if (processed === FILES_TO_LOAD.length) {
                     setTimeout(() => {
                         hideLoading();
@@ -424,6 +424,7 @@
                         
                         if (missingFiles.length > 0) {
                             alert("⚠️ Attention, le code n'a pas pu lire ces fichiers :\n\n" + missingFiles.join("\n"));
+                            return; // <--- AJOUTER CE RETURN ICI POUR STOPPER L'ANALYSE DANS LE VIDE
                         }
                         
                         // Si tout est ok, on lance l'analyse
@@ -1037,5 +1038,6 @@
 </body>
 
 </html>
+
 
 
