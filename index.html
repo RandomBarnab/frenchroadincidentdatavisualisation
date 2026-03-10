@@ -45,7 +45,7 @@
         #map { height: 50vh; min-height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ccc; z-index: 1; }
         @media (min-width: 768px) { #map { height: 550px; } }
 
-        .map-tools { display: flex; background: white; padding: 12px; border-radius: 8px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center;}
+        .map-tools { display: flex; background: white; padding: 12px; border-radius: 8px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: flex-start;}
         .map-view-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center;}
         .map-legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;}
         .legend-item { display: flex; align-items: center; font-size: 0.85em; font-weight: 600; }
@@ -53,12 +53,13 @@
         .view-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9em; }
         .view-btn.active { background: #667eea; color: white; border-color: #667eea; }
 
-        /* Le contrôle de la Heatmap */
+        /* Le laboratoire de la Heatmap */
         #heatmapControls { display: none; flex-direction: column; gap: 8px; background: #fdfdfd; padding: 10px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; flex: 1 1 100%; }
         #heatmapControls label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 130px; display: inline-block;}
         .heatmap-slider-row { display: flex; align-items: center; gap: 10px; width: 100%; }
         .heatmap-slider-row input[type="range"] { flex: 1; }
-        .heatmap-slider-row span { font-size: 0.8em; font-weight: bold; width: 30px; text-align: right; }
+        .heatmap-slider-row span { font-size: 0.8em; font-weight: bold; width: 40px; text-align: right; }
+        .heat-stats { background: #e3f2fd; padding: 8px; border-radius: 5px; font-family: monospace; font-size: 0.85em; color: #1565c0; display: flex; justify-content: space-between;}
 
         .content { padding: 20px; }
         .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid #667eea;}
@@ -250,18 +251,30 @@
                     <!-- LE LABORATOIRE DE LA HEATMAP -->
                     <div id="heatmapControls">
                         <div style="font-size: 0.9em; font-weight: bold; color: #1e3c72; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between;">
-                            <span>🎛️ Paramètres de la Densité</span>
-                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Auto-ajuster au zoom</label>
+                            <span>🎛️ Laboratoire de la Densité</span>
+                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Auto-ajuster</label>
                         </div>
+                        
+                        <div class="heat-stats">
+                            <span>Zoom: <span id="statZ">-</span></span>
+                            <span>Pts écran: <span id="statP">-</span></span>
+                            <span>Ratio (Z/P): <span id="statRatio">-</span></span>
+                        </div>
+
+                        <!-- 5ème curseur demandé pour tester le ratio Zoom/Points -->
+                        <div class="heatmap-slider-row" id="rowAutoCoeff">
+                            <label for="heatAutoCoeff" style="color: #4caf50;">⚖️ Coeff. (Z/P) :</label>
+                            <input type="range" id="heatAutoCoeff" min="100" max="30000" step="100" value="5000">
+                            <span id="valAutoCoeff" style="width: 45px;">5000</span>
+                        </div>
+
                         <div class="heatmap-slider-row">
-                            <label for="heatRadius">Taille du point :</label>
-                            <input type="range" id="heatRadius" min="2" max="50" value="12">
+                            <label for="heatRadius">Taille (= Flou) :</label>
+                            <input type="range" id="heatRadius" min="2" max="60" value="12">
                             <span id="valRadius">12</span>
                         </div>
-                        <div class="heatmap-slider-row">
-                            <label for="heatBlur">Flou (Diffusion) :</label>
-                            <input type="range" id="heatBlur" min="2" max="50" value="15">
-                            <span id="valBlur">15</span>
+                        <div class="heatmap-slider-row" style="display:none;"> <!-- Flou caché car lié à la taille -->
+                            <input type="range" id="heatBlur" min="2" max="60" value="12">
                         </div>
                         <div class="heatmap-slider-row">
                             <label for="heatMax">Seuil d'alerte :</label>
@@ -271,7 +284,7 @@
                         <div class="heatmap-slider-row">
                             <label for="heatMinOp">Opacité de base :</label>
                             <input type="range" id="heatMinOp" min="0" max="100" value="20">
-                            <span id="valMinOp">0.2</span>
+                            <span id="valMinOp">0.20</span>
                         </div>
                     </div>
                 </div>
@@ -444,25 +457,36 @@
             // GESTION DU LABORATOIRE HEATMAP MANUEL & AUTO
             function updateHeatmapFromSliders() {
                 if(!heatLayer) return;
+                // Règle 1: Taille = Flou
                 let r = parseInt(document.getElementById('heatRadius').value);
-                let b = parseInt(document.getElementById('heatBlur').value);
+                document.getElementById('heatBlur').value = r; // Synchro forcée
+                
+                let b = r;
                 let m = parseInt(document.getElementById('heatMax').value);
                 let mo = parseInt(document.getElementById('heatMinOp').value) / 100;
                 
                 document.getElementById('valRadius').innerText = r;
                 document.getElementById('valBlur').innerText = b;
                 document.getElementById('valMax').innerText = m;
-                document.getElementById('valMinOp').innerText = mo;
+                document.getElementById('valMinOp').innerText = mo.toFixed(2);
 
                 heatLayer.setOptions({ radius: r, blur: b, max: m, minOpacity: mo });
             }
 
-            ['heatRadius', 'heatBlur', 'heatMax', 'heatMinOp'].forEach(id => {
+            // Écouteurs sur les sliders manuels
+            ['heatRadius', 'heatMax', 'heatMinOp'].forEach(id => {
                 let el = document.getElementById(id);
                 if(el) el.addEventListener('input', function() {
-                    document.getElementById('autoHeatmap').checked = false; // Désactive l'auto si on touche un slider
+                    document.getElementById('autoHeatmap').checked = false; // Désactive l'auto si on touche à la main
+                    document.getElementById('rowAutoCoeff').style.opacity = '0.4';
                     updateHeatmapFromSliders();
                 });
+            });
+
+            // Écouteur sur le 5ème slider (Coeff Auto)
+            document.getElementById('heatAutoCoeff').addEventListener('input', function(e) {
+                document.getElementById('valAutoCoeff').innerText = e.target.value;
+                if(document.getElementById('autoHeatmap').checked) calculateAutoHeatmap();
             });
 
             // L'algorithme Radar Thermique Intelligent au déplacement
@@ -470,7 +494,12 @@
             map.on('zoomend', function() { if(currentMapView === 'heatmap' && document.getElementById('autoHeatmap').checked) calculateAutoHeatmap(); });
 
             document.getElementById('autoHeatmap').addEventListener('change', function(e) {
-                if(e.target.checked) calculateAutoHeatmap();
+                if(e.target.checked) {
+                    document.getElementById('rowAutoCoeff').style.opacity = '1';
+                    calculateAutoHeatmap();
+                } else {
+                    document.getElementById('rowAutoCoeff').style.opacity = '0.4';
+                }
             });
 
             loadInitialData();
@@ -480,42 +509,54 @@
             document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
         });
 
-        // ALGORITHME DE CALCUL DU ROUGE PARFAIT
+        // ALGORITHME DE CALCUL DE LA TAILLE ET DU ROUGE
         function calculateAutoHeatmap() {
             if (!heatLayer || currentHeatData.length === 0) return;
             const bounds = map.getBounds();
-            
-            // 1. On regroupe les points visibles dans une grille pour trouver la plus forte concentration locale
-            const gridSize = 0.01; // Approx 1km carré
-            let grid = {};
-            let localMax = 1;
+            let pointsInView = 0;
 
             currentHeatData.forEach(pt => {
-                if (bounds.contains([pt[0], pt[1]])) {
-                    let cellX = Math.floor(pt[0] / gridSize);
-                    let cellY = Math.floor(pt[1] / gridSize);
-                    let key = cellX + ',' + cellY;
-                    grid[key] = (grid[key] || 0) + pt[2]; // pt[2] = le poids (1, 2 ou 4)
-                    if (grid[key] > localMax) localMax = grid[key];
-                }
+                if (bounds.contains([pt[0], pt[1]])) pointsInView++; // Nombre brut de points
             });
 
-            // 2. On ajuste la taille selon le niveau de zoom
             const z = map.getZoom();
-            let r = z <= 7 ? 6 : (z <= 10 ? 10 : 15);
-            let b = z <= 7 ? 8 : (z <= 10 ? 15 : 20);
+            let ratio = z / Math.max(1, pointsInView);
+            
+            // MAJ Panneau Stats
+            document.getElementById('statZ').innerText = z;
+            document.getElementById('statP').innerText = pointsInView;
+            document.getElementById('statRatio').innerText = ratio.toFixed(5);
 
-            // 3. On défini le max de la heatmap comme 80% de la densité max trouvée (pour que le centre soit bien rouge)
-            let calculatedMax = Math.max(3, Math.floor(localMax * 0.8));
+            // 1. Calcul de la Taille (et Flou) selon la formule demandée
+            let coeff = parseFloat(document.getElementById('heatAutoCoeff').value);
+            let rawSize = coeff * ratio;
+            let size = Math.floor(Math.max(3, Math.min(60, rawSize))); // Borné entre 3 et 60px
 
-            // Mise à jour des sliders visuels pour refléter le calcul
-            document.getElementById('heatRadius').value = r; document.getElementById('valRadius').innerText = r;
-            document.getElementById('heatBlur').value = b; document.getElementById('valBlur').innerText = b;
-            document.getElementById('heatMax').value = calculatedMax; document.getElementById('valMax').innerText = calculatedMax;
+            // 2. Règles strictes pour Max et Opacité selon les cas décrits
+            let m, mo;
+            if (pointsInView <= 20) { 
+                // Zone éparse
+                m = 2; mo = 0.66;
+            } else if (z <= 6) { 
+                // Echelle France
+                m = 5; mo = 0.23;
+            } else if (z >= 13 && pointsInView > 100) { 
+                // Ville très dense, zoom fort
+                m = 2; mo = 0.30;
+            } else { 
+                // Ville dense, zoom moyen (ex: 5000 pts)
+                m = 2; mo = 0.21;
+            }
 
-            heatLayer.setOptions({ radius: r, blur: b, max: calculatedMax });
+            // Mise à jour visuelle des sliders pour refléter l'Auto
+            document.getElementById('heatRadius').value = size; document.getElementById('valRadius').innerText = size;
+            document.getElementById('heatBlur').value = size; document.getElementById('valBlur').innerText = size;
+            document.getElementById('heatMax').value = m; document.getElementById('valMax').innerText = m;
+            document.getElementById('heatMinOp').value = Math.floor(mo * 100); document.getElementById('valMinOp').innerText = mo.toFixed(2);
+
+            // Application
+            heatLayer.setOptions({ radius: size, blur: size, max: m, minOpacity: mo });
         }
-
 
         function loadInitialData() {
             let processed = 0;
@@ -691,6 +732,7 @@
             renderDashboard(mainAccidents, mainUsagers);
         }
 
+        // --- FILTRE CROISÉ MULTIPLE ---
         function handleCrossFilterClick(e, title, label, validAccIdsSet) {
             let isMulti = e && (e.ctrlKey || e.metaKey);
             let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
@@ -815,7 +857,7 @@
                 let rad = gravMax === 2 ? 8 : (gravMax === 3 ? 6 : 4);
                 
                 const m = L.circleMarker([lat, long], { radius: rad, color: 'white', weight: 1, fillColor: color, fillOpacity: 0.8 });
-                
+                // CLIC DIRECT SUR LA CARTE (Pop-up détaillé restauré)
                 m.on('click', function(e) {
                     const content = generateDetailedPopup(acc, victimes);
                     L.popup({ maxWidth: 350 }).setLatLng(e.latlng).setContent(content).openOn(map);
@@ -823,10 +865,15 @@
                 pointsLayer.addLayer(m);
             });
 
-            // Initialisation avec des valeurs par défaut douces
+            // Initialisation de la Heatmap
+            let hr = parseInt(document.getElementById('heatRadius').value);
+            let hb = parseInt(document.getElementById('heatBlur').value);
+            let hm = parseInt(document.getElementById('heatMax').value);
+            let hmo = parseInt(document.getElementById('heatMinOp').value) / 100;
+
             heatLayer = L.heatLayer(currentHeatData, { 
-                radius: 12, blur: 15, maxZoom: 15, max: 15, minOpacity: 0.2,
-                gradient: { 0.2: 'blue', 0.4: 'cyan', 0.6: 'lime', 0.8: 'yellow', 1.0: 'red' } 
+                radius: hr, blur: hb, maxZoom: 15, max: hm, minOpacity: hmo,
+                gradient: { 0.3: 'blue', 0.5: 'cyan', 0.7: 'lime', 0.85: 'yellow', 1.0: 'red' } 
             });
             
             if (currentMapView === 'points') pointsLayer.addTo(map);
@@ -1016,24 +1063,28 @@
                 h += `<h3>👥 Personnes impliquées</h3>`;
                 usgs.forEach((u, index) => {
                     const className = u.grav !== '1' ? 'victim-card' : 'victim-card indemne';
-                    h += `<div class="${className}"><strong>Personne ${index + 1}</strong>`;
+                    h += `<div class="${className}"><p><strong>Personne ${index + 1}</strong></p>`;
                     const age = acc.an && u.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(u.an_nais) : null;
                     const sexe = u.sexe === '1' ? 'Homme' : (u.sexe === '2' ? 'Femme' : 'Non précisé');
-                    h += `<br>Sexe: ${sexe}${age ? ` | Âge: ${age} ans` : ''}`;
-                    let typeVehicule = (u.catu === '3' || u.catu === '4') ? '🚶 Piéton' : (vMap.get(u.id_vehicule) ? `${vMap.get(u.id_vehicule).idText} (${vMap.get(u.id_vehicule).type})` : '');
-                    h += `<br>Rôle: ${NOMENCLATURES.catu[u.catu] || 'Occupant'} ${typeVehicule ? ' - ' + typeVehicule : ''}`;
-                    h += `<br>État: <strong>${NOMENCLATURES.gravite[u.grav] || 'Inconnu'}</strong></div>`;
+                    h += `<p><strong>Sexe :</strong> ${sexe}${age ? ` | <strong>Âge :</strong> ${age} ans` : ''}</p>`;
+                    
+                    let typeVehicule = '';
+                    if (u.catu === '3' || u.catu === '4') typeVehicule = '🚶 Piéton';
+                    else { const vInfo = vMap.get(u.id_vehicule); if (vInfo) typeVehicule = `${vInfo.idText} (${vInfo.type})`; }
+                    const role = NOMENCLATURES.catu[u.catu] || 'Occupant';
+                    h += `<p><strong>Rôle :</strong> ${role.charAt(0).toUpperCase() + role.slice(1)} ${typeVehicule ? ' - ' + typeVehicule : ''}</p>`;
+                    h += `<p><strong>État : ${NOMENCLATURES.gravite[u.grav] || 'Inconnu'}</strong></p></div>`;
                 });
 
                 if (vehs.length > 0) {
-                    h += `<h3>🚗 Véhicules</h3>`;
+                    h += `<h3>🚗 Véhicules impliqués</h3>`;
                     vehs.forEach((v, index) => {
-                        const cond = usgs.find(u => u.id_vehicule === v.id_vehicule && u.catu === '1');
-                        h += `<div class="info-section"><strong>Véhicule ${index + 1} :</strong> ${NOMENCLATURES.vehicules[v.catv] || 'Type inconnu'}`;
-                        if (cond) {
-                            const ageCond = acc.an && cond.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(cond.an_nais) : null;
-                            const sexeCond = cond.sexe === '1' ? 'un homme' : (cond.sexe === '2' ? 'une femme' : 'conducteur');
-                            h += `<br>Conduit par ${sexeCond}${ageCond ? ` de ${ageCond} ans` : ''}`;
+                        const conducteur = usgs.find(u => u.id_vehicule === v.id_vehicule && u.catu === '1');
+                        h += `<div class="info-section"><p><strong>Véhicule ${index + 1} :</strong> ${NOMENCLATURES.vehicules[v.catv] || 'Type inconnu'}</p>`;
+                        if (conducteur) {
+                            const ageCond = acc.an && conducteur.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(conducteur.an_nais) : null;
+                            const sexeCond = conducteur.sexe === '1' ? 'un homme' : (conducteur.sexe === '2' ? 'une femme' : 'conducteur');
+                            h += `<p>Conduit par ${sexeCond}${ageCond ? ` de ${ageCond} ans` : ''} (voir Personne ci-dessus)</p>`;
                         }
                         h += `</div>`;
                     });
