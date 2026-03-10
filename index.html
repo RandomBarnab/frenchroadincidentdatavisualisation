@@ -497,28 +497,17 @@
             document.getElementById('loadingOverlay').style.backgroundColor = 'rgba(255,255,255,0.9)'; 
             updateProgress(0);
             setTimeout(async () => {
-                try { await analyzeData(); hideLoading(); } 
-                catch(error) { hideLoading(); alert('Erreur: ' + error.message); console.error(error); }
-            }, 50);
-        });
-        
-        function isVehicleMatchingFilter(v, advVehSelected) {
-            if (advVehSelected.includes('all')) return true;
-            if (!v || !v.catv) return false;
-            const catv = String(v.catv).trim();
-            const catvNorm = catv.padStart(2, '0');
-            return advVehSelected.some(filter => {
-                if (filter === 'sans') return false;
-                if (filter.includes(',')) {
-                    return filter.split(',').some(f => f.trim() === catv || f.trim().padStart(2, '0') === catvNorm);
-                }
-                const filtNorm = String(filter).trim().padStart(2, '0');
-                return catv === filter || catvNorm === filtNorm;
-            });
-        }
-
-        async function analyzeData() {
+                try { await async function analyzeData() {
             updateProgress(5);
+            
+            // --- CORRECTION RAM IOS --- : Vidange massive de la mémoire avant le calcul
+            vehiculesIndex.clear();
+            lieuxIndex.clear();
+            usagersByAccidentIndex.clear();
+            vehiculesByAccidentIndex.clear();
+            accidentsByIdIndex.clear();
+            victimesFiltreesIndex.clear();
+            if (pointsLayer) { pointsLayer.clearLayers(); } // Vide la mémoire de la carte
             
             const years = Array.from(document.getElementById('annee').selectedOptions).map(o => o.value);
             const typeVictime = Array.from(document.getElementById('typeVictime').selectedOptions).map(o => o.value);
@@ -550,13 +539,24 @@
             let vehiculesData = [];
             let usagersData = [];
             
+            // --- CORRECTION RAM IOS --- : Utilisation d'une boucle For classique (évite le Concat destructeur de RAM)
             years.forEach(year => {
-                caracteristiquesData = caracteristiquesData.concat(allData[year].caracteristiques || []);
-                lieuxData = lieuxData.concat(allData[year].lieux || []);
-                vehiculesData = vehiculesData.concat(allData[year].vehicules || []);
-                usagersData = usagersData.concat(allData[year].usagers || []);
+                if(allData[year].caracteristiques) {
+                    for(let i=0; i<allData[year].caracteristiques.length; i++) caracteristiquesData.push(allData[year].caracteristiques[i]);
+                }
+                if(allData[year].lieux) {
+                    for(let i=0; i<allData[year].lieux.length; i++) lieuxData.push(allData[year].lieux[i]);
+                }
+                if(allData[year].vehicules) {
+                    for(let i=0; i<allData[year].vehicules.length; i++) vehiculesData.push(allData[year].vehicules[i]);
+                }
+                if(allData[year].usagers) {
+                    for(let i=0; i<allData[year].usagers.length; i++) usagersData.push(allData[year].usagers[i]);
+                }
             });
             updateProgress(15);
+            
+            // ... LA SUITE DE VOTRE CODE analyzeData() RESTE IDENTIQUE ...
             
             vehiculesIndex = new Map(); vehiculesData.forEach(v => vehiculesIndex.set(v.id_vehicule, v));
             lieuxIndex = new Map(); lieuxData.forEach(l => lieuxIndex.set(l.Num_Acc, l));
@@ -904,6 +904,9 @@
             const acc = accidentsByIdIndex.get(accidentId);
             const victimesFiltrees = victimesFiltreesIndex.get(accidentId) || [];
             
+            // --- CORRECTION IOS --- : On ouvre l'onglet IMMÉDIATEMENT au clic !
+            let newTab = window.open('about:blank', '_blank'); 
+            
             button.textContent = '⏳ Chargement...'; button.disabled = true;
             const lieu = lieuxIndex.get(acc.Num_Acc);
             if (lieu && lieu.voie) { const voie = lieu.voie.replace(/^\d+\s*-?\s*/, '').trim(); if (voie) searchTerms.push(voie); }
@@ -964,7 +967,10 @@
             if (tues > 0) searchTerms.push(tues === 1 ? 'mortel' : `${tues} morts`); else if (blesses > 0) searchTerms.push('blessé');
             
             const url = `https://www.google.com/search?q=${encodeURIComponent(searchTerms.join(' '))}`;
-            window.open(url, '_blank');
+            
+            // --- CORRECTION IOS --- : On redirige l'onglet préalablement ouvert
+            newTab.location.href = url;
+            
             button.textContent = '🔍 Rechercher des articles'; button.disabled = false;
         }
 
@@ -1203,27 +1209,34 @@
         }
 
         const commonChartOptions = (clickCallback) => ({
-            responsive: true, maintainAspectRatio: false,
+            responsive: true, 
+            maintainAspectRatio: false, // Permet au graphique de s'adapter
             onClick: clickCallback ? (evt, activeElements) => { if (activeElements.length > 0) clickCallback(evt.chart.data.labels[activeElements[0].index]); } : undefined,
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
         });
 
         function createBarChartWithLabels(id, labels, data, cb) {
-            const canvas = document.getElementById(id); canvas.parentElement.style.height = '300px';
+            const canvas = document.getElementById(id);
+            canvas.style.height = '280px'; // On applique la hauteur au canvas directement !
             return new Chart(canvas, { type: 'bar', data: {labels, datasets: [{data, backgroundColor: '#667eea'}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
         }
         function createPieChartWithLabels(id, labels, data, cb) {
-            const canvas = document.getElementById(id); canvas.parentElement.style.height = '300px';
+            const canvas = document.getElementById(id); 
+            canvas.style.height = '280px';
             return new Chart(canvas, { type: 'pie', data: {labels, datasets: [{data, backgroundColor: ['#667eea', '#ff6b35', '#ffd93d', '#4ecdc4', '#764ba2', '#ccc']}]}, options: commonChartOptions(cb) });
         }
         function createPieChartCustomColors(id, labels, data, colorMap, cb) {
-            const canvas = document.getElementById(id); canvas.parentElement.style.height = '300px';
+            const canvas = document.getElementById(id); 
+            canvas.style.height = '280px';
             return new Chart(canvas, { type: 'pie', data: {labels, datasets: [{data, backgroundColor: labels.map(l => colorMap[l] || '#ccc')}]}, options: commonChartOptions(cb) });
         }
         function createLineChartWithLabels(id, labels, data, cb) {
-            const canvas = document.getElementById(id); canvas.parentElement.style.height = '300px';
+            const canvas = document.getElementById(id); 
+            canvas.style.height = '280px';
             return new Chart(canvas, { type: 'line', data: {labels, datasets: [{data, borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.2)', fill: true, tension: 0.4}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
         }
+        
     </script>
 </body>
 </html>
+
