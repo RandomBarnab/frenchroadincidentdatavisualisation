@@ -63,7 +63,6 @@
         .chart-container h3 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 1.05em; }
         .chart-subtitle { text-align: center; font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 10px;}
         
-        /* LE SECRET POUR ÉVITER L'ALLONGEMENT INFINI CHART.JS */
         .canvas-wrapper { position: relative; height: 260px; width: 100%; }
         .canvas-wrapper-small { position: relative; height: 200px; width: 100%; }
         .canvas-wrapper-large { position: relative; height: 320px; width: 100%; }
@@ -138,7 +137,7 @@
             
             <h2 class="section-title">📍 1. Choisissez la zone d'analyse</h2>
             <div class="map-selection-zone">
-                <p style="margin-bottom: 10px; color: #555; font-size: 0.9em;">Recherchez une ville ou zoomez manuellement. <strong>Ce qui est visible sur la carte sera analysé.</strong></p>
+                <p style="margin-bottom: 10px; color: #555; font-size: 0.9em;">Recherchez une ville ou zoomez manuellement. <strong>Seule la zone visible sur la carte sera analysée.</strong></p>
                 <div class="search-box">
                     <input type="text" id="citySearch" placeholder="Ex: Paris, Lyon, Gironde..." />
                     <button onclick="searchCityMap()">Zoomer</button>
@@ -208,6 +207,18 @@
                         <option value="2">En agglomération</option>
                     </select>
                 </div>
+                <!-- LE MENU LUMINOSITÉ EST DE RETOUR ICI ! -->
+                <div class="filter-group">
+                    <label>Luminosité</label>
+                    <select id="lumiere" multiple size="5">
+                        <option value="all" selected>Toutes</option>
+                        <option value="1">☀️ Plein jour</option>
+                        <option value="2">🌅 Crépuscule</option>
+                        <option value="3">🌙 Nuit (sans éclairage)</option>
+                        <option value="4">🌙 Nuit (éclairage off)</option>
+                        <option value="5">💡 Nuit (éclairage on)</option>
+                    </select>
+                </div>
             </div>
             
             <button class="btn" id="analyzeBtn">🚀 Générer l'Analyse</button>
@@ -223,12 +234,12 @@
 
             <div class="stats-summary" id="statsSummary"></div>
             
-            <div class="map-view-controls">
+            <div class="map-view-controls" id="resultsLegend">
                 <button class="age-btn active" id="btnViewPoints" onclick="setMapView('points')">📍 Afficher les Points</button>
                 <button class="age-btn" id="btnViewHeatmap" onclick="setMapView('heatmap')">🔥 Afficher la Densité (Heatmap)</button>
             </div>
             
-            <div class="map-legend" id="resultsLegend">
+            <div class="map-legend">
                 <div class="legend-item"><div class="legend-marker" style="background-color: #ffd93d; width: 10px; height: 10px;"></div>Blessé léger</div>
                 <div class="legend-item"><div class="legend-marker" style="background-color: #ff6b35; width: 14px; height: 14px;"></div>Blessé hospitalisé</div>
                 <div class="legend-item"><div class="legend-marker" style="background-color: #8b0000; width: 18px; height: 18px;"></div>Tué</div>
@@ -344,13 +355,13 @@
         let map, pointsLayer = null, heatLayer = null;
         let currentMapView = 'points';
         
-        // Bases de données filtrées principales (issues du formulaire)
+        // Bases de données filtrées principales
         let mainAccidents = [];
         let mainUsagers = [];
         let mainLieux = [];
         let mainVehicules = [];
 
-        // Gestion du filtre croisé (Clic sur un graphique)
+        // Gestion du filtre croisé
         let activeCrossFilter = null; 
 
         // Index globaux
@@ -399,7 +410,13 @@
                     complete: function(results) {
                         allData[fileObj.year][fileObj.type] = results.data;
                         processed++; updateProgress((processed/FILES_TO_LOAD.length)*100);
-                        if(processed === FILES_TO_LOAD.length) setTimeout(() => { hideLoading(); document.getElementById('filtersSection').style.display = 'block'; }, 500);
+                        if(processed === FILES_TO_LOAD.length) setTimeout(() => { 
+                            hideLoading(); 
+                            document.getElementById('filtersSection').style.display = 'block'; 
+                            
+                            // FIX ZONES GRISÉES : on force Leaflet à recalculer la taille de la carte maintenant qu'elle est visible
+                            setTimeout(() => { map.invalidateSize(); }, 200); 
+                        }, 500);
                     }
                 });
             });
@@ -445,7 +462,7 @@
         });
 
         function executeMainFilter() {
-            activeCrossFilter = null; // Reset du cross filter
+            activeCrossFilter = null;
             document.getElementById('mapHighlightInfo').style.display = 'none';
 
             vehiculesIndex.clear(); lieuxIndex.clear(); usagersByAccidentIndex.clear();
@@ -543,7 +560,6 @@
 
             document.getElementById('results').style.display = 'block';
             
-            // Si on est sur mobile, on scroll vers les résultats
             if(window.innerWidth < 768) {
                 document.getElementById('resultsLegend').scrollIntoView({behavior: 'smooth'});
             }
@@ -558,7 +574,7 @@
             }
             activeCrossFilter = { title: filterTitle, label: label };
             document.getElementById('mapHighlightInfo').style.display = 'block';
-            document.getElementById('crossFilterText').innerHTML = `🔵 <strong>Filtre actif :</strong> Seuls les accidents impliquant <b>${label}</b> (${filterTitle}) sont affichés sur la carte et les autres graphiques.`;
+            document.getElementById('crossFilterText').innerHTML = `🔵 <strong>Filtre croisé actif :</strong> Seuls les accidents avec <b>${label}</b> (${filterTitle}) sont affichés sur la carte et les graphiques.`;
             
             let subAcc = mainAccidents.filter(a => validAccIdsSet.has(a.Num_Acc));
             let subUsg = mainUsagers.filter(u => validAccIdsSet.has(u.Num_Acc));
@@ -597,7 +613,7 @@
                 const long = parseFloat(acc.long.replace(',','.'));
                 const gravMax = Math.min(...victimes.map(u => parseInt(u.grav)||4));
                 
-                // Nouvelle pondération demandée (T:4, H:2, L:1)
+                // Nouvelle pondération
                 let weight = (gravMax === 2) ? 4 : (gravMax === 3 ? 2 : 1);
                 heatData.push([lat, long, weight]);
 
@@ -642,7 +658,7 @@
             });
             let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
             let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
-            charts.age = createBarChart('chartAge', aData, '#667eea', l => applyCrossFilter('Age', l, new Set(aAcc[l])));
+            charts.age = createBarChart('chartAge', aData, '#667eea', l => applyCrossFilter('Âge', l, new Set(aAcc[l])));
 
             // --- GR 2 : Vehicules ---
             let vaCount = {}; let vaAcc = {};
@@ -667,11 +683,11 @@
             });
             let vvSorted = Object.entries(vvCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
             let vvData = {}; vvSorted.forEach(e => vvData[e[0]]=e[1]);
-            charts.vVic = createHorizontalBarChart('chartVehicules', vvData, '#2196f3', l => applyCrossFilter('Véhicule victime', l, new Set(vvAcc[l])));
+            charts.vVic = createHorizontalBarChart('chartVehicules', vvData, '#2196f3', l => applyCrossFilter('Véhicule de la victime', l, new Set(vvAcc[l])));
 
             let cCount = {}; let cAcc = {};
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
-            charts.col = createHorizontalBarChart('chartCollision', cCount, '#764ba2', l => applyCrossFilter('Collision', l, new Set(cAcc[l])));
+            charts.col = createHorizontalBarChart('chartCollision', cCount, '#764ba2', l => applyCrossFilter('Type de collision', l, new Set(cAcc[l])));
 
             // --- GR 3 : Temps ---
             let hCount = {}; let hAcc = {};
@@ -714,7 +730,7 @@
 
             let aggCount={'🏙️ Agglo':0, '🌳 Hors agglo':0}; let aggAcc={'🏙️ Agglo':[], '🌳 Hors agglo':[]};
             accs.forEach(a => { let n=a.agg==='2'?'🏙️ Agglo':'🌳 Hors agglo'; aggCount[n]++; aggAcc[n].push(a.Num_Acc); });
-            charts.agg = createPieChart('chartAgglomeration', aggCount, {'🏙️ Agglo':'#2196f3', '🌳 Hors agglo':'#4caf50'}, l => applyCrossFilter('Agglo', l, new Set(aggAcc[l])));
+            charts.agg = createHorizontalBarChart('chartAgglomeration', aggCount, '#4caf50', l => applyCrossFilter('Agglo', l, new Set(aggAcc[l])));
         }
 
         function setMapView(view) {
@@ -750,7 +766,6 @@
             return new Chart(document.getElementById(id), { type: 'pie', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: Object.keys(dict).map(k=>colorMap[k]||'#ccc') }] }, options: o });
         }
 
-        // --- POPUP HTML (Minimalisé pour le code) ---
         function generateDetailedPopup(acc, victimes) {
             const l = lieuxIndex.get(acc.Num_Acc); const meteo = NOMENCLATURES.meteo[acc.atm]||'?';
             let c = `<div style="max-width:320px"><strong>📅 ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
