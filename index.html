@@ -412,69 +412,58 @@
 
         // --- NOUVEAUTÉ : FONCTION DE TÉLÉCHARGEMENT AUTOMATIQUE ---
                 // --- NOUVEAUTÉ : FONCTION DE TÉLÉCHARGEMENT AUTOMATIQUE ---
-        async function loadInitialData() {
+        // --- NOUVEAUTÉ : FONCTION DE TÉLÉCHARGEMENT AUTOMATIQUE OPTIMISÉE ---
+        function loadInitialData() {
             let processed = 0;
             updateProgress(0);
-            let missingFiles = []; // Pour traquer les fichiers introuvables
+            let missingFiles = [];
 
-            // Fonction de vérification appelée à chaque étape
             function checkFinish() {
                 if (processed === FILES_TO_LOAD.length) {
                     setTimeout(() => {
                         hideLoading();
                         document.getElementById('filtersSection').style.display = 'block';
                         
-                        // Si on a raté des fichiers, on alerte l'utilisateur
                         if (missingFiles.length > 0) {
-                            alert("⚠️ Attention, le code n'a pas trouvé ces fichiers dans le dossier 'data' :\n\n" + 
-                                missingFiles.join("\n") + 
-                                "\n\nVérifiez l'orthographe exacte et l'emplacement des fichiers.");
-                        } else {
-                            // Si tout est parfait, on lance l'analyse !
-                            document.getElementById('analyzeBtn').click();
+                            alert("⚠️ Attention, le code n'a pas pu lire ces fichiers :\n\n" + missingFiles.join("\n"));
                         }
+                        
+                        // Si tout est ok, on lance l'analyse
+                        document.getElementById('analyzeBtn').click();
                     }, 800);
                 }
             }
 
-            for (const fileObj of FILES_TO_LOAD) {
-                try {
-                    const response = await fetch(fileObj.url);
-                    if (!response.ok) {
-                        console.warn(`Fichier non trouvé : ${fileObj.url}`);
-                        missingFiles.push(fileObj.url); // On note le fichier manquant
+            // On lance le téléchargement des 16 fichiers en parallèle
+            FILES_TO_LOAD.forEach(fileObj => {
+                Papa.parse(fileObj.url, {
+                    download: true, // Demande à PapaParse de gérer le téléchargement proprement
+                    header: true,
+                    skipEmptyLines: true,
+                    // ⚠️ On a supprimé "delimiter: ';'" pour qu'il devine tout seul si c'est , ou ;
+                    // ⚠️ On nettoie le BOM (caractère invisible) au début du fichier
+                    transformHeader: h => h.replace(/^\uFEFF/, '').trim(), 
+                    transform: v => v.trim(),
+                    complete: function(results) {
+                        // Petit test de sécurité pour voir si les colonnes sont bien lues
+                        if (results.data.length > 0 && !results.data[0]['Num_Acc'] && !results.data[0]['num_acc']) {
+                            console.warn(`⚠️ Colonnes non reconnues dans ${fileObj.url}`);
+                        }
+                        
+                        allData[fileObj.year][fileObj.type] = results.data;
                         processed++;
                         updateProgress((processed / FILES_TO_LOAD.length) * 100);
-                        checkFinish(); // On vérifie si c'était le dernier
-                        continue;
+                        checkFinish();
+                    },
+                    error: function(err) {
+                        console.error(`Erreur réseau/lecture pour ${fileObj.url}:`, err);
+                        missingFiles.push(fileObj.url);
+                        processed++;
+                        updateProgress((processed / FILES_TO_LOAD.length) * 100);
+                        checkFinish();
                     }
-                    
-                    const csvText = await response.text();
-                    
-                    Papa.parse(csvText, {
-                        header: true, delimiter: ';', quoteChar: '"', skipEmptyLines: true,
-                        transformHeader: h => h.trim(), transform: v => v.trim(),
-                        complete: function(results) {
-                            allData[fileObj.year][fileObj.type] = results.data;
-                            processed++;
-                            updateProgress((processed / FILES_TO_LOAD.length) * 100);
-                            checkFinish(); // On vérifie si c'était le dernier
-                        },
-                        error: function(err) {
-                            console.error(`Erreur de lecture CSV pour ${fileObj.url}:`, err);
-                            missingFiles.push(fileObj.url + " (Erreur de format)");
-                            processed++;
-                            checkFinish();
-                        }
-                    });
-                } catch (error) {
-                    console.error(`Erreur réseau pour ${fileObj.url}`, error);
-                    missingFiles.push(fileObj.url + " (Erreur réseau)");
-                    processed++;
-                    updateProgress((processed / FILES_TO_LOAD.length) * 100);
-                    checkFinish();
-                }
-            }
+                });
+            });
         }
 
         // Lancer le téléchargement dès que la page s'ouvre
@@ -1051,3 +1040,4 @@
 </body>
 
 </html>
+
