@@ -410,8 +410,6 @@
         function updateProgress(percent) { document.getElementById('progressFill').style.width = percent + '%'; }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
-        // --- NOUVEAUTÉ : FONCTION DE TÉLÉCHARGEMENT AUTOMATIQUE ---
-                // --- NOUVEAUTÉ : FONCTION DE TÉLÉCHARGEMENT AUTOMATIQUE ---
         // --- NOUVEAUTÉ : FONCTION DE TÉLÉCHARGEMENT AUTOMATIQUE OPTIMISÉE ---
         function loadInitialData() {
             let processed = 0;
@@ -437,19 +435,19 @@
             // On lance le téléchargement des 16 fichiers en parallèle
             FILES_TO_LOAD.forEach(fileObj => {
                 Papa.parse(fileObj.url, {
-                    download: true, // Demande à PapaParse de gérer le téléchargement proprement
+                    download: true,
                     header: true,
+                    delimiter: ';', // <-- LE RETOUR DU SAUVEUR !
+                    quoteChar: '"',
                     skipEmptyLines: true,
-                    // ⚠️ On a supprimé "delimiter: ';'" pour qu'il devine tout seul si c'est , ou ;
-                    // ⚠️ On nettoie le BOM (caractère invisible) au début du fichier
-                    transformHeader: h => h.replace(/^\uFEFF/, '').trim(), 
-                    transform: v => v.trim(),
+                    // Nettoyage extrême : enlève les caractères invisibles et uniformise la colonne Num_Acc
+                    transformHeader: h => {
+                        let cleanH = h.replace(/^\uFEFF/, '').replace(/^"|"$/g, '').trim();
+                        if (cleanH.toLowerCase() === 'num_acc') return 'Num_Acc';
+                        return cleanH;
+                    }, 
+                    transform: v => v ? v.trim() : v,
                     complete: function(results) {
-                        // Petit test de sécurité pour voir si les colonnes sont bien lues
-                        if (results.data.length > 0 && !results.data[0]['Num_Acc'] && !results.data[0]['num_acc']) {
-                            console.warn(`⚠️ Colonnes non reconnues dans ${fileObj.url}`);
-                        }
-                        
                         allData[fileObj.year][fileObj.type] = results.data;
                         processed++;
                         updateProgress((processed / FILES_TO_LOAD.length) * 100);
@@ -465,7 +463,6 @@
                 });
             });
         }
-
         // Lancer le téléchargement dès que la page s'ouvre
         document.addEventListener('DOMContentLoaded', function() {
             loadInitialData();
@@ -1040,4 +1037,5 @@
 </body>
 
 </html>
+
 
