@@ -16,11 +16,11 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; padding: 10px; color: #333; }
-        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; padding-bottom: 60px; }
+        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; padding-bottom: 90px; /* Espace pour la bannière sticky */ }
         
         header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 25px 20px; text-align: center; }
         header h1 { font-size: clamp(1.4em, 4vw, 2.4em); margin-bottom: 10px; }
-        header p.desc { font-size: clamp(0.9em, 1.5vw, 1.05em); font-weight: 300; font-style: italic; color: rgba(255,255,255,0.85); max-width: 950px; margin: 0 auto 15px auto; line-height: 1.5;}
+        header p.desc { font-size: clamp(0.9em, 1.5vw, 1.05em); font-weight: 300; font-style: italic; color: rgba(255,255,255,0.85); max-width: 900px; margin: 0 auto 15px auto; line-height: 1.5;}
         footer { background: #2c3e50; color: white; padding: 15px; text-align: center; font-size: 0.85em; margin-top: 20px;}
         
         .intro-banner { position: relative; background: #e3f2fd; border-left: 5px solid #2196f3; padding: 20px; margin: 15px; border-radius: 8px; }
@@ -62,7 +62,7 @@
         #btnToggleHeatmap { display: none; background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; padding: 6px 12px; border-radius: 15px; font-size: 0.85em; cursor: pointer; font-weight: bold; }
         #btnToggleHeatmap:hover { background: #ffe0b2; }
 
-        /* Le laboratoire Heatmap complet */
+        /* Laboratoire Heatmap */
         #heatmapAdvancedControls { display: none; flex-direction: column; gap: 10px; background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; flex: 1 1 100%; margin-top: 10px; }
         .heatmap-slider-row { display: flex; align-items: center; gap: 10px; width: 100%; }
         .heatmap-slider-row label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 140px; display: inline-block;}
@@ -72,19 +72,17 @@
 
         .content { padding: 20px; }
         .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid; }
-        
-        #crossFilterBanner { display: none; }
-        #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; font-size: 1.05em; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        /* Le bandeau collant adapté pour mobile */
-        #stickySummary { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 114, 0.95); color: white; padding: 10px 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10000; display: none; align-items: center; justify-content: center; gap: 8px; font-size: 0.75em; width: 95vw; max-width: 900px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); pointer-events: none; flex-wrap: wrap; line-height: 1.4; text-align: center; }
-        @media (min-width: 768px) { #stickySummary { font-size: 0.85em; border-radius: 30px; width: auto; max-width: 90vw; padding: 12px 25px; flex-wrap: nowrap; text-align: left; } }
+        /* BANDEAU FLOTTANT UNIQUE EN BAS (Regroupe tout) */
+        #stickySummary { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 114, 0.95); color: white; padding: 12px 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10000; display: none; align-items: center; justify-content: center; gap: 10px; font-size: 0.8em; width: 95vw; max-width: 1000px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); flex-direction: column; text-align: center; }
+        @media (min-width: 768px) { #stickySummary { font-size: 0.85em; border-radius: 30px; width: auto; max-width: 90vw; padding: 12px 25px; flex-direction: row; text-align: left; } }
         #stickySummary strong { color: #ffd93d; }
+        .sticky-cross-filters { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); width: 100%;}
+        @media (min-width: 768px) { .sticky-cross-filters { border-top: none; padding-top: 0; padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); width: auto;} }
 
-        /* Toggle Multiselect Mobile */
-        .mobile-toggle-btn { background: #fdfdfd; border: 2px solid #ddd; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; color: #555;}
-        .mobile-toggle-btn.active { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
+        /* Bouton Mobile Multi-Select (Universel) */
+        .multi-toggle-btn { background: #fdfdfd; border: 2px solid #ddd; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; color: #555;}
+        .multi-toggle-btn.active { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
 
         .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; transition: all 0.3s; position: relative; min-width: 0;}
         .chart-container h3 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 1.05em; }
@@ -101,6 +99,7 @@
         .charts-grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 900px) { .charts-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
+        /* Style des KPI et Moyennes */
         .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; }
         .stat-card .number { font-size: 1.8em; font-weight: 700; margin-bottom: 2px; }
@@ -150,8 +149,21 @@
         <p id="loadingText">Veuillez patienter...</p>
     </div>
 
-    <!-- BANNIÈRE STICKY POUR LE CONTEXTE EN CONTINU -->
-    <div id="stickySummary">🔍 Base : <span id="stickyBaseText">-</span></div>
+    <!-- BANNIÈRE STICKY (RÉSUMÉ ET FILTRES ACTIFS) -->
+    <div id="stickySummary">
+        <div id="stickyBaseText">🔍 Base : -</div>
+        
+        <div id="stickyCrossFilters" class="sticky-cross-filters">
+            <span id="stickyFiltersList" style="font-weight: bold; color: #ffd93d;"></span>
+            
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.9em;">
+                <input type="checkbox" id="modeVictimeOnly" checked onchange="window.reapplyCrossFilters()">
+                🎯 Mode Strict
+            </label>
+            
+            <button onclick="window.cancelCrossFilter()" style="padding: 5px 12px; font-size: 0.85em; background: #dc3545; border: none; border-radius: 15px; color: white; cursor: pointer; font-weight: bold;">❌ Effacer</button>
+        </div>
+    </div>
 
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-content">
@@ -164,7 +176,9 @@
         <header>
             <h1>🚗 Analyse de la Sécurité Routière en France</h1>
             <p class="desc">
-                <em>Cet outil interactif a pour vocation de rendre les données de l'accidentalité routière parfaitement intelligibles et exploitables. Que vous soyez un usager de la route ou un décideur public élaborant une politique de mobilité, vous pouvez générer en quelques clics des statistiques précises à l'échelle nationale, régionale ou locale.</em>
+                Cet outil interactif a pour vocation de rendre les données de l'accidentalité routière parfaitement intelligibles et exploitables.<br>
+                Que vous soyez un usager de la route ou un décideur public élaborant une politique de mobilité,<br>
+                vous pouvez générer en quelques clics des statistiques précises à l'échelle nationale, régionale ou locale.
             </p>
         </header>
 
@@ -175,7 +189,7 @@
                 <li><span>Paramétrez :</span> Sélectionnez les années ou le type de victimes ci-dessous.</li>
                 <li><span>Cadrez :</span> Déplacez la carte sur la zone qui vous intéresse (seule la zone visible est analysée).</li>
                 <li><span>Analysez :</span> Cliquez sur le gros bouton vert pour générer les résultats.</li>
-                <li><span>Filtrez en direct :</span> Cliquez sur les graphiques (ex: "Blessé léger") pour croiser les filtres dynamiquement ! Maintenez <b>Ctrl</b> (sur PC) ou activez le bouton <b>Mode Multi-sélection</b> (sur mobile) pour additionner les filtres.</li>
+                <li><span>Filtrez en direct :</span> Cliquez sur les graphiques (ex: "Blessé léger") pour filtrer dynamiquement. Activez la <b>Sélection multiple</b> pour croiser les données.</li>
             </ol>
         </div>
         
@@ -183,7 +197,6 @@
             
             <h2 class="section-title" style="border-bottom-color: #667eea;">⚙️ 1. Paramétrez les filtres</h2>
             
-            <!-- FILTRES PRINCIPAUX -->
             <div class="filter-grid">
                 <div class="filter-group">
                     <label>Années</label>
@@ -234,7 +247,6 @@
 
             <button id="toggleFiltersBtn" class="btn-secondary">➕ Plus de filtres (Lieu, Période, Météo...)</button>
 
-            <!-- FILTRES SECONDAIRES CACHÉS -->
             <div id="secondaryFilters" class="filter-grid" style="display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
                 <div class="filter-group">
                     <label>Période d'accident</label>
@@ -286,11 +298,10 @@
                         <div class="legend-item"><div class="legend-marker" style="background-color: #C0392B; width: 18px; height: 18px;"></div>Tué</div>
                     </div>
                     
-                    <!-- LE LABORATOIRE DE LA HEATMAP -->
                     <div id="heatmapAdvancedControls">
                         <div style="font-size: 0.9em; font-weight: bold; color: #1e3c72; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between;">
-                            <span>🎛️ Paramètres de la Densité</span>
-                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Mode Auto-Ajusté</label>
+                            <span>🎛️ Laboratoire de la Densité</span>
+                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Auto-ajuster</label>
                         </div>
                         
                         <div class="heat-stats">
@@ -300,7 +311,7 @@
                         </div>
 
                         <div class="heatmap-slider-row" id="rowAutoCoeff">
-                            <label for="heatAutoCoeff" style="color: #4caf50;">⚖️ Coef. Multiplicateur :</label>
+                            <label for="heatAutoCoeff" style="color: #4caf50;">⚖️ Coef. (C) :</label>
                             <input type="range" id="heatAutoCoeff" min="1000" max="3000000" step="10000" value="500000">
                             <span id="valAutoCoeff" style="width: 65px;">500000</span>
                         </div>
@@ -334,27 +345,12 @@
         
         <div class="content" id="results" style="display: none;">
             
-            <div id="crossFilterBanner">
-                <div id="mapHighlightInfo">
-                    <div id="crossFilterText"></div>
-                    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
-                        <label style="font-size: 0.9em; font-weight: bold; color: #1e3c72; display: flex; align-items: center; gap: 5px; cursor: pointer;">
-                            <input type="checkbox" id="modeVictimeOnly" checked onchange="window.reapplyCrossFilters()">
-                            🎯 Mode strict (Isoler les victimes)
-                        </label>
-                        <button class="btn-cancel-filter" onclick="window.cancelCrossFilter()">❌ Effacer les filtres</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NOUVEAU BOUTON MOBILE MULTI-SELECT -->
             <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
-                <button id="mobileMultiSelectBtn" onclick="window.toggleMobileMultiSelect()" class="mobile-toggle-btn">
-                    <span>📱 Sélection multiple :</span> <span id="mobileMultiSelectStatus" style="color:#d32f2f;">OFF</span>
+                <button id="multiSelectBtn" onclick="window.toggleMultiSelect()" class="multi-toggle-btn">
+                    <span>🖱️ Sélection multiple :</span> <span id="multiSelectStatus" style="color:#d32f2f;">OFF</span>
                 </button>
             </div>
 
-            <!-- KPI ROW -->
             <div class="kpi-header-row">
                 <h2 class="section-title" style="border: none;">📊 Statistiques globales</h2>
                 <div>
@@ -460,10 +456,6 @@
             </div>
 
         </div>
-        
-        <footer>
-            <p>© 2026 Benjamin Pannetier - Source : data.gouv.fr (BAAC)</p>
-        </footer>
     </div>
     
     <script>
@@ -495,7 +487,7 @@
         let currentAgeInterval = 5;
         let lastRenderedUsgs = [], lastRenderedAccs = []; 
         let currentHeatData = []; 
-        let mobileMultiSelect = false; // Variable globale pour le bouton mobile
+        let isMultiSelectEnabled = false; // Remplace le Ctrl+Clic
         
         let currentZ = 5, currentP = 0, currentRatio = 0;
         let currentSearchedCityMap = null;
@@ -523,15 +515,14 @@
         function updateProgress(p) { const el = document.getElementById('progressFill'); if(el) el.style.width = p + '%'; }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
-        // Fonction du bouton mobile
-        window.toggleMobileMultiSelect = function() {
-            mobileMultiSelect = !mobileMultiSelect;
-            const btn = document.getElementById('mobileMultiSelectBtn');
-            const status = document.getElementById('mobileMultiSelectStatus');
-            if(mobileMultiSelect) {
+        window.toggleMultiSelect = function() {
+            isMultiSelectEnabled = !isMultiSelectEnabled;
+            const btn = document.getElementById('multiSelectBtn');
+            const status = document.getElementById('multiSelectStatus');
+            if(isMultiSelectEnabled) {
                 btn.classList.add('active');
                 status.innerText = "ON";
-                status.style.color = "#4caf50";
+                status.style.color = "#1565c0";
             } else {
                 btn.classList.remove('active');
                 status.innerText = "OFF";
@@ -539,7 +530,6 @@
             }
         }
 
-        // PLUGIN CHART.JS CUSTOM (Pourcentages)
         try {
             const percentPlugin = {
                 id: 'percentLabels',
@@ -595,7 +585,6 @@
             return res;
         }
 
-        // --- GESTION DES STATS EN TEMPS RÉEL (SANS CRASH) ---
         window.updateHeatmapStats = function() {
             if (!heatLayer || currentMapView !== 'heatmap' || currentHeatData.length === 0) return;
             const bounds = map.getBounds();
@@ -605,7 +594,6 @@
             const west = bounds.getWest();
             
             currentP = 0;
-            // Optimisation stricte de la mémoire : pas de création d'objet L.latLng
             for(let i=0; i<currentHeatData.length; i++) {
                 let lat = currentHeatData[i][0];
                 let lon = currentHeatData[i][1];
@@ -659,7 +647,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             map = L.map('map', { preferCanvas: true, zoomControl: true }).setView([46.603354, 1.888334], 5);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
-            pointsLayer = L.featureGroup().addTo(map);
             
             map.on('moveend', function() {
                 if(currentMapView === 'heatmap') {
@@ -840,10 +827,11 @@
         }
 
         function executeMainFilter() {
-            document.getElementById('introBanner').style.display = 'none';
+            if(pointsLayer) pointsLayer.clearLayers();
             document.getElementById('mapTools').style.display = 'flex'; 
             activeCrossFilters = [];
             document.getElementById('crossFilterBanner').style.display = 'none';
+            document.getElementById('stickyCrossFilters').style.display = 'none';
 
             vehiculesIndex.clear(); lieuxIndex.clear(); usagersByAccidentIndex.clear();
             vehiculesByAccidentIndex.clear(); accidentsByIdIndex.clear(); victimesFiltreesIndex.clear();
@@ -888,6 +876,7 @@
             let usagersPreFiltres = allUsg.filter(u => {
                 if(u.grav === '1') return false; 
                 if(!grav.includes('all') && !grav.includes(u.grav)) return false;
+                
                 if(!vType.includes('all')) {
                     if(u.catu === '3' || u.catu === '4') { if(!vType.includes('3')) return false; }
                     else {
@@ -949,9 +938,9 @@
             renderDashboard(mainAccidents, mainUsagers);
         }
 
-        // --- FILTRE CROISÉ MULTIPLE ---
+        // --- FILTRE CROISÉ MULTIPLE (BOUTON ONLY) ---
         function handleCrossFilterClick(e, title, label, validAccIdsSet, victimFilterFn = null) {
-            let isMulti = (e && (e.ctrlKey || e.metaKey)) || mobileMultiSelect;
+            let isMulti = isMultiSelectEnabled;
             let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
 
             if (isMulti) {
@@ -966,28 +955,21 @@
         }
 
         function updateStickyBanner() {
-            const banner = document.getElementById('stickySummary');
             if (activeCrossFilters.length > 0) {
                 let text = activeCrossFilters.map(f => f.label).join(' + ');
-                let base = document.getElementById('stickyBaseText').innerText.split(' | 🎯')[0];
-                document.getElementById('stickyBaseText').innerHTML = `${base} | 🎯 Filtres : <strong>${text}</strong>`;
+                document.getElementById('stickyFiltersList').innerText = text;
+                document.getElementById('stickyCrossFilters').style.display = 'flex';
             } else {
-                let base = document.getElementById('stickyBaseText').innerText.split(' | 🎯')[0];
-                document.getElementById('stickyBaseText').innerText = base;
+                document.getElementById('stickyCrossFilters').style.display = 'none';
             }
         }
 
         window.reapplyCrossFilters = function() {
             updateStickyBanner();
             if (activeCrossFilters.length === 0) {
-                document.getElementById('crossFilterBanner').style.display = 'none';
-                renderDashboard(mainAccidents, mainUsagers, true);
+                renderDashboard(mainAccidents, mainUsagers, false);
                 return;
             }
-
-            document.getElementById('crossFilterBanner').style.display = 'block';
-            let text = activeCrossFilters.map(f => `<b>${f.label}</b>`).join(' <span style="color:#dc3545">ET</span> ');
-            document.getElementById('crossFilterText').innerHTML = `🔵 <strong>Filtres croisés actifs :</strong> ${text}`;
 
             let intersectedIds = new Set(activeCrossFilters[0].idsSet);
             for (let i = 1; i < activeCrossFilters.length; i++) {
@@ -1013,9 +995,8 @@
 
         window.cancelCrossFilter = function() {
             activeCrossFilters = [];
-            document.getElementById('crossFilterBanner').style.display = 'none';
             updateStickyBanner();
-            renderDashboard(mainAccidents, mainUsagers, true);
+            renderDashboard(mainAccidents, mainUsagers, false);
         }
 
         function sortDict(dict) {
@@ -1031,15 +1012,16 @@
             document.getElementById('btnToggleHeatmap').style.display = 'none';
             document.getElementById('heatmapAdvancedControls').style.display = 'none';
             
+            if (map && pointsLayer) map.removeLayer(pointsLayer);
+            if (map && heatLayer) map.removeLayer(heatLayer);
+            
             if (view === 'points') { 
                 document.getElementById('btnViewPoints').classList.add('active'); 
-                if(heatLayer) map.removeLayer(heatLayer);
                 if(pointsLayer) map.addLayer(pointsLayer); 
             } else if (view === 'heatmap') { 
                 document.getElementById('btnViewHeatmap').classList.add('active'); 
                 document.getElementById('btnToggleHeatmap').style.display = 'inline-block';
                 document.getElementById('btnToggleHeatmap').innerHTML = '⚙️ Paramètres avancés de la Densité';
-                if(pointsLayer) map.removeLayer(pointsLayer);
                 if(heatLayer) map.addLayer(heatLayer); 
                 updateHeatmapStats();
                 if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
@@ -1073,7 +1055,7 @@
             let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
             let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
             
-            charts.age = createBarChart('chartAge', aData, '#34495E', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
+            charts.age = createBarChart('chartAge', aData, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
                 const acc = accidentsByIdIndex.get(u.Num_Acc);
                 if(acc && u.an_nais && acc.an) {
                     let a=parseInt(acc.an); if(a<100) a+=2000;
@@ -1127,7 +1109,7 @@
             `;
         }
 
-        // Seule fonction pour gérer les clics sur les points (économie massive de RAM)
+        // Un seul event listener pour toute la carte (Anti-Crash iOS)
         function handleMarkerClick(e) {
             if(e.layer && e.layer.accidentId) {
                 const accId = e.layer.accidentId;
@@ -1143,7 +1125,6 @@
             lastRenderedUsgs = usgs;
             window.renderKPIs();
 
-            // RECRÉATION MAP MARKERS (RAPIDE ET ANTI-CRASH MOBILE)
             if(pointsLayer) map.removeLayer(pointsLayer);
             if(heatLayer) map.removeLayer(heatLayer);
             
@@ -1171,7 +1152,7 @@
             }
 
             pointsLayer = L.featureGroup(markersArray);
-            pointsLayer.on('click', handleMarkerClick); // Un seul listener global pour 50k points
+            pointsLayer.on('click', handleMarkerClick);
 
             let hr = parseInt(document.getElementById('heatRadius').value) || 15;
             let hb = parseInt(document.getElementById('heatBlur').value) || 15;
@@ -1236,7 +1217,6 @@
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
             charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), generateGradient('#4A235A', '#D2B4DE', Object.keys(cCount).length), (e, l) => handleCrossFilterClick(e, 'Type de collision', l, new Set(cAcc[l])));
 
-            // --- GR 3 : Temps (Couleur Unique #117864) ---
             let anCount = {}; let anAcc = {};
             for(let i=2017; i<=2024; i++) { anCount[i.toString()] = 0; anAcc[i.toString()] = []; }
             accs.forEach(a => { 
@@ -1268,7 +1248,6 @@
             accs.forEach(a => { if(a.hrmn){ let h=parseInt(a.hrmn.substring(0,2)); if(h>=0&&h<24){ hCount[h+'h']++; if(!hAcc[h+'h']) hAcc[h+'h']=[]; hAcc[h+'h'].push(a.Num_Acc);} } });
             charts.hrs = createLineChart('chartHeure', hCount, '#117864', (e, l) => handleCrossFilterClick(e, 'Heure', l, new Set(hAcc[l])));
 
-            // --- GR 4 : Environnement ---
             let rCount={}; let rAcc={};
             accs.forEach(a => { let l=lieuxIndex.get(a.Num_Acc); if(l&&l.catr){ let n=NOMENCLATURES.typeRoute[l.catr]||'?'; rCount[n]=(rCount[n]||0)+1; if(!rAcc[n]) rAcc[n]=[]; rAcc[n].push(a.Num_Acc); }});
             charts.rte = createHorizontalBarChart('chartTypeRoute', sortDict(rCount), generateGradient('#A1887F', '#D7CCC8', Object.keys(rCount).length), (e, l) => handleCrossFilterClick(e, 'Route', l, new Set(rAcc[l])));
@@ -1324,6 +1303,7 @@
             return new Chart(document.getElementById(id), { type: 'pie', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: Object.keys(dict).map(k=>colorMap[k]||'#ccc') }] }, options: o });
         }
 
+        // --- POPUPS & RECHERCHE GOOGLE ---
         function generateDetailedPopup(acc, victimes) {
             const l = lieuxIndex.get(acc.Num_Acc); const meteo = NOMENCLATURES.meteo[acc.atm]||'?';
             let c = `<div style="max-width:350px; font-family:sans-serif; font-size:14px; line-height:1.5;">`;
@@ -1462,7 +1442,7 @@
                             if (typeVeh.includes('VL')) typesVehicules.add('voiture');
                             else if (typeVeh.includes('Moto') || typeVeh.includes('Scooter') || typeVeh.includes('2RM') || typeVeh.includes('3RM')) typesVehicules.add('moto');
                             else if (typeVeh.includes('PL') || typeVeh.includes('Tracteur') || typeVeh.includes('Semi')) typesVehicules.add('poids lourd');
-                            else if (typeVeh.includes('Bicyclette') || typeVeh.includes('VAE')) typesVehicules.add('cycliste');
+                            else if (typeVeh.includes('Bicyclette') || typeVeh.includes('VAE')) typesVehicules.add('vélo');
                             else if (typeVeh.includes('EDP')) typesVehicules.add('trottinette');
                         }
                     }
