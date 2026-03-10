@@ -37,6 +37,7 @@
         .btn { background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); color: white; padding: 18px 20px; border: none; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); transition: all 0.3s;}
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(66, 133, 244, 0.4); }
         
+        /* Cadrage de la carte en mode filtre */
         .map-selection-zone { background: #f8f9fa; border: 2px dashed #667eea; border-radius: 12px; padding: 15px; margin-top: 20px; }
         .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .search-box input { flex: 1; min-width: 200px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
@@ -60,6 +61,7 @@
         #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; font-size: 1.05em; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
+        /* GRILLES ET CANVAS WRAPPERS (ANTI-BUG CHART.JS) */
         .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; transition: all 0.3s; position: relative;}
         .chart-container h3 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 1.05em; }
         .chart-subtitle { text-align: center; font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 10px;}
@@ -83,6 +85,8 @@
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; padding: 20px; text-align: center; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar-container { width: 100%; max-width: 300px; height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: flex-end; z-index: 10000; }
         @media (min-width: 768px) { .modal-overlay { align-items: center; padding: 20px; } }
@@ -106,6 +110,7 @@
     <div class="loading-overlay" id="loadingOverlay">
         <h2>🚗 Chargement des données</h2>
         <div class="spinner"></div>
+        <div class="progress-bar-container"><div class="progress-fill" id="progressFill"></div></div>
         <p id="loadingText">Veuillez patienter...</p>
     </div>
 
@@ -188,7 +193,6 @@
                         <option value="4">🩹 Blessé léger</option>
                     </select>
                 </div>
-                <!-- REMIS ET PROTÉGÉ CONTRE L'EFFACEMENT -->
                 <div class="filter-group">
                     <label>Localisation</label>
                     <select id="localisation" multiple size="3">
@@ -238,6 +242,7 @@
         
         <div class="content" id="results" style="display: none;">
             
+            <!-- BANNIÈRE DE FILTRE CROISÉ -->
             <div id="crossFilterBanner">
                 <div id="mapHighlightInfo">
                     <div id="crossFilterText"></div>
@@ -387,7 +392,13 @@
 
         function showLoading(t) { document.getElementById('loadingOverlay').style.display='flex'; document.getElementById('loadingText').textContent=t; }
         function hideLoading() { document.getElementById('loadingOverlay').style.display='none'; }
-        function updateProgress(p) { document.getElementById('progressFill').style.width = p + '%'; }
+        
+        // CORRECTION DE LA PROGRESS BAR (SAFE)
+        function updateProgress(p) { 
+            const el = document.getElementById('progressFill');
+            if(el) el.style.width = p + '%'; 
+        }
+        
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -467,7 +478,7 @@
             setTimeout(() => { try { executeMainFilter(); hideLoading(); } catch(e) { hideLoading(); alert("Erreur: " + e.message); } }, 50);
         });
 
-        // Sécurité pour la lecture des filtres HTML (évite l'erreur null)
+        // Sécurité pour la lecture des filtres HTML (évite l'erreur null si vous supprimez un filtre)
         const getFilterValues = (id) => {
             const el = document.getElementById(id);
             return el ? Array.from(el.selectedOptions).map(o=>o.value) : ['all'];
