@@ -37,7 +37,6 @@
         .btn { background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); color: white; padding: 18px 20px; border: none; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); transition: all 0.3s;}
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(66, 133, 244, 0.4); }
         
-        /* Cadrage de la carte en mode filtre */
         .map-selection-zone { background: #f8f9fa; border: 2px dashed #667eea; border-radius: 12px; padding: 15px; margin-top: 20px; }
         .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
         .search-box input { flex: 1; min-width: 200px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
@@ -61,21 +60,21 @@
         #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; font-size: 1.05em; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        /* GRILLES ET CANVAS WRAPPERS (ANTI-BUG CHART.JS) */
-        .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; transition: all 0.3s; position: relative;}
+        /* CORRECTIF RESPONSIVITÉ DES GRAPHIQUES : min-width: 0 */
+        .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; transition: all 0.3s; position: relative; min-width: 0;}
         .chart-container h3 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 1.05em; }
         .chart-subtitle { text-align: center; font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 10px;}
         
-        .canvas-wrapper { position: relative; height: 260px; width: 100%; }
-        .canvas-wrapper-small { position: relative; height: 220px; width: 100%; }
-        .canvas-wrapper-large { position: relative; height: 320px; width: 100%; }
-        .canvas-wrapper-tiny { position: relative; height: 100px; width: 100%; }
+        .canvas-wrapper { position: relative; height: 260px; width: 100%; min-width: 0; }
+        .canvas-wrapper-small { position: relative; height: 220px; width: 100%; min-width: 0; }
+        .canvas-wrapper-large { position: relative; height: 320px; width: 100%; min-width: 0; }
+        .canvas-wrapper-tiny { position: relative; height: 100px; width: 100%; min-width: 0; }
 
         .charts-grid-3 { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 900px) { .charts-grid-3 { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 900px) { .charts-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         
         .charts-grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 900px) { .charts-grid-2 { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 900px) { .charts-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
         .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -224,6 +223,7 @@
                 
                 <div id="map"></div>
                 
+                <!-- LES OUTILS COLLÉS À LA CARTE -->
                 <div class="map-tools" id="mapTools">
                     <div class="map-view-controls">
                         <button class="view-btn active" id="btnViewPoints" onclick="setMapView('points')">📍 Afficher en Points</button>
@@ -242,7 +242,6 @@
         
         <div class="content" id="results" style="display: none;">
             
-            <!-- BANNIÈRE DE FILTRE CROISÉ -->
             <div id="crossFilterBanner">
                 <div id="mapHighlightInfo">
                     <div id="crossFilterText"></div>
@@ -276,7 +275,7 @@
                 </div>
             </div>
 
-            <!-- GROUPE 2 : VÉHICULES -->
+            <!-- GROUPE 2 : VÉHICULES (TOUS EN BARRES HORIZONTALES) -->
             <h2 class="section-title">🚗 Véhicules & Collisions</h2>
             <div class="charts-grid-3">
                 <div class="chart-container">
@@ -373,6 +372,7 @@
         let activeCrossFilters = []; 
         let currentAgeInterval = 5;
         let lastRenderedUsgs = []; 
+        let currentHeatData = []; // Pour réajuster la heatmap
 
         let vehiculesIndex = new Map(), lieuxIndex = new Map();
         let usagersByAccidentIndex = new Map(), vehiculesByAccidentIndex = new Map();
@@ -392,19 +392,17 @@
 
         function showLoading(t) { document.getElementById('loadingOverlay').style.display='flex'; document.getElementById('loadingText').textContent=t; }
         function hideLoading() { document.getElementById('loadingOverlay').style.display='none'; }
-        
-        // CORRECTION DE LA PROGRESS BAR (SAFE)
-        function updateProgress(p) { 
-            const el = document.getElementById('progressFill');
-            if(el) el.style.width = p + '%'; 
-        }
-        
+        function updateProgress(p) { const el = document.getElementById('progressFill'); if(el) el.style.width = p + '%'; }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
         document.addEventListener('DOMContentLoaded', function() {
             map = L.map('map', { preferCanvas: true, zoomControl: true }).setView([46.603354, 1.888334], 5);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
             pointsLayer = L.featureGroup().addTo(map);
+            
+            // Re-calculer l'intensité de la heatmap au déplacement
+            map.on('moveend', updateHeatmapScale);
+            map.on('zoomend', updateHeatmapScale);
             
             loadInitialData();
             setupSmartSelects();
@@ -478,7 +476,6 @@
             setTimeout(() => { try { executeMainFilter(); hideLoading(); } catch(e) { hideLoading(); alert("Erreur: " + e.message); } }, 50);
         });
 
-        // Sécurité pour la lecture des filtres HTML (évite l'erreur null si vous supprimez un filtre)
         const getFilterValues = (id) => {
             const el = document.getElementById(id);
             return el ? Array.from(el.selectedOptions).map(o=>o.value) : ['all'];
@@ -588,7 +585,7 @@
             renderDashboard(mainAccidents, mainUsagers);
         }
 
-        // --- FILTRE CROISÉ MULTIPLE (BI) ---
+        // --- FILTRE CROISÉ MULTIPLE ---
         function handleCrossFilterClick(e, title, label, validAccIdsSet) {
             let isMulti = e && (e.ctrlKey || e.metaKey);
             let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
@@ -641,7 +638,7 @@
             if (map && pointsLayer) map.removeLayer(pointsLayer);
             if (map && heatLayer) map.removeLayer(heatLayer);
             if (view === 'points') { document.getElementById('btnViewPoints').classList.add('active'); pointsLayer.addTo(map); }
-            else if (view === 'heatmap') { document.getElementById('btnViewHeatmap').classList.add('active'); heatLayer.addTo(map); }
+            else if (view === 'heatmap') { document.getElementById('btnViewHeatmap').classList.add('active'); heatLayer.addTo(map); updateHeatmapScale(); }
         }
 
         window.changeAgeInterval = function(val) {
@@ -672,6 +669,22 @@
             charts.age = createBarChart('chartAge', aData, '#667eea', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l])));
         }
 
+        // Fonction pour recalculer dynamiquement la couleur de la Heatmap selon ce qu'on voit !
+        window.updateHeatmapScale = function() {
+            if (currentMapView !== 'heatmap' || !heatLayer || currentHeatData.length === 0) return;
+            const bounds = map.getBounds();
+            let countInBounds = 0;
+            currentHeatData.forEach(pt => {
+                if (bounds.contains([pt[0], pt[1]])) {
+                    countInBounds += pt[2]; // pt[2] = poids (4=Tué, 2=Hosp, 1=Léger)
+                }
+            });
+            // Si on voit 1000 points d'impact, il faut une concentration de 10 pour que ça soit rouge.
+            // Si on en voit 10, une concentration de 2 suffit pour être rouge. 
+            let newMax = Math.max(3, countInBounds / 80); 
+            heatLayer.setOptions({ max: newMax });
+        };
+
         function renderDashboard(accs, usgs, isCrossFiltering = false) {
             lastRenderedUsgs = usgs;
             
@@ -687,20 +700,20 @@
                 <div class="stat-card" style="background:#ffd93d; color:#856404"><div class="number">${l.toLocaleString()}</div><div class="label">🩹 Légers</div></div>
             `;
 
-            // 2. Carte et Heatmap Ajustée
+            // 2. Carte et Heatmap Ajustée (Rayon plus fin pour dessiner les rues)
             pointsLayer.clearLayers();
             if(heatLayer) map.removeLayer(heatLayer);
+            currentHeatData = [];
             
-            let heatData = [];
             accs.forEach(acc => {
                 const victimes = victimesFiltreesIndex.get(acc.Num_Acc) || [];
                 const lat = parseFloat(acc.lat.replace(',','.'));
                 const long = parseFloat(acc.long.replace(',','.'));
                 const gravMax = Math.min(...victimes.map(u => parseInt(u.grav)||4));
                 
-                // Pondération : 4/2/1
+                // Pondération stricte demandée : 4/2/1
                 let weight = (gravMax === 2) ? 4 : (gravMax === 3 ? 2 : 1);
-                heatData.push([lat, long, weight]);
+                currentHeatData.push([lat, long, weight]);
 
                 let color = gravMax === 2 ? '#8b0000' : (gravMax === 3 ? '#ff6b35' : '#ffd93d');
                 let rad = gravMax === 2 ? 8 : (gravMax === 3 ? 6 : 4);
@@ -710,12 +723,11 @@
                 pointsLayer.addLayer(m);
             });
 
-            // Ajustement Heatmap dynamique selon le volume (Empêche l'énorme blob rouge)
-            let dynamicMax = Math.max(10, accs.length / 300);
-            heatLayer = L.heatLayer(heatData, { radius: 12, blur: 15, maxZoom: 13, max: dynamicMax, gradient: { 0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 0.8: 'orange', 1.0: 'red' } });
+            // Rayon plus petit (7) pour éviter le bloc géant
+            heatLayer = L.heatLayer(currentHeatData, { radius: 7, blur: 10, maxZoom: 15, gradient: { 0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 0.8: 'orange', 1.0: 'red' } });
             
             if (currentMapView === 'points') pointsLayer.addTo(map);
-            else if (currentMapView === 'heatmap') heatLayer.addTo(map);
+            else if (currentMapView === 'heatmap') { heatLayer.addTo(map); updateHeatmapScale(); }
 
             // 3. Graphiques
             Object.values(charts).forEach(c => { if(c) c.destroy() }); charts = {};
@@ -731,7 +743,7 @@
 
             drawAgeChart(usgs);
 
-            // --- GR 2 : Vehicules ---
+            // --- GR 2 : Vehicules (Tous pareils et triés) ---
             let vaCount = {}; let vaAcc = {};
             accs.forEach(acc => {
                 let vfil = victimesFiltreesIndex.get(acc.Num_Acc)||[];
@@ -750,11 +762,11 @@
                 let n = (u.catu==='3'||u.catu==='4')?'🚶 Piéton':(NOMENCLATURES.vehicules[(vehiculesIndex.get(u.id_vehicule)||{}).catv]||'Autre');
                 vvCount[n]=(vvCount[n]||0)+1; if(!vvAcc[n]) vvAcc[n]=[]; vvAcc[n].push(u.Num_Acc);
             });
-            charts.vVic = createHorizontalBarChart('chartVehicules', sortDict(vvCount), '#2196f3', (e, l) => handleCrossFilterClick(e, 'Véhicule victime', l, new Set(vvAcc[l])));
+            charts.vVic = createHorizontalBarChart('chartVehicules', sortDict(vvCount), '#2196f3', (e, l) => handleCrossFilterClick(e, 'Véhicule de la victime', l, new Set(vvAcc[l])));
 
             let cCount = {}; let cAcc = {};
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
-            charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), '#764ba2', (e, l) => handleCrossFilterClick(e, 'Collision', l, new Set(cAcc[l])));
+            charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), '#764ba2', (e, l) => handleCrossFilterClick(e, 'Type de collision', l, new Set(cAcc[l])));
 
             // --- GR 3 : Temps ---
             let hCount = {}; let hAcc = {};
@@ -833,13 +845,16 @@
             return new Chart(document.getElementById(id), { type: 'pie', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: Object.keys(dict).map(k=>colorMap[k]||'#ccc') }] }, options: o });
         }
 
-        // --- POPUPS & GOOGLE SEARCH ---
+        // --- POPUPS ET RECHERCHE GOOGLE ---
         function generateDetailedPopup(acc, victimes) {
             const l = lieuxIndex.get(acc.Num_Acc); const meteo = NOMENCLATURES.meteo[acc.atm]||'?';
-            let c = `<div style="max-width:320px"><strong>📅 ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
+            let c = `<div style="max-width:320px; font-family:sans-serif;"><strong>📅 ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
             if(l&&l.voie) c+=`📍 ${l.voie}<br>`; c+=`☁️ ${meteo}<br><br>`;
             victimes.forEach((v,i) => { c+=`<div class="popup-victim">⚠️ V${i+1} : ${NOMENCLATURES.gravite[v.grav]}</div>`; });
-            c+=`<button class="btn-voir-plus" onclick="showAccidentDetails('${acc.Num_Acc}')">📋 Détails complets</button></div>`;
+            
+            // Les deux boutons restaurés directement dans la carte
+            c+=`<button class="btn-voir-plus" onclick="showAccidentDetails('${acc.Num_Acc}')" style="margin-top: 10px;">📋 Voir le rapport complet</button>`;
+            c+=`<button class="btn-voir-plus" data-accident-id="${acc.Num_Acc}" onclick="openGoogleSearch(this)" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); margin-top: 8px;">🔍 Rechercher sur Google</button></div>`;
             return c;
         }
 
