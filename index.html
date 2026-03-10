@@ -11,7 +11,6 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5./npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     
     <style>
@@ -21,7 +20,8 @@
         
         header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 25px 20px; text-align: center; }
         header h1 { font-size: clamp(1.4em, 4vw, 2.4em); margin-bottom: 10px; }
-        header p.desc { font-size: clamp(0.9em, 1.5vw, 1.05em); font-weight: 300; font-style: italic; color: rgba(255,255,255,0.85); max-width: 900px; margin: 0 auto 15px auto; line-height: 1.5;}
+        header p.desc { font-size: clamp(0.9em, 1.5vw, 1.05em); font-weight: 300; color: rgba(255,255,255,0.9); max-width: 900px; margin: 0 auto 15px auto; line-height: 1.6;}
+        
         footer { background: #2c3e50; color: white; padding: 15px; text-align: center; font-size: 0.85em; margin-top: 20px;}
         
         .intro-banner { position: relative; background: #e3f2fd; border-left: 5px solid #2196f3; padding: 20px; margin: 15px; border-radius: 8px; }
@@ -63,11 +63,13 @@
         #btnToggleHeatmap { display: none; background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; padding: 6px 12px; border-radius: 15px; font-size: 0.85em; cursor: pointer; font-weight: bold; }
         #btnToggleHeatmap:hover { background: #ffe0b2; }
 
+        /* Le laboratoire Heatmap complet */
         #heatmapAdvancedControls { display: none; flex-direction: column; gap: 10px; background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; flex: 1 1 100%; margin-top: 10px; }
         .heatmap-slider-row { display: flex; align-items: center; gap: 10px; width: 100%; }
         .heatmap-slider-row label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 140px; display: inline-block;}
         .heatmap-slider-row input[type="range"] { flex: 1; }
-        .heatmap-slider-row span { font-size: 0.8em; font-weight: bold; width: 40px; text-align: right; background: #e3f2fd; padding: 3px 6px; border-radius: 4px; color: #1565c0;}
+        .heatmap-slider-row span { font-size: 0.8em; font-weight: bold; width: 60px; text-align: right; background: #e3f2fd; padding: 3px 6px; border-radius: 4px; color: #1565c0;}
+        .heat-stats { background: #e3f2fd; padding: 8px; border-radius: 5px; font-family: monospace; font-size: 0.85em; color: #1565c0; display: flex; justify-content: space-between; font-weight: bold;}
 
         .content { padding: 20px; }
         .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid; }
@@ -76,7 +78,7 @@
         #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; font-size: 1.05em; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
-        /* Le bandeau collant optimisé Mobile & Propre */
+        /* Le bandeau collant optimisé */
         #stickySummary { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 114, 0.95); color: white; padding: 10px 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); z-index: 10000; display: none; align-items: center; justify-content: center; gap: 8px; font-size: 0.75em; width: 95vw; max-width: 900px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); pointer-events: none; flex-wrap: wrap; line-height: 1.4; text-align: center; }
         @media (min-width: 768px) { #stickySummary { font-size: 0.85em; border-radius: 30px; width: auto; max-width: 90vw; padding: 12px 25px; flex-wrap: nowrap; text-align: left; } }
         #stickySummary strong { color: #ffd93d; }
@@ -160,7 +162,9 @@
         <header>
             <h1>🚗 Analyse de la Sécurité Routière en France</h1>
             <p class="desc">
-                Outil interactif d'analyse de l'accidentalité routière. Permet d'extraire des statistiques précises à l'échelle nationale, régionale ou locale pour les usagers et décideurs.
+                <em>Cet outil interactif a pour vocation de rendre les données de l'accidentalité routière parfaitement intelligibles et exploitables.</em><br><br>
+                <em>Que vous soyez un usager de la route ou un décideur public élaborant une politique de mobilité,</em><br>
+                <em>vous pouvez générer en quelques clics des statistiques précises à l'échelle nationale, régionale ou locale.</em>
             </p>
         </header>
 
@@ -179,6 +183,7 @@
             
             <h2 class="section-title" style="border-bottom-color: #667eea;">⚙️ 1. Paramétrez les filtres</h2>
             
+            <!-- FILTRES PRINCIPAUX -->
             <div class="filter-grid">
                 <div class="filter-group">
                     <label>Années</label>
@@ -281,8 +286,26 @@
                         <div class="legend-item"><div class="legend-marker" style="background-color: #8b0000; width: 18px; height: 18px;"></div>Tué</div>
                     </div>
                     
-                    <!-- LE LABORATOIRE MANUEL DE LA HEATMAP -->
+                    <!-- LE LABORATOIRE DE LA HEATMAP -->
                     <div id="heatmapAdvancedControls">
+                        <div style="font-size: 0.9em; font-weight: bold; color: #1e3c72; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between;">
+                            <span>🎛️ Laboratoire de la Densité</span>
+                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Auto-ajuster</label>
+                        </div>
+                        
+                        <div class="heat-stats">
+                            <span>Zoom (Z): <span id="statZ">-</span></span>
+                            <span>Points (P): <span id="statP">-</span></span>
+                            <span>Ratio (Z/P): <span id="statRatio">-</span></span>
+                        </div>
+
+                        <!-- Le 5ème curseur de test Coefficient C -->
+                        <div class="heatmap-slider-row" id="rowAutoCoeff">
+                            <label for="heatAutoCoeff" style="color: #4caf50;">⚖️ Coef. (C) :</label>
+                            <input type="range" id="heatAutoCoeff" min="1000" max="3000000" step="10000" value="500000">
+                            <span id="valAutoCoeff" style="width: 65px;">500000</span>
+                        </div>
+
                         <div class="heatmap-slider-row">
                             <label for="heatRadius">Taille (Radius) :</label>
                             <input type="range" id="heatRadius" min="2" max="60" value="15">
@@ -385,7 +408,7 @@
             </div>
 
             <!-- GROUPE 3 : TEMPS -->
-            <h2 class="section-title" style="border-bottom-color: #4A90E2;">🕒 Temporalité</h2>
+            <h2 class="section-title" style="border-bottom-color: #117864;">🕒 Temporalité</h2>
             <div class="charts-grid-2">
                 <div class="chart-container">
                     <h3>Années</h3>
@@ -467,6 +490,7 @@
         let lastRenderedUsgs = [], lastRenderedAccs = []; 
         let currentHeatData = []; 
         
+        let currentZ = 5, currentP = 0, currentRatio = 0;
         let currentSearchedCityMap = null;
         let timeSpanInDays = 365*4; 
 
@@ -549,7 +573,22 @@
             return res;
         }
 
-        function updateHeatmapFromSliders() {
+        window.updateHeatmapStats = function() {
+            if (!heatLayer || currentMapView !== 'heatmap' || currentHeatData.length === 0) return;
+            const bounds = map.getBounds();
+            currentP = 0;
+            currentHeatData.forEach(pt => {
+                if (bounds.contains([pt[0], pt[1]])) currentP++; 
+            });
+            currentZ = map.getZoom();
+            currentRatio = currentP > 0 ? (currentZ / currentP) : currentZ;
+
+            document.getElementById('statZ').innerText = currentZ;
+            document.getElementById('statP').innerText = currentP;
+            document.getElementById('statRatio').innerText = currentRatio.toFixed(5);
+        };
+
+        window.applyManualHeatmap = function() {
             if (!heatLayer || currentMapView !== 'heatmap') return;
             let r = parseInt(document.getElementById('heatRadius').value);
             let b = parseInt(document.getElementById('heatBlur').value);
@@ -562,13 +601,78 @@
             document.getElementById('valMinOp').innerText = mo.toFixed(2);
 
             heatLayer.setOptions({ radius: r, blur: b, max: m, minOpacity: mo });
-        }
+        };
+
+        window.applyAutoHeatmap = function() {
+            if (!heatLayer || currentMapView !== 'heatmap') return;
+            
+            let c = parseFloat(document.getElementById('heatAutoCoeff').value);
+            let rawSize = c * currentRatio;
+            let size = Math.floor(Math.max(2, Math.min(60, rawSize))); 
+
+            let m, mo;
+            if (currentP <= 20) { m = 2; mo = 0.66; }
+            else if (currentZ <= 6) { m = 5; mo = 0.23; }
+            else if (currentZ >= 13 && currentP > 100) { m = 2; mo = 0.30; }
+            else { m = 2; mo = 0.21; }
+
+            document.getElementById('heatRadius').value = size; document.getElementById('valRadius').innerText = size;
+            document.getElementById('heatBlur').value = size; document.getElementById('valBlur').innerText = size;
+            document.getElementById('heatMax').value = m; document.getElementById('valMax').innerText = m;
+            document.getElementById('heatMinOp').value = Math.floor(mo * 100); document.getElementById('valMinOp').innerText = mo.toFixed(2);
+
+            heatLayer.setOptions({ radius: size, blur: size, max: m, minOpacity: mo });
+        };
 
         document.addEventListener('DOMContentLoaded', function() {
             map = L.map('map', { preferCanvas: true, zoomControl: true }).setView([46.603354, 1.888334], 5);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
             pointsLayer = L.featureGroup().addTo(map);
             
+            map.on('moveend', function() {
+                if(currentMapView === 'heatmap') {
+                    updateHeatmapStats();
+                    if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
+                }
+            });
+            map.on('zoomend', function() {
+                if(currentMapView === 'heatmap') {
+                    updateHeatmapStats();
+                    if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
+                }
+            });
+
+            ['heatRadius', 'heatBlur', 'heatMax', 'heatMinOp'].forEach(id => {
+                let el = document.getElementById(id);
+                if(el) el.addEventListener('input', function() {
+                    document.getElementById('autoHeatmap').checked = false;
+                    document.getElementById('rowAutoCoeff').style.opacity = '0.4';
+                    applyManualHeatmap();
+                });
+            });
+
+            document.getElementById('heatAutoCoeff').addEventListener('input', function(e) {
+                document.getElementById('valAutoCoeff').innerText = e.target.value;
+                let c = parseFloat(e.target.value);
+                let rawSize = c * currentRatio;
+                let size = Math.floor(Math.max(2, Math.min(60, rawSize)));
+                
+                document.getElementById('heatRadius').value = size; document.getElementById('valRadius').innerText = size;
+                document.getElementById('heatBlur').value = size; document.getElementById('valBlur').innerText = size;
+                
+                applyManualHeatmap(); 
+            });
+
+            document.getElementById('autoHeatmap').addEventListener('change', function(e) {
+                if(e.target.checked) {
+                    document.getElementById('rowAutoCoeff').style.opacity = '1';
+                    updateHeatmapStats();
+                    applyAutoHeatmap();
+                } else {
+                    document.getElementById('rowAutoCoeff').style.opacity = '0.4';
+                }
+            });
+
             document.getElementById('toggleFiltersBtn').addEventListener('click', function() {
                 let secF = document.getElementById('secondaryFilters');
                 if (secF.style.display === 'none') {
@@ -578,22 +682,6 @@
                     secF.style.display = 'none';
                     this.textContent = '➕ Plus de filtres (Lieu, Période, Météo...)';
                 }
-            });
-
-            document.getElementById('btnToggleHeatmap').addEventListener('click', function() {
-                const panel = document.getElementById('heatmapAdvancedControls');
-                if (panel.style.display === 'none' || panel.style.display === '') {
-                    panel.style.display = 'flex';
-                    this.innerHTML = '⚙️ Masquer les paramètres';
-                } else {
-                    panel.style.display = 'none';
-                    this.innerHTML = '⚙️ Paramètres avancés de la Densité';
-                }
-            });
-
-            ['heatRadius', 'heatBlur', 'heatMax', 'heatMinOp'].forEach(id => {
-                let el = document.getElementById(id);
-                if(el) el.addEventListener('input', updateHeatmapFromSliders);
             });
 
             loadInitialData();
@@ -614,7 +702,8 @@
                         document.getElementById('filtersSection').style.display = 'block'; 
                         setTimeout(() => { map.invalidateSize(); }, 200); 
                         if(missingFiles.length > 0) alert("⚠️ Fichiers introuvables :\n" + missingFiles.join("\n"));
-                        document.getElementById('analyzeBtn').click(); // Auto-start
+                        // AUTO START 
+                        document.getElementById('analyzeBtn').click(); 
                     }, 500);
                 }
             }
@@ -680,7 +769,6 @@
         window.updateBaseSummaryText = function() {
             const years = getFilterValues('annee');
             
-            // Nettoyage intelligent des emojis et (Hors indemnes)
             const cleanText = (txt) => {
                 if(txt.includes('Toutes')) return 'Toutes';
                 if(txt.includes('Hors')) return 'Toutes';
@@ -694,13 +782,13 @@
             let parts = [];
             
             if (currentSearchedCityMap) parts.push(`📍 ${currentSearchedCityMap}`);
-            else parts.push(`📍 Zone visible`);
+            else parts.push(`📍 France`);
 
             if (years.includes('all') || years.length === 4) parts.push(`📅 2021-2024`);
             else parts.push(`📅 ` + years.join(','));
 
-            if (!vType.some(t => t.includes('Toutes') || t.includes('Tous'))) parts.push(`👤 ` + vType.join('/'));
-            if (!vAdv.some(t => t.includes('Toutes') || t.includes('Tous') || t.includes('Sans'))) parts.push(`🚙 Adv:` + vAdv.join('/'));
+            if (!vType.some(t => t.includes('Tous'))) parts.push(`👤 ` + vType.join('/'));
+            if (!vAdv.some(t => t.includes('Tous') || t.includes('Sans'))) parts.push(`🚙 Adv:` + vAdv.join('/'));
             else if (vAdv.some(t => t.includes('Sans'))) parts.push(`🚙 Sans tiers`);
 
             if (!grav.some(t => t.includes('Toutes'))) parts.push(`⚕️ ` + grav.join('/'));
@@ -710,13 +798,11 @@
         }
 
         function executeMainFilter() {
-            document.getElementById('introBanner').style.display = 'none';
+            // Nettoyage rapide de la mémoire : pas de re-création complète des layers s'il n'y a pas besoin
+            if(pointsLayer) pointsLayer.clearLayers();
             document.getElementById('mapTools').style.display = 'flex'; 
             activeCrossFilters = [];
             document.getElementById('crossFilterBanner').style.display = 'none';
-
-            vehiculesIndex.clear(); lieuxIndex.clear(); usagersByAccidentIndex.clear();
-            vehiculesByAccidentIndex.clear(); accidentsByIdIndex.clear(); victimesFiltreesIndex.clear();
 
             let years = getFilterValues('annee');
             if(years.includes('all')) years = ['2024', '2023', '2022', '2021'];
@@ -739,15 +825,17 @@
             }
 
             updateBaseSummaryText();
-
             const bounds = map.getBounds();
+
+            vehiculesIndex.clear(); lieuxIndex.clear(); usagersByAccidentIndex.clear();
+            vehiculesByAccidentIndex.clear(); accidentsByIdIndex.clear(); victimesFiltreesIndex.clear();
 
             let allCarac = [], allLieux = [], allVeh = [], allUsg = [];
             years.forEach(y => {
-                if(allData[y].caracteristiques) for(let i=0;i<allData[y].caracteristiques.length;i++) allCarac.push(allData[y].caracteristiques[i]);
-                if(allData[y].lieux) for(let i=0;i<allData[y].lieux.length;i++) allLieux.push(allData[y].lieux[i]);
-                if(allData[y].vehicules) for(let i=0;i<allData[y].vehicules.length;i++) allVeh.push(allData[y].vehicules[i]);
-                if(allData[y].usagers) for(let i=0;i<allData[y].usagers.length;i++) allUsg.push(allData[y].usagers[i]);
+                if(allData[y].caracteristiques) { for(let i=0;i<allData[y].caracteristiques.length;i++) allCarac.push(allData[y].caracteristiques[i]); }
+                if(allData[y].lieux) { for(let i=0;i<allData[y].lieux.length;i++) allLieux.push(allData[y].lieux[i]); }
+                if(allData[y].vehicules) { for(let i=0;i<allData[y].vehicules.length;i++) allVeh.push(allData[y].vehicules[i]); }
+                if(allData[y].usagers) { for(let i=0;i<allData[y].usagers.length;i++) allUsg.push(allData[y].usagers[i]); }
             });
 
             allVeh.forEach(v => vehiculesIndex.set(v.id_vehicule, v));
@@ -758,7 +846,6 @@
             let usagersPreFiltres = allUsg.filter(u => {
                 if(u.grav === '1') return false; 
                 if(!grav.includes('all') && !grav.includes(u.grav)) return false;
-                
                 if(!vType.includes('all')) {
                     if(u.catu === '3' || u.catu === '4') { if(!vType.includes('3')) return false; }
                     else {
@@ -816,7 +903,6 @@
             });
 
             document.getElementById('results').style.display = 'block';
-            if(window.innerWidth < 768) document.getElementById('results').scrollIntoView({behavior: 'smooth'});
             
             renderDashboard(mainAccidents, mainUsagers);
         }
@@ -900,21 +986,20 @@
             currentMapView = view;
             document.getElementById('btnViewPoints').classList.remove('active');
             document.getElementById('btnViewHeatmap').classList.remove('active');
-            document.getElementById('btnToggleHeatmap').style.display = 'none';
-            document.getElementById('heatmapAdvancedControls').style.display = 'none';
-            
-            if (map && pointsLayer) map.removeLayer(pointsLayer);
-            if (map && heatLayer) map.removeLayer(heatLayer);
             
             if (view === 'points') { 
                 document.getElementById('btnViewPoints').classList.add('active'); 
+                document.getElementById('heatmapControls').style.display = 'none';
+                if(heatLayer) map.removeLayer(heatLayer);
                 pointsLayer.addTo(map); 
             } else if (view === 'heatmap') { 
                 document.getElementById('btnViewHeatmap').classList.add('active'); 
-                document.getElementById('btnToggleHeatmap').style.display = 'inline-block';
-                document.getElementById('btnToggleHeatmap').innerHTML = '⚙️ Paramètres avancés de la Densité';
-                heatLayer.addTo(map); 
-                updateHeatmapFromSliders();
+                document.getElementById('heatmapControls').style.display = 'flex';
+                if(pointsLayer) map.removeLayer(pointsLayer);
+                if(heatLayer) heatLayer.addTo(map); 
+                updateHeatmapStats();
+                if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
+                else applyManualHeatmap();
             }
         }
 
@@ -944,7 +1029,6 @@
             let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
             let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
             
-            // Age utilise la même couleur que Temporel : #4A90E2
             charts.age = createBarChart('chartAge', aData, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
                 const acc = accidentsByIdIndex.get(u.Num_Acc);
                 if(acc && u.an_nais && acc.an) {
@@ -1004,10 +1088,13 @@
             lastRenderedUsgs = usgs;
             window.renderKPIs();
 
+            // RECRÉATION MAP MARKERS (RAPIDE ET ECONOMIQUE)
             pointsLayer.clearLayers();
             if(heatLayer) map.removeLayer(heatLayer);
             
+            let markersArray = [];
             currentHeatData = [];
+            
             accs.forEach(acc => {
                 const victimes = isCrossFiltering ? usgs.filter(u => u.Num_Acc === acc.Num_Acc) : (victimesFiltreesIndex.get(acc.Num_Acc) || []);
                 if(victimes.length === 0) return;
@@ -1023,12 +1110,20 @@
                 let rad = gravMax === 2 ? 8 : (gravMax === 3 ? 6 : 4);
                 
                 const m = L.circleMarker([lat, long], { radius: rad, color: 'white', weight: 1, fillColor: color, fillOpacity: 0.8 });
-                
-                m.on('click', function(e) {
-                    const content = generateDetailedPopup(acc, victimes);
+                m.accidentId = acc.Num_Acc;
+                markersArray.push(m);
+            });
+
+            // Délégation d'event unique pour éviter de crasher la RAM des téléphones
+            pointsLayer = L.featureGroup(markersArray);
+            pointsLayer.on('click', function(e) {
+                if(e.layer && e.layer.accidentId) {
+                    const accId = e.layer.accidentId;
+                    const acc = accidentsByIdIndex.get(accId);
+                    const victimesToDisplay = lastRenderedUsgs.filter(u => u.Num_Acc === accId);
+                    const content = generateDetailedPopup(acc, victimesToDisplay);
                     L.popup({ maxWidth: 350 }).setLatLng(e.latlng).setContent(content).openOn(map);
-                });
-                pointsLayer.addLayer(m);
+                }
             });
 
             let hr = parseInt(document.getElementById('heatRadius').value) || 15;
@@ -1042,7 +1137,12 @@
             });
             
             if (currentMapView === 'points') pointsLayer.addTo(map);
-            else if (currentMapView === 'heatmap') heatLayer.addTo(map); 
+            else if (currentMapView === 'heatmap') { 
+                heatLayer.addTo(map); 
+                updateHeatmapStats();
+                if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
+                else applyManualHeatmap();
+            } 
 
             Object.values(charts).forEach(c => { if(c) c.destroy() }); charts = {};
             
@@ -1091,7 +1191,7 @@
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
             charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), generateGradient('#7F8C8D', '#D5D8DC', Object.keys(cCount).length), (e, l) => handleCrossFilterClick(e, 'Type de collision', l, new Set(cAcc[l])));
 
-            // --- GR 3 : Temps (Même couleur #4A90E2 que Age) ---
+            // --- GR 3 : Temps (Avec Années bloquées 2017-2024) ---
             let anCount = {}; let anAcc = {};
             for(let i=2017; i<=2024; i++) { anCount[i.toString()] = 0; anAcc[i.toString()] = []; }
             accs.forEach(a => { 
@@ -1099,13 +1199,13 @@
                 let yr = y.toString(); 
                 if(anCount[yr] !== undefined) { anCount[yr]++; anAcc[yr].push(a.Num_Acc); }
             });
-            charts.annee = createBarChart('chartAnnee', anCount, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Année', l, new Set(anAcc[l])));
+            charts.annee = createBarChart('chartAnnee', anCount, '#117864', (e, l) => handleCrossFilterClick(e, 'Année', l, new Set(anAcc[l])));
 
             let mCount = {}; let mAcc = {};
             const moisOrdre = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
             moisOrdre.forEach(m => mCount[m]=0);
             accs.forEach(a => { let n=NOMENCLATURES.mois[a.mois]; if(n && mCount[n]!==undefined){ mCount[n]++; if(!mAcc[n]) mAcc[n]=[]; mAcc[n].push(a.Num_Acc);} });
-            charts.mois = createLineChart('chartMois', mCount, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Mois', l, new Set(mAcc[l])));
+            charts.mois = createLineChart('chartMois', mCount, '#117864', (e, l) => handleCrossFilterClick(e, 'Mois', l, new Set(mAcc[l])));
 
             let jCount = {'Lundi':0,'Mardi':0,'Mercredi':0,'Jeudi':0,'Vendredi':0,'Samedi':0,'Dimanche':0}; let jAcc = {};
             const jours = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
@@ -1116,12 +1216,12 @@
                     if(!isNaN(d)) { jCount[jours[d]]++; if(!jAcc[jours[d]]) jAcc[jours[d]]=[]; jAcc[jours[d]].push(a.Num_Acc); }
                 }
             });
-            charts.jour = createBarChart('chartJourSemaine', jCount, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Jour', l, new Set(jAcc[l])));
+            charts.jour = createBarChart('chartJourSemaine', jCount, '#117864', (e, l) => handleCrossFilterClick(e, 'Jour', l, new Set(jAcc[l])));
 
             let hCount = {}; let hAcc = {};
             for(let i=0;i<24;i++) hCount[i+'h']=0;
             accs.forEach(a => { if(a.hrmn){ let h=parseInt(a.hrmn.substring(0,2)); if(h>=0&&h<24){ hCount[h+'h']++; if(!hAcc[h+'h']) hAcc[h+'h']=[]; hAcc[h+'h'].push(a.Num_Acc);} } });
-            charts.hrs = createLineChart('chartHeure', hCount, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Heure', l, new Set(hAcc[l])));
+            charts.hrs = createLineChart('chartHeure', hCount, '#117864', (e, l) => handleCrossFilterClick(e, 'Heure', l, new Set(hAcc[l])));
 
 
             // --- GR 4 : Environnement ---
