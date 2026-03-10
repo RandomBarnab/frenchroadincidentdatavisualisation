@@ -32,52 +32,52 @@
         .filter-group select, .filter-group input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; background: #fdfdfd; }
         .filter-group select { min-height: 120px; }
         
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 20px; }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
         
         .btn { background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); color: white; padding: 18px 20px; border: none; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); transition: all 0.3s;}
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(66, 133, 244, 0.4); }
         
         /* Cadrage de la carte en mode filtre */
         .map-selection-zone { background: #f8f9fa; border: 2px dashed #667eea; border-radius: 12px; padding: 15px; margin-top: 15px; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 15px; }
-        .search-box input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
+        .search-box input { flex: 1; min-width: 200px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         .search-box button { padding: 12px 20px; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;}
-        #map { height: 45vh; min-height: 350px; width: 100%; border-radius: 8px; border: 1px solid #ccc; z-index: 1; }
-        @media (min-width: 768px) { #map { height: 500px; } }
+        
+        #map { height: 50vh; min-height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ccc; z-index: 1; }
+        @media (min-width: 768px) { #map { height: 550px; } }
+
+        .map-tools { display: none; background: white; padding: 12px; border-radius: 8px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center;}
+        .map-view-controls { display: flex; gap: 10px; flex-wrap: wrap;}
+        .map-legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;}
+        .legend-item { display: flex; align-items: center; font-size: 0.85em; font-weight: 600; }
+        .legend-marker { border-radius: 50%; margin-right: 6px; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .view-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9em; }
+        .view-btn.active { background: #667eea; color: white; border-color: #667eea; }
 
         .content { padding: 20px; }
-        .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid #667eea; display: flex; align-items: center; gap: 10px;}
+        .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid #667eea;}
         
-        #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; display: none; font-size: 1.05em; font-weight: 500; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-left: 15px; }
-        
-        .map-legend { background: white; padding: 12px; border-radius: 8px; margin: 15px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; align-items: center;}
-        .legend-item { display: flex; align-items: center; font-size: 0.9em; font-weight: 600; }
-        .legend-marker { border-radius: 50%; margin-right: 8px; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-        .map-view-controls { display: flex; justify-content: center; gap: 10px; margin: 15px 0; }
-        .age-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .age-btn.active { background: #667eea; color: white; border-color: #667eea; }
+        #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; display: none; font-size: 1.05em; font-weight: 500; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;}
+        .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
 
         /* GRILLES DE GRAPHIQUES ORGANISÉES */
-        .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; transition: all 0.3s;}
+        .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; transition: all 0.3s; position: relative;}
         .chart-container h3 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 1.05em; }
         .chart-subtitle { text-align: center; font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 10px;}
         
+        /* LE SECRET POUR ÉVITER L'ALLONGEMENT INFINI CHART.JS */
         .canvas-wrapper { position: relative; height: 260px; width: 100%; }
-        .canvas-wrapper-small { position: relative; height: 200px; width: 100%; }
+        .canvas-wrapper-small { position: relative; height: 220px; width: 100%; }
         .canvas-wrapper-large { position: relative; height: 320px; width: 100%; }
+        .canvas-wrapper-tiny { position: relative; height: 100px; width: 100%; } /* Pour Sexe */
 
         .charts-grid-3 { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 900px) { .charts-grid-3 { grid-template-columns: repeat(3, 1fr); } }
         
         .charts-grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 900px) { .charts-grid-2 { grid-template-columns: repeat(2, 1fr); } }
-        
-        .charts-grid-small { display: grid; grid-template-columns: 1fr; gap: 15px; }
-        @media (min-width: 600px) { .charts-grid-small { grid-template-columns: repeat(2, 1fr); } }
-        @media (min-width: 1200px) { .charts-grid-small { grid-template-columns: repeat(3, 1fr); } }
 
-        .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .stat-card .number { font-size: 1.8em; font-weight: 700; margin-bottom: 5px; }
         .stat-card .label { font-size: 0.85em; opacity: 0.9; }
@@ -85,8 +85,6 @@
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; padding: 20px; text-align: center; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .progress-bar-container { width: 100%; max-width: 300px; height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
-        .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s; }
         
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: flex-end; z-index: 10000; }
         @media (min-width: 768px) { .modal-overlay { align-items: center; padding: 20px; } }
@@ -100,13 +98,16 @@
         .btn-voir-plus { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
         .popup-victim { background: #fff3e0; padding: 8px; margin: 6px 0; border-left: 3px solid #ff6b35; border-radius: 4px; font-size: 0.9em;}
         .popup-responsible { background: #e8f5e9; padding: 6px; margin: 4px 0 4px 8px; border-left: 3px solid #4caf50; border-radius: 4px; font-size: 0.85em; }
+
+        .age-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .age-controls button { padding: 4px 10px; border-radius: 15px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.8em;}
+        .age-controls button.active { background: #667eea; color: white; border-color: #667eea; }
     </style>
 </head>
 <body>
     <div class="loading-overlay" id="loadingOverlay">
         <h2>🚗 Chargement des données</h2>
         <div class="spinner"></div>
-        <div class="progress-bar-container"><div class="progress-fill" id="progressFill"></div></div>
         <p id="loadingText">Veuillez patienter...</p>
     </div>
 
@@ -124,28 +125,18 @@
         </header>
 
         <div class="intro-banner" id="introBanner">
-            <h3>Bienvenue sur le tableau de bord interactif</h3>
+            <h3>Comment utiliser cet outil ?</h3>
             <ol>
-                <li><span>Définissez la zone géographique :</span> Utilisez la carte ci-dessous pour zoomer sur la région ou la ville que vous souhaitez étudier.</li>
-                <li><span>Ajustez vos critères :</span> Sélectionnez les années, les types de victimes ou la gravité dans les menus.</li>
-                <li><span>Générez l'analyse :</span> Cliquez sur le bouton d'analyse en bas. Tous les graphiques et la carte s'adapteront à votre sélection.</li>
-                <li><span>Filtrez dynamiquement :</span> Cliquez sur une barre d'un graphique (ex: "Vélo") pour mettre à jour instantanément la carte et tous les autres graphiques !</li>
+                <li><span>Paramétrez :</span> Sélectionnez les années ou le type de victimes ci-dessous.</li>
+                <li><span>Cadrez :</span> Déplacez la carte sur la zone qui vous intéresse (la zone visible sera analysée).</li>
+                <li><span>Analysez :</span> Cliquez sur le gros bouton vert pour générer les résultats.</li>
+                <li><span>Filtrez (Magique !) :</span> Maintenez <b>Ctrl</b> (ou Cmd) et cliquez sur les éléments des graphiques (ex: "Tué" + "Vélo") pour croiser les filtres dynamiquement sur la carte !</li>
             </ol>
         </div>
         
         <div class="filters" id="filtersSection">
             
-            <h2 class="section-title">📍 1. Choisissez la zone d'analyse</h2>
-            <div class="map-selection-zone">
-                <p style="margin-bottom: 10px; color: #555; font-size: 0.9em;">Recherchez une ville ou zoomez manuellement. <strong>Seule la zone visible sur la carte sera analysée.</strong></p>
-                <div class="search-box">
-                    <input type="text" id="citySearch" placeholder="Ex: Paris, Lyon, Gironde..." />
-                    <button onclick="searchCityMap()">Zoomer</button>
-                </div>
-                <div id="map"></div>
-            </div>
-
-            <h2 class="section-title" style="margin-top: 30px;">⚙️ 2. Paramétrez les filtres</h2>
+            <h2 class="section-title">⚙️ 1. Paramétrez les filtres</h2>
             <div class="filter-grid">
                 <div class="filter-group">
                     <label>Années</label>
@@ -158,7 +149,7 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Période d'accident</label>
+                    <label>Période</label>
                     <div style="display: flex; flex-direction: column; gap: 8px;">
                         <input type="date" id="dateDebut" title="Date de début">
                         <input type="date" id="dateFin" title="Date de fin">
@@ -200,15 +191,6 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>Localisation</label>
-                    <select id="localisation" multiple size="3">
-                        <option value="all" selected>Toutes</option>
-                        <option value="1">Hors agglomération</option>
-                        <option value="2">En agglomération</option>
-                    </select>
-                </div>
-                <!-- LE MENU LUMINOSITÉ EST DE RETOUR ICI ! -->
-                <div class="filter-group">
                     <label>Luminosité</label>
                     <select id="lumiere" multiple size="5">
                         <option value="all" selected>Toutes</option>
@@ -220,65 +202,86 @@
                     </select>
                 </div>
             </div>
-            
-            <button class="btn" id="analyzeBtn">🚀 Générer l'Analyse</button>
+
+            <h2 class="section-title">📍 2. Choisissez la zone d'analyse</h2>
+            <div class="map-selection-zone">
+                <p style="margin-bottom: 10px; color: #555; font-size: 0.9em;">Recherchez une ville ou déplacez la carte manuellement. <strong>Seule la zone encadrée sera analysée.</strong></p>
+                <div class="search-box">
+                    <input type="text" id="citySearch" placeholder="Ex: Paris, Lyon, Gironde..." />
+                    <button onclick="searchCityMap()">Rechercher & Zoomer</button>
+                </div>
+                
+                <div id="map"></div>
+                
+                <div class="map-tools" id="mapTools">
+                    <div class="map-view-controls">
+                        <button class="view-btn active" id="btnViewPoints" onclick="setMapView('points')">📍 Points</button>
+                        <button class="view-btn" id="btnViewHeatmap" onclick="setMapView('heatmap')">🔥 Heatmap</button>
+                    </div>
+                    <div class="map-legend">
+                        <div class="legend-item"><div class="legend-marker" style="background-color: #ffd93d; width: 10px; height: 10px;"></div>Blessé léger</div>
+                        <div class="legend-item"><div class="legend-marker" style="background-color: #ff6b35; width: 14px; height: 14px;"></div>Hospitalisé</div>
+                        <div class="legend-item"><div class="legend-marker" style="background-color: #8b0000; width: 18px; height: 18px;"></div>Tué</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" id="analyzeBtn">🚀 Générer l'Analyse sur cette zone</button>
         </div>
         
         <div class="content" id="results" style="display: none;">
             
             <!-- BANNIÈRE DE FILTRE CROISÉ -->
-            <div id="mapHighlightInfo">
-                <span id="crossFilterText"></span>
-                <button class="btn-cancel-filter" onclick="cancelCrossFilter()">❌ Annuler le filtre</button>
+            <div id="crossFilterBanner" style="display:none;">
+                <div id="mapHighlightInfo">
+                    <div id="crossFilterText"></div>
+                    <button class="btn-cancel-filter" onclick="cancelCrossFilter()">❌ Effacer les filtres</button>
+                </div>
             </div>
 
             <div class="stats-summary" id="statsSummary"></div>
             
-            <div class="map-view-controls" id="resultsLegend">
-                <button class="age-btn active" id="btnViewPoints" onclick="setMapView('points')">📍 Afficher les Points</button>
-                <button class="age-btn" id="btnViewHeatmap" onclick="setMapView('heatmap')">🔥 Afficher la Densité (Heatmap)</button>
-            </div>
-            
-            <div class="map-legend">
-                <div class="legend-item"><div class="legend-marker" style="background-color: #ffd93d; width: 10px; height: 10px;"></div>Blessé léger</div>
-                <div class="legend-item"><div class="legend-marker" style="background-color: #ff6b35; width: 14px; height: 14px;"></div>Blessé hospitalisé</div>
-                <div class="legend-item"><div class="legend-marker" style="background-color: #8b0000; width: 18px; height: 18px;"></div>Tué</div>
-            </div>
-
             <!-- GROUPE 1 : PROFILS -->
             <h2 class="section-title">👤 Profil des Victimes</h2>
             <div class="charts-grid-3">
+                <div class="chart-container">
+                    <h3>Sexe</h3>
+                    <p class="chart-subtitle">Répartition globale</p>
+                    <div class="canvas-wrapper-tiny"><canvas id="chartSexe"></canvas></div>
+                </div>
                 <div class="chart-container">
                     <h3>Gravité</h3>
                     <p class="chart-subtitle">Nombre de victimes</p>
                     <div class="canvas-wrapper-large"><canvas id="chartGravite"></canvas></div>
                 </div>
                 <div class="chart-container">
-                    <h3>Sexe</h3>
-                    <p class="chart-subtitle">Répartition Hommes / Femmes</p>
-                    <div class="canvas-wrapper-large"><canvas id="chartSexe"></canvas></div>
-                </div>
-                <div class="chart-container">
                     <h3>Tranches d'âge</h3>
-                    <p class="chart-subtitle">Nombre de victimes</p>
+                    <div class="age-controls">
+                        <button id="btnAge1" onclick="changeAgeInterval(1)">1 an</button>
+                        <button id="btnAge5" class="active" onclick="changeAgeInterval(5)">5 ans</button>
+                        <button id="btnAge10" onclick="changeAgeInterval(10)">10 ans</button>
+                    </div>
                     <div class="canvas-wrapper-large"><canvas id="chartAge"></canvas></div>
                 </div>
             </div>
 
             <!-- GROUPE 2 : VÉHICULES -->
             <h2 class="section-title">🚗 Véhicules & Collisions</h2>
-            <div class="charts-grid-2">
+            <div class="charts-grid-3">
                 <div class="chart-container">
-                    <h3>Véhicule Adverse (A heurté la victime)</h3>
+                    <h3>Véhicule Adverse</h3>
+                    <p class="chart-subtitle">A heurté la victime</p>
                     <div class="canvas-wrapper-large"><canvas id="chartVehiculesAdverses"></canvas></div>
                 </div>
                 <div class="chart-container">
-                    <h3>Type de Collision</h3>
-                    <div class="canvas-wrapper-large"><canvas id="chartCollision"></canvas></div>
-                </div>
-                <div class="chart-container wide">
                     <h3>Véhicule de la Victime</h3>
-                    <div class="canvas-wrapper-small"><canvas id="chartVehicules"></canvas></div>
+                    <p class="chart-subtitle">Mode de déplacement</p>
+                    <div class="canvas-wrapper-large"><canvas id="chartVehicules"></canvas></div>
+                </div>
+                <div class="chart-container">
+                    <h3>Type de Collision</h3>
+                    <p class="chart-subtitle">Nature de l'impact</p>
+                    <div class="canvas-wrapper-large"><canvas id="chartCollision"></canvas></div>
                 </div>
             </div>
 
@@ -301,7 +304,7 @@
 
             <!-- GROUPE 4 : ENVIRONNEMENT -->
             <h2 class="section-title">🌦️ Environnement & Infrastructure</h2>
-            <div class="charts-grid-small">
+            <div class="charts-grid-3">
                 <div class="chart-container">
                     <h3>Type de Route</h3>
                     <div class="canvas-wrapper-small"><canvas id="chartTypeRoute"></canvas></div>
@@ -355,16 +358,11 @@
         let map, pointsLayer = null, heatLayer = null;
         let currentMapView = 'points';
         
-        // Bases de données filtrées principales
-        let mainAccidents = [];
-        let mainUsagers = [];
-        let mainLieux = [];
-        let mainVehicules = [];
+        let mainAccidents = [], mainUsagers = [];
+        let activeCrossFilters = []; 
+        let currentAgeInterval = 5;
+        let lastRenderedUsgs = []; 
 
-        // Gestion du filtre croisé
-        let activeCrossFilter = null; 
-
-        // Index globaux
         let vehiculesIndex = new Map(), lieuxIndex = new Map();
         let usagersByAccidentIndex = new Map(), vehiculesByAccidentIndex = new Map();
         let accidentsByIdIndex = new Map(), victimesFiltreesIndex = new Map();
@@ -386,11 +384,9 @@
         function updateProgress(p) { document.getElementById('progressFill').style.width = p + '%'; }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
-        // INITIALISATION
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialisation de la carte vierge
             map = L.map('map', { preferCanvas: true, zoomControl: true }).setView([46.603354, 1.888334], 5);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO' }).addTo(map);
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
             pointsLayer = L.featureGroup().addTo(map);
             
             loadInitialData();
@@ -413,8 +409,6 @@
                         if(processed === FILES_TO_LOAD.length) setTimeout(() => { 
                             hideLoading(); 
                             document.getElementById('filtersSection').style.display = 'block'; 
-                            
-                            // FIX ZONES GRISÉES : on force Leaflet à recalculer la taille de la carte maintenant qu'elle est visible
                             setTimeout(() => { map.invalidateSize(); }, 200); 
                         }, 500);
                     }
@@ -447,23 +441,17 @@
             } catch(e) {}
         }
 
-        // --- MOTEUR DE FILTRAGE PRINCIPAL ---
-        document.getElementById('analyzeBtn').addEventListener('click', async function() {
-            showLoading("Croisement des données et analyse géographique...");
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
+            showLoading("Croisement et analyse en cours...");
             document.getElementById('loadingOverlay').style.backgroundColor = 'rgba(255,255,255,0.9)'; 
-            
-            setTimeout(() => {
-                try {
-                    document.getElementById('introBanner').style.display = 'none'; // Cache l'intro
-                    executeMainFilter();
-                    hideLoading();
-                } catch(e) { hideLoading(); alert("Erreur: " + e.message); }
-            }, 50);
+            setTimeout(() => { try { executeMainFilter(); hideLoading(); } catch(e) { hideLoading(); alert("Erreur: " + e.message); } }, 50);
         });
 
         function executeMainFilter() {
-            activeCrossFilter = null;
-            document.getElementById('mapHighlightInfo').style.display = 'none';
+            document.getElementById('introBanner').style.display = 'none';
+            document.getElementById('mapTools').style.display = 'flex'; 
+            activeCrossFilters = [];
+            document.getElementById('crossFilterBanner').style.display = 'none';
 
             vehiculesIndex.clear(); lieuxIndex.clear(); usagersByAccidentIndex.clear();
             vehiculesByAccidentIndex.clear(); accidentsByIdIndex.clear(); victimesFiltreesIndex.clear();
@@ -479,7 +467,6 @@
             const dDeb = document.getElementById('dateDebut').value;
             const dFin = document.getElementById('dateFin').value;
             
-            // LA CARTE EST LE FILTRE GÉOGRAPHIQUE
             const bounds = map.getBounds();
 
             let allCarac = [], allLieux = [], allVeh = [], allUsg = [];
@@ -496,7 +483,7 @@
             allVeh.forEach(v => { if(!vehiculesByAccidentIndex.has(v.Num_Acc)) vehiculesByAccidentIndex.set(v.Num_Acc,[]); vehiculesByAccidentIndex.get(v.Num_Acc).push(v); });
 
             let usagersPreFiltres = allUsg.filter(u => {
-                if(u.grav === '1') return false; // Hors indemnes
+                if(u.grav === '1') return false; 
                 if(!grav.includes('all') && !grav.includes(u.grav)) return false;
                 
                 if(!vType.includes('all')) {
@@ -536,21 +523,18 @@
                     if(dFin && d > new Date(dFin)) return false;
                 }
 
-                // FILTRE GEOGRAPHIQUE STRICT
                 if(acc.lat && acc.long) {
                     const lat = parseFloat(acc.lat.replace(',','.'));
                     const lon = parseFloat(acc.long.replace(',','.'));
                     if(isNaN(lat) || isNaN(lon)) return false;
                     if(!bounds.contains([lat, lon])) return false;
-                } else return false; // On ignore les accidents sans coordonnées
+                } else return false; 
 
                 return true;
             });
 
             const finalIds = new Set(mainAccidents.map(a => a.Num_Acc));
             mainUsagers = usagersPreFiltres.filter(u => finalIds.has(u.Num_Acc));
-            mainLieux = allLieux;
-            mainVehicules = allVeh;
 
             mainAccidents.forEach(a => accidentsByIdIndex.set(a.Num_Acc, a));
             mainUsagers.forEach(u => {
@@ -559,36 +543,97 @@
             });
 
             document.getElementById('results').style.display = 'block';
-            
-            if(window.innerWidth < 768) {
-                document.getElementById('resultsLegend').scrollIntoView({behavior: 'smooth'});
-            }
+            if(window.innerWidth < 768) document.getElementById('results').scrollIntoView({behavior: 'smooth'});
             
             renderDashboard(mainAccidents, mainUsagers);
         }
 
-        // --- GESTION DU CROSS-FILTERING ---
-        function applyCrossFilter(filterTitle, label, validAccIdsSet) {
-            if(activeCrossFilter && activeCrossFilter.title === filterTitle && activeCrossFilter.label === label) {
-                cancelCrossFilter(); return;
+        // --- FILTRE CROISÉ MULTIPLE ---
+        function handleCrossFilterClick(e, title, label, validAccIdsSet) {
+            let isMulti = e && (e.ctrlKey || e.metaKey);
+            let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
+
+            if (isMulti) {
+                if (existingIdx >= 0) activeCrossFilters.splice(existingIdx, 1);
+                else activeCrossFilters.push({ title, label, idsSet: validAccIdsSet });
+            } else {
+                if (existingIdx >= 0 && activeCrossFilters.length === 1) activeCrossFilters = [];
+                else activeCrossFilters = [{ title, label, idsSet: validAccIdsSet }];
             }
-            activeCrossFilter = { title: filterTitle, label: label };
-            document.getElementById('mapHighlightInfo').style.display = 'block';
-            document.getElementById('crossFilterText').innerHTML = `🔵 <strong>Filtre croisé actif :</strong> Seuls les accidents avec <b>${label}</b> (${filterTitle}) sont affichés sur la carte et les graphiques.`;
-            
-            let subAcc = mainAccidents.filter(a => validAccIdsSet.has(a.Num_Acc));
-            let subUsg = mainUsagers.filter(u => validAccIdsSet.has(u.Num_Acc));
-            renderDashboard(subAcc, subUsg, true);
+
+            if (activeCrossFilters.length === 0) {
+                document.getElementById('crossFilterBanner').style.display = 'none';
+                renderDashboard(mainAccidents, mainUsagers, true);
+            } else {
+                document.getElementById('crossFilterBanner').style.display = 'block';
+                let text = activeCrossFilters.map(f => `<b>${f.label}</b>`).join(' <span style="color:#dc3545">ET</span> ');
+                document.getElementById('crossFilterText').innerHTML = `🔵 <strong>Filtres actifs :</strong> ${text}`;
+
+                let intersectedIds = new Set(activeCrossFilters[0].idsSet);
+                for (let i = 1; i < activeCrossFilters.length; i++) {
+                    let currentSet = activeCrossFilters[i].idsSet;
+                    intersectedIds = new Set([...intersectedIds].filter(x => currentSet.has(x)));
+                }
+
+                let subAcc = mainAccidents.filter(a => intersectedIds.has(a.Num_Acc));
+                let subUsg = mainUsagers.filter(u => intersectedIds.has(u.Num_Acc));
+                renderDashboard(subAcc, subUsg, true);
+            }
         }
 
         function cancelCrossFilter() {
-            activeCrossFilter = null;
-            document.getElementById('mapHighlightInfo').style.display = 'none';
+            activeCrossFilters = [];
+            document.getElementById('crossFilterBanner').style.display = 'none';
             renderDashboard(mainAccidents, mainUsagers, true);
         }
 
-        // --- AFFICHAGE GLOBAL ---
+        // --- OUTILS ET GRAPHIQUES ---
+        function sortDict(dict) {
+            let sorted = Object.entries(dict).sort((a,b)=>b[1]-a[1]);
+            let res = {}; sorted.forEach(e => res[e[0]]=e[1]);
+            return res;
+        }
+
+        function setMapView(view) {
+            currentMapView = view;
+            document.getElementById('btnViewPoints').classList.remove('active');
+            document.getElementById('btnViewHeatmap').classList.remove('active');
+            if (map && pointsLayer) map.removeLayer(pointsLayer);
+            if (map && heatLayer) map.removeLayer(heatLayer);
+            if (view === 'points') { document.getElementById('btnViewPoints').classList.add('active'); pointsLayer.addTo(map); }
+            else if (view === 'heatmap') { document.getElementById('btnViewHeatmap').classList.add('active'); heatLayer.addTo(map); }
+        }
+
+        window.changeAgeInterval = function(val) {
+            currentAgeInterval = val;
+            document.querySelectorAll('.age-controls button').forEach(b => b.classList.remove('active'));
+            document.getElementById('btnAge'+val).classList.add('active');
+            drawAgeChart(lastRenderedUsgs);
+        };
+
+        function drawAgeChart(usgs) {
+            if(charts.age) charts.age.destroy();
+            let aCount = {}; let aAcc = {};
+            usgs.forEach(u => {
+                const acc = accidentsByIdIndex.get(u.Num_Acc);
+                if(acc && u.an_nais && acc.an) {
+                    let a=parseInt(acc.an); if(a<100) a+=2000;
+                    let age = a - parseInt(u.an_nais);
+                    if(age>=0 && age<=120) {
+                        let lower = Math.floor(age/currentAgeInterval)*currentAgeInterval;
+                        let n = currentAgeInterval === 1 ? `${lower} ans` : `${lower}-${lower+currentAgeInterval-1} ans`;
+                        if(age>=90) n="90+ ans";
+                        aCount[n]=(aCount[n]||0)+1; if(!aAcc[n]) aAcc[n]=[]; aAcc[n].push(u.Num_Acc);
+                    }
+                }
+            });
+            let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
+            let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
+            charts.age = createBarChart('chartAge', aData, '#667eea', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l])));
+        }
+
         function renderDashboard(accs, usgs, isCrossFiltering = false) {
+            lastRenderedUsgs = usgs;
             
             // 1. Stats
             const tues = usgs.filter(u => u.grav === '2').length;
@@ -602,7 +647,7 @@
                 <div class="stat-card" style="background:#ffd93d; color:#856404"><div class="number">${l.toLocaleString()}</div><div class="label">🩹 Légers</div></div>
             `;
 
-            // 2. Carte et Heatmap
+            // 2. Carte et Heatmap Ajustée
             pointsLayer.clearLayers();
             if(heatLayer) map.removeLayer(heatLayer);
             
@@ -613,7 +658,6 @@
                 const long = parseFloat(acc.long.replace(',','.'));
                 const gravMax = Math.min(...victimes.map(u => parseInt(u.grav)||4));
                 
-                // Nouvelle pondération
                 let weight = (gravMax === 2) ? 4 : (gravMax === 3 ? 2 : 1);
                 heatData.push([lat, long, weight]);
 
@@ -625,40 +669,25 @@
                 pointsLayer.addLayer(m);
             });
 
-            heatLayer = L.heatLayer(heatData, { radius: 15, blur: 10, maxZoom: 13, max: 4, gradient: { 0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 0.8: 'orange', 1.0: 'red' } });
+            // Ajustement Heatmap pour éviter la "grosse tache rouge" : max plus élevé
+            heatLayer = L.heatLayer(heatData, { radius: 10, blur: 15, maxZoom: 14, max: 15, gradient: { 0.2: 'blue', 0.4: 'lime', 0.6: 'yellow', 0.8: 'orange', 1.0: 'red' } });
             
             if (currentMapView === 'points') pointsLayer.addTo(map);
             else if (currentMapView === 'heatmap') heatLayer.addTo(map);
 
             // 3. Graphiques
-            Object.values(charts).forEach(c => c.destroy()); charts = {};
+            Object.values(charts).forEach(c => { if(c) c.destroy() }); charts = {};
             
             // --- GR 1 : Profil ---
+            let sCount = {'👨 Hommes':0, '👩 Femmes':0}; let sAcc = {'👨 Hommes':[], '👩 Femmes':[]};
+            usgs.forEach(u => { if(u.sexe==='1'){ sCount['👨 Hommes']++; sAcc['👨 Hommes'].push(u.Num_Acc); } else if(u.sexe==='2'){ sCount['👩 Femmes']++; sAcc['👩 Femmes'].push(u.Num_Acc); } });
+            charts.sexe = createSingleStackedBar('chartSexe', sCount, {'👨 Hommes':'#2196f3', '👩 Femmes':'#e91e63'}, (e, l) => handleCrossFilterClick(e, 'Sexe', l, new Set(sAcc[l])));
+
             let gCount = {}; let gAcc = {};
             usgs.forEach(u => { let n=NOMENCLATURES.gravite[u.grav]||'?'; gCount[n]=(gCount[n]||0)+1; if(!gAcc[n]) gAcc[n]=[]; gAcc[n].push(u.Num_Acc); });
-            charts.grav = createPieChart('chartGravite', gCount, {'💀 Tué':'#8b0000', '🏥 Hospitalisé':'#ff6b35', '🩹 Blessé léger':'#ffd93d'}, l => applyCrossFilter('Gravité', l, new Set(gAcc[l])));
+            charts.grav = createPieChart('chartGravite', gCount, {'💀 Tué':'#8b0000', '🏥 Hospitalisé':'#ff6b35', '🩹 Blessé léger':'#ffd93d'}, (e, l) => handleCrossFilterClick(e, 'Gravité', l, new Set(gAcc[l])));
 
-            let sCount = {}; let sAcc = {};
-            usgs.forEach(u => { let n=u.sexe==='1'?'👨 Homme':(u.sexe==='2'?'👩 Femme':'?'); sCount[n]=(sCount[n]||0)+1; if(!sAcc[n]) sAcc[n]=[]; sAcc[n].push(u.Num_Acc); });
-            charts.sexe = createBarChart('chartSexe', sCount, '#4ecdc4', l => applyCrossFilter('Sexe', l, new Set(sAcc[l])));
-
-            let aCount = {}; let aAcc = {};
-            usgs.forEach(u => {
-                const acc = accidentsByIdIndex.get(u.Num_Acc);
-                if(acc && u.an_nais && acc.an) {
-                    let a=parseInt(acc.an); if(a<100) a+=2000;
-                    let age = a - parseInt(u.an_nais);
-                    if(age>=0 && age<=120) {
-                        let t = Math.floor(age/10)*10;
-                        let n = `${t}-${t+9} ans`;
-                        if(age>=90) n="90+ ans";
-                        aCount[n]=(aCount[n]||0)+1; if(!aAcc[n]) aAcc[n]=[]; aAcc[n].push(u.Num_Acc);
-                    }
-                }
-            });
-            let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
-            let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
-            charts.age = createBarChart('chartAge', aData, '#667eea', l => applyCrossFilter('Âge', l, new Set(aAcc[l])));
+            drawAgeChart(usgs);
 
             // --- GR 2 : Vehicules ---
             let vaCount = {}; let vaAcc = {};
@@ -672,33 +701,29 @@
                     else adv.forEach(x => { let n=NOMENCLATURES.vehicules[x.catv]||'Autre'; vaCount[n]=(vaCount[n]||0)+1; if(!vaAcc[n]) vaAcc[n]=[]; vaAcc[n].push(acc.Num_Acc); });
                 });
             });
-            let vaSorted = Object.entries(vaCount).sort((a,b)=>b[1]-a[1]).slice(0,10);
-            let vaData = {}; vaSorted.forEach(e => vaData[e[0]]=e[1]);
-            charts.vAdv = createBarChart('chartVehiculesAdverses', vaData, '#f7931e', l => applyCrossFilter('Véhicule adverse', l, new Set(vaAcc[l])));
+            charts.vAdv = createHorizontalBarChart('chartVehiculesAdverses', sortDict(vaCount), '#f7931e', (e, l) => handleCrossFilterClick(e, 'Véhicule adverse', l, new Set(vaAcc[l])));
 
             let vvCount = {}; let vvAcc = {};
             usgs.forEach(u => {
                 let n = (u.catu==='3'||u.catu==='4')?'🚶 Piéton':(NOMENCLATURES.vehicules[(vehiculesIndex.get(u.id_vehicule)||{}).catv]||'Autre');
                 vvCount[n]=(vvCount[n]||0)+1; if(!vvAcc[n]) vvAcc[n]=[]; vvAcc[n].push(u.Num_Acc);
             });
-            let vvSorted = Object.entries(vvCount).sort((a,b)=>b[1]-a[1]).slice(0,8);
-            let vvData = {}; vvSorted.forEach(e => vvData[e[0]]=e[1]);
-            charts.vVic = createHorizontalBarChart('chartVehicules', vvData, '#2196f3', l => applyCrossFilter('Véhicule de la victime', l, new Set(vvAcc[l])));
+            charts.vVic = createHorizontalBarChart('chartVehicules', sortDict(vvCount), '#2196f3', (e, l) => handleCrossFilterClick(e, 'Véhicule victime', l, new Set(vvAcc[l])));
 
             let cCount = {}; let cAcc = {};
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
-            charts.col = createHorizontalBarChart('chartCollision', cCount, '#764ba2', l => applyCrossFilter('Type de collision', l, new Set(cAcc[l])));
+            charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), '#764ba2', (e, l) => handleCrossFilterClick(e, 'Collision', l, new Set(cAcc[l])));
 
             // --- GR 3 : Temps ---
             let hCount = {}; let hAcc = {};
             for(let i=0;i<24;i++) hCount[i+'h']=0;
             accs.forEach(a => { if(a.hrmn){ let h=parseInt(a.hrmn.substring(0,2)); if(h>=0&&h<24){ hCount[h+'h']++; if(!hAcc[h+'h']) hAcc[h+'h']=[]; hAcc[h+'h'].push(a.Num_Acc);} } });
-            charts.hrs = createLineChart('chartHeure', hCount, l => applyCrossFilter('Heure', l, new Set(hAcc[l])));
+            charts.hrs = createLineChart('chartHeure', hCount, (e, l) => handleCrossFilterClick(e, 'Heure', l, new Set(hAcc[l])));
 
             let mCount = {}; let mAcc = {};
             Object.values(NOMENCLATURES.mois).forEach(m => mCount[m]=0);
             accs.forEach(a => { let n=NOMENCLATURES.mois[a.mois]; if(n){ mCount[n]++; if(!mAcc[n]) mAcc[n]=[]; mAcc[n].push(a.Num_Acc);} });
-            charts.mois = createLineChart('chartMois', mCount, l => applyCrossFilter('Mois', l, new Set(mAcc[l])));
+            charts.mois = createLineChart('chartMois', mCount, (e, l) => handleCrossFilterClick(e, 'Mois', l, new Set(mAcc[l])));
 
             let jCount = {'Lun':0,'Mar':0,'Mer':0,'Jeu':0,'Ven':0,'Sam':0,'Dim':0}; let jAcc = {};
             const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
@@ -709,44 +734,34 @@
                     if(!isNaN(d)) { jCount[jours[d]]++; if(!jAcc[jours[d]]) jAcc[jours[d]]=[]; jAcc[jours[d]].push(a.Num_Acc); }
                 }
             });
-            charts.jour = createBarChart('chartJourSemaine', jCount, '#667eea', l => applyCrossFilter('Jour', l, new Set(jAcc[l])));
+            charts.jour = createBarChart('chartJourSemaine', jCount, '#667eea', (e, l) => handleCrossFilterClick(e, 'Jour', l, new Set(jAcc[l])));
 
             // --- GR 4 : Environnement (Petits) ---
             let rCount={}; let rAcc={};
             accs.forEach(a => { let l=lieuxIndex.get(a.Num_Acc); if(l&&l.catr){ let n=NOMENCLATURES.typeRoute[l.catr]||'?'; rCount[n]=(rCount[n]||0)+1; if(!rAcc[n]) rAcc[n]=[]; rAcc[n].push(a.Num_Acc); }});
-            charts.rte = createHorizontalBarChart('chartTypeRoute', rCount, '#607d8b', l => applyCrossFilter('Route', l, new Set(rAcc[l])));
+            charts.rte = createHorizontalBarChart('chartTypeRoute', sortDict(rCount), '#607d8b', (e, l) => handleCrossFilterClick(e, 'Route', l, new Set(rAcc[l])));
 
             let lumCount={}; let lumAcc={};
             accs.forEach(a => { let n=NOMENCLATURES.lumiere[a.lum]||'?'; lumCount[n]=(lumCount[n]||0)+1; if(!lumAcc[n]) lumAcc[n]=[]; lumAcc[n].push(a.Num_Acc); });
-            charts.lum = createHorizontalBarChart('chartLumiere', lumCount, '#ffc107', l => applyCrossFilter('Luminosité', l, new Set(lumAcc[l])));
+            charts.lum = createHorizontalBarChart('chartLumiere', sortDict(lumCount), '#ffc107', (e, l) => handleCrossFilterClick(e, 'Luminosité', l, new Set(lumAcc[l])));
 
             let metCount={}; let metAcc={};
             accs.forEach(a => { let n=NOMENCLATURES.meteo[a.atm]||'?'; metCount[n]=(metCount[n]||0)+1; if(!metAcc[n]) metAcc[n]=[]; metAcc[n].push(a.Num_Acc); });
-            charts.met = createHorizontalBarChart('chartMeteo', metCount, '#03a9f4', l => applyCrossFilter('Météo', l, new Set(metAcc[l])));
+            charts.met = createHorizontalBarChart('chartMeteo', sortDict(metCount), '#03a9f4', (e, l) => handleCrossFilterClick(e, 'Météo', l, new Set(metAcc[l])));
 
             let chCount={}; let chAcc={};
             accs.forEach(a => { let l=lieuxIndex.get(a.Num_Acc); if(l&&l.surf){ let n=NOMENCLATURES.chaussee[l.surf]||'?'; chCount[n]=(chCount[n]||0)+1; if(!chAcc[n]) chAcc[n]=[]; chAcc[n].push(a.Num_Acc); }});
-            charts.ch = createHorizontalBarChart('chartChaussee', chCount, '#8d6e63', l => applyCrossFilter('Chaussée', l, new Set(chAcc[l])));
+            charts.ch = createHorizontalBarChart('chartChaussee', sortDict(chCount), '#8d6e63', (e, l) => handleCrossFilterClick(e, 'Chaussée', l, new Set(chAcc[l])));
 
             let aggCount={'🏙️ Agglo':0, '🌳 Hors agglo':0}; let aggAcc={'🏙️ Agglo':[], '🌳 Hors agglo':[]};
             accs.forEach(a => { let n=a.agg==='2'?'🏙️ Agglo':'🌳 Hors agglo'; aggCount[n]++; aggAcc[n].push(a.Num_Acc); });
-            charts.agg = createHorizontalBarChart('chartAgglomeration', aggCount, '#4caf50', l => applyCrossFilter('Agglo', l, new Set(aggAcc[l])));
-        }
-
-        function setMapView(view) {
-            currentMapView = view;
-            document.getElementById('btnViewPoints').classList.remove('active');
-            document.getElementById('btnViewHeatmap').classList.remove('active');
-            if (map && pointsLayer) map.removeLayer(pointsLayer);
-            if (map && heatLayer) map.removeLayer(heatLayer);
-            if (view === 'points') { document.getElementById('btnViewPoints').classList.add('active'); pointsLayer.addTo(map); }
-            else if (view === 'heatmap') { document.getElementById('btnViewHeatmap').classList.add('active'); heatLayer.addTo(map); }
+            charts.agg = createHorizontalBarChart('chartAgglomeration', sortDict(aggCount), '#4caf50', (e, l) => handleCrossFilterClick(e, 'Agglo', l, new Set(aggAcc[l])));
         }
 
         // --- CHART.JS FACTORIES ---
         const cOpts = (cb) => ({
             responsive: true, maintainAspectRatio: false,
-            onClick: cb ? (e, els) => { if(els.length>0) cb(e.chart.data.labels[els[0].index]); } : null,
+            onClick: cb ? (e, els) => { if(els.length>0) cb(e.native, e.chart.data.labels[els[0].index]); } : null,
             plugins: { legend: { display: false } }
         });
 
@@ -757,6 +772,16 @@
             let o = cOpts(cb); o.indexAxis = 'y';
             return new Chart(document.getElementById(id), { type: 'bar', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: color }] }, options: o });
         }
+        function createSingleStackedBar(id, dict, colorMap, cb) {
+            let datasets = Object.keys(dict).map(k => ({ label: k, data: [dict[k]], backgroundColor: colorMap[k]||'#ccc' }));
+            let o = {
+                responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+                scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } },
+                plugins: { legend: { display: true, position: 'bottom' }, tooltip: { mode: 'nearest' } },
+                onClick: cb ? (e, els) => { if(els.length>0) cb(e.native, e.chart.data.datasets[els[0].datasetIndex].label); } : null
+            };
+            return new Chart(document.getElementById(id), { type: 'bar', data: { labels: [''], datasets }, options: o });
+        }
         function createLineChart(id, dict, cb) {
             let o = cOpts(cb); o.elements = { line: { tension: 0.4 }, point:{radius:2} };
             return new Chart(document.getElementById(id), { type: 'line', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.2)', fill: true }] }, options: o });
@@ -766,6 +791,7 @@
             return new Chart(document.getElementById(id), { type: 'pie', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: Object.keys(dict).map(k=>colorMap[k]||'#ccc') }] }, options: o });
         }
 
+        // --- POPUPS ---
         function generateDetailedPopup(acc, victimes) {
             const l = lieuxIndex.get(acc.Num_Acc); const meteo = NOMENCLATURES.meteo[acc.atm]||'?';
             let c = `<div style="max-width:320px"><strong>📅 ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
@@ -784,7 +810,21 @@
                 let vStr = (u.catu==='3'||u.catu==='4')?'Piéton':(NOMENCLATURES.vehicules[vInfo?vInfo.catv:'']||'Véhicule');
                 h+=`<div class="victim-card"><strong>Personne ${i+1}</strong> (${u.sexe==='1'?'H':'F'}, ${age} ans)<br>Rôle: ${NOMENCLATURES.catu[u.catu]||'?'} - ${vStr}<br>État: <strong>${NOMENCLATURES.gravite[u.grav]}</strong></div>`;
             });
+            h+=`<button class="btn-voir-plus" data-accident-id="${id}" onclick="openGoogleSearch(this)" style="background: #4285f4;">🔍 Chercher dans la presse</button>`;
             document.getElementById('modalBody').innerHTML = h; document.getElementById('modalOverlay').style.display='flex';
+        }
+
+        function openGoogleSearch(btn) {
+            let newTab = window.open('about:blank', '_blank'); 
+            const id = btn.getAttribute('data-accident-id'); const acc = accidentsByIdIndex.get(id);
+            let s = ['accident']; const l = lieuxIndex.get(id);
+            if (l && l.voie) s.push(l.voie.replace(/^\d+\s*-?\s*/, '').trim());
+            if (acc.com) s.push(acc.com);
+            if (acc.jour && acc.mois && acc.an) {
+                let annee = parseInt(acc.an); if (annee < 100) annee += 2000;
+                s.push(`${acc.jour} ${NOMENCLATURES.mois[acc.mois] || acc.mois} ${annee}`);
+            }
+            newTab.location.href = `https://www.google.com/search?q=${encodeURIComponent(s.join(' '))}`;
         }
     </script>
 </body>
