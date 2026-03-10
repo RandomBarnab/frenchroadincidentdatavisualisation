@@ -53,13 +53,14 @@
         .view-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9em; }
         .view-btn.active { background: #667eea; color: white; border-color: #667eea; }
 
-        /* Le laboratoire de la Heatmap */
+        /* Le laboratoire de la Heatmap repensé */
         #heatmapControls { display: none; flex-direction: column; gap: 8px; background: #fdfdfd; padding: 10px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; flex: 1 1 100%; }
-        #heatmapControls label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 130px; display: inline-block;}
+        #heatmapControls label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 140px; display: inline-block;}
         .heatmap-slider-row { display: flex; align-items: center; gap: 10px; width: 100%; }
         .heatmap-slider-row input[type="range"] { flex: 1; }
         .heatmap-slider-row span { font-size: 0.8em; font-weight: bold; width: 40px; text-align: right; }
         .heat-stats { background: #e3f2fd; padding: 8px; border-radius: 5px; font-family: monospace; font-size: 0.85em; color: #1565c0; display: flex; justify-content: space-between; font-weight: bold;}
+        .algo-select { padding: 5px; border-radius: 5px; border: 1px solid #1e3c72; background: #e3f2fd; color: #1e3c72; font-weight: bold; width: 100%; }
 
         .content { padding: 20px; }
         .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid #667eea;}
@@ -146,7 +147,7 @@
                 <li><span>Paramétrez :</span> Sélectionnez les années ou le type de victimes ci-dessous.</li>
                 <li><span>Cadrez :</span> Déplacez la carte sur la zone qui vous intéresse (la zone visible sera analysée).</li>
                 <li><span>Analysez :</span> Cliquez sur le gros bouton vert pour générer les résultats.</li>
-                <li><span>Filtrez (Magique !) :</span> Maintenez <b>Ctrl</b> (ou Cmd sur Mac) et cliquez sur les éléments des graphiques (ex: "Tué" + "Vélo") pour croiser les filtres dynamiquement sur la carte !</li>
+                <li><span>Filtrez (Magique !) :</span> Maintenez <b>Ctrl</b> (ou Cmd) et cliquez sur les graphiques (ex: "Tué" + "Vélo") pour croiser les filtres dynamiquement !</li>
             </ol>
         </div>
         
@@ -250,33 +251,28 @@
                     
                     <!-- LE LABORATOIRE DE LA HEATMAP -->
                     <div id="heatmapControls">
-                        <div style="font-size: 0.9em; font-weight: bold; color: #1e3c72; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between;">
-                            <span>🎛️ Laboratoire de la Densité</span>
-                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Auto-ajuster</label>
+                        <div style="font-size: 0.9em; font-weight: bold; margin-bottom: 5px; display: flex; flex-direction: column; gap: 8px;">
+                            <span>🎛️ Algorithme de la Densité :</span>
+                            <select id="heatmapAlgo" class="algo-select">
+                                <option value="manual">⚙️ Mode Manuel</option>
+                                <option value="power">A. Loi de Puissance & Densité</option>
+                                <option value="steps" selected>B. Paliers Interpolés (Recommandé)</option>
+                                <option value="percentile">C. Grille Spatiale (Percentile 95)</option>
+                            </select>
                         </div>
                         
                         <div class="heat-stats">
-                            <span>Zoom (Z): <span id="statZ">-</span></span>
-                            <span>Points (P): <span id="statP">-</span></span>
-                            <span>Ratio (Z/P): <span id="statRatio">-</span></span>
-                        </div>
-
-                        <!-- Le 5ème curseur de test Coefficient C -->
-                        <div class="heatmap-slider-row" id="rowAutoCoeff">
-                            <label for="heatAutoCoeff" style="color: #4caf50;">⚖️ Coef. (C) :</label>
-                            <input type="range" id="heatAutoCoeff" min="1000" max="300000" step="1000" value="50000">
-                            <span id="valAutoCoeff" style="width: 65px;">50000</span>
+                            <span>Zoom (Z): <strong id="statZ">-</strong></span>
+                            <span>Points (P): <strong id="statP">-</strong></span>
                         </div>
 
                         <div class="heatmap-slider-row">
-                            <label for="heatRadius">Taille (Radius) :</label>
+                            <label for="heatRadius">Taille & Flou :</label>
                             <input type="range" id="heatRadius" min="2" max="60" value="12">
                             <span id="valRadius">12</span>
                         </div>
-                        <div class="heatmap-slider-row">
-                            <label for="heatBlur">Flou (Blur) :</label>
+                        <div class="heatmap-slider-row" style="display:none;">
                             <input type="range" id="heatBlur" min="2" max="60" value="12">
-                            <span id="valBlur">12</span>
                         </div>
                         <div class="heatmap-slider-row">
                             <label for="heatMax">Seuil d'alerte :</label>
@@ -297,14 +293,13 @@
         
         <div class="content" id="results" style="display: none;">
             
-            <!-- NOUVELLE BANNIÈRE DE FILTRE CROISÉ AVEC LE TOGGLE "MODE STRICT" -->
-            <div id="crossFilterBanner" style="display:none;">
+            <div id="crossFilterBanner">
                 <div id="mapHighlightInfo">
                     <div id="crossFilterText"></div>
                     <div style="display: flex; gap: 15px; align-items: center;">
                         <label style="font-size: 0.9em; font-weight: bold; color: #1e3c72; display: flex; align-items: center; gap: 5px; cursor: pointer;">
                             <input type="checkbox" id="modeVictimeOnly" checked onchange="window.reapplyCrossFilters()">
-                            🎯 Mode strict (Isoler ces victimes)
+                            🎯 Mode strict (Isoler les victimes)
                         </label>
                         <button class="btn-cancel-filter" onclick="window.cancelCrossFilter()">❌ Effacer les filtres</button>
                     </div>
@@ -436,7 +431,7 @@
         let lastRenderedUsgs = []; 
         let currentHeatData = []; 
         
-        let currentZ = 5, currentP = 0, currentRatio = 0;
+        let currentZ = 5, currentP = 0;
 
         let vehiculesIndex = new Map(), lieuxIndex = new Map();
         let usagersByAccidentIndex = new Map(), vehiculesByAccidentIndex = new Map();
@@ -460,19 +455,97 @@
         function updateProgress(p) { const el = document.getElementById('progressFill'); if(el) el.style.width = p + '%'; }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
-        window.updateHeatmapStats = function() {
+        // --- LES 3 CERVEAUX MATHEMATIQUES DE LA HEATMAP ---
+        function lerp(x, x0, x1, y0, y1) { return y0 + (x - x0) * (y1 - y0) / (x1 - x0); }
+
+        window.calculateAutoHeatmap = function() {
             if (!heatLayer || currentMapView !== 'heatmap' || currentHeatData.length === 0) return;
+            
             const bounds = map.getBounds();
             currentP = 0;
-            currentHeatData.forEach(pt => {
-                if (bounds.contains([pt[0], pt[1]])) currentP++; 
-            });
+            currentHeatData.forEach(pt => { if (bounds.contains([pt[0], pt[1]])) currentP++; });
             currentZ = map.getZoom();
-            currentRatio = currentP > 0 ? (currentZ / currentP) : currentZ;
 
             document.getElementById('statZ').innerText = currentZ;
             document.getElementById('statP').innerText = currentP;
-            document.getElementById('statRatio').innerText = currentRatio.toFixed(5);
+
+            let algo = document.getElementById('heatmapAlgo').value;
+            let r, b, m, mo;
+
+            if (algo === 'power') {
+                // A. Loi de Puissance & Densité
+                let r0 = 6, z0 = 6, alpha = 0.7;
+                r = Math.floor(r0 * Math.pow(2, (currentZ - z0) * alpha));
+                r = Math.max(3, Math.min(60, r));
+                b = Math.floor(r * 0.75);
+                m = Math.max(2, Math.floor(1.5 * Math.pow(currentP, 0.5)));
+                mo = Math.min(0.8, Math.max(0.1, 0.05 + 0.05 * Math.log10(currentP + 1)));
+                
+            } else if (algo === 'steps') {
+                // B. Paliers Interpolés (Recommandé)
+                if (currentZ <= 8) {
+                    r = lerp(currentZ, 5, 8, 8, 15);
+                    b = lerp(currentZ, 5, 8, 6, 10);
+                    m = Math.max(3, currentP / lerp(currentZ, 5, 8, 150, 50));
+                    mo = 0.15;
+                } else if (currentZ <= 12) {
+                    r = lerp(currentZ, 8, 12, 15, 25);
+                    b = lerp(currentZ, 8, 12, 10, 18);
+                    m = Math.max(3, currentP / lerp(currentZ, 8, 12, 50, 20));
+                    mo = lerp(currentZ, 8, 12, 0.15, 0.20);
+                } else if (currentZ <= 15) {
+                    r = lerp(currentZ, 12, 15, 25, 40);
+                    b = lerp(currentZ, 12, 15, 18, 30);
+                    m = Math.max(2, currentP / lerp(currentZ, 12, 15, 20, 5));
+                    mo = lerp(currentZ, 12, 15, 0.20, 0.30);
+                } else {
+                    r = 60; b = 45; m = Math.max(2, currentP / 2); mo = 0.4;
+                }
+                r = Math.floor(r); b = Math.floor(b); m = Math.floor(m);
+
+            } else if (algo === 'percentile') {
+                // C. Grille Spatiale et Percentiles
+                let latMin = bounds.getSouthWest().lat; let latMax = bounds.getNorthEast().lat;
+                let lngMin = bounds.getSouthWest().lng; let lngMax = bounds.getNorthEast().lng;
+                
+                let grid = {};
+                let cols = 30, rows = 30; // 900 cases virtuelles sur l'écran
+                let latStep = (latMax - latMin) / rows;
+                let lngStep = (lngMax - lngMin) / cols;
+                
+                currentHeatData.forEach(pt => {
+                    if (pt[0] >= latMin && pt[0] <= latMax && pt[1] >= lngMin && pt[1] <= lngMax) {
+                        let rIdx = Math.floor((pt[0] - latMin) / latStep);
+                        let cIdx = Math.floor((pt[1] - lngMin) / lngStep);
+                        let key = rIdx + '-' + cIdx;
+                        grid[key] = (grid[key] || 0) + pt[2]; // Additionne les poids
+                    }
+                });
+                
+                let densities = Object.values(grid).sort((x, y) => x - y);
+                let p95 = 2; 
+                if(densities.length > 0) {
+                    let idx = Math.floor(densities.length * 0.95);
+                    if(idx >= densities.length) idx = densities.length - 1;
+                    p95 = densities[idx];
+                }
+                
+                m = Math.max(3, p95);
+                r = Math.floor(Math.max(5, Math.min(60, 5 * Math.pow(1.3, currentZ - 5))));
+                b = Math.floor(r * 0.8);
+                mo = 0.2;
+            } else {
+                return; // Mode Manuel
+            }
+
+            // Application UI
+            document.getElementById('heatRadius').value = r; document.getElementById('valRadius').innerText = r;
+            document.getElementById('heatBlur').value = b; document.getElementById('valBlur').innerText = b;
+            document.getElementById('heatMax').value = m; document.getElementById('valMax').innerText = m;
+            document.getElementById('heatMinOp').value = Math.floor(mo * 100); document.getElementById('valMinOp').innerText = mo.toFixed(2);
+
+            // Application Leaflet
+            heatLayer.setOptions({ radius: r, blur: b, max: m, minOpacity: mo });
         };
 
         window.applyManualHeatmap = function() {
@@ -490,74 +563,25 @@
             heatLayer.setOptions({ radius: r, blur: b, max: m, minOpacity: mo });
         };
 
-        window.applyAutoHeatmap = function() {
-            if (!heatLayer || currentMapView !== 'heatmap') return;
-            
-            let c = parseFloat(document.getElementById('heatAutoCoeff').value);
-            let rawSize = c * currentRatio;
-            let size = Math.floor(Math.max(2, Math.min(60, rawSize))); 
-
-            let m, mo;
-            if (currentP <= 20) { m = 2; mo = 0.66; }
-            else if (currentZ <= 6) { m = 5; mo = 0.23; }
-            else if (currentZ >= 13 && currentP > 100) { m = 2; mo = 0.30; }
-            else { m = 2; mo = 0.21; }
-
-            document.getElementById('heatRadius').value = size; document.getElementById('valRadius').innerText = size;
-            document.getElementById('heatBlur').value = size; document.getElementById('valBlur').innerText = size;
-            document.getElementById('heatMax').value = m; document.getElementById('valMax').innerText = m;
-            document.getElementById('heatMinOp').value = Math.floor(mo * 100); document.getElementById('valMinOp').innerText = mo.toFixed(2);
-
-            heatLayer.setOptions({ radius: size, blur: size, max: m, minOpacity: mo });
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             map = L.map('map', { preferCanvas: true, zoomControl: true }).setView([46.603354, 1.888334], 5);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
             pointsLayer = L.featureGroup().addTo(map);
             
-            map.on('moveend', function() {
-                if(currentMapView === 'heatmap') {
-                    updateHeatmapStats();
-                    if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
-                }
-            });
-            map.on('zoomend', function() {
-                if(currentMapView === 'heatmap') {
-                    updateHeatmapStats();
-                    if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
-                }
-            });
+            map.on('moveend', function() { if(currentMapView === 'heatmap') calculateAutoHeatmap(); });
+            map.on('zoomend', function() { if(currentMapView === 'heatmap') calculateAutoHeatmap(); });
 
-            ['heatRadius', 'heatBlur', 'heatMax', 'heatMinOp'].forEach(id => {
+            ['heatRadius', 'heatMax', 'heatMinOp'].forEach(id => {
                 let el = document.getElementById(id);
-                if(el) el.addEventListener('input', function() {
-                    document.getElementById('autoHeatmap').checked = false;
-                    document.getElementById('rowAutoCoeff').style.opacity = '0.4';
+                if(el) el.addEventListener('input', function(e) {
+                    if(id === 'heatRadius') document.getElementById('heatBlur').value = e.target.value; // Synchronise taille/flou
+                    document.getElementById('heatmapAlgo').value = 'manual';
                     applyManualHeatmap();
                 });
             });
 
-            document.getElementById('heatAutoCoeff').addEventListener('input', function(e) {
-                document.getElementById('valAutoCoeff').innerText = e.target.value;
-                let c = parseFloat(e.target.value);
-                let rawSize = c * currentRatio;
-                let size = Math.floor(Math.max(2, Math.min(60, rawSize)));
-                
-                document.getElementById('heatRadius').value = size; document.getElementById('valRadius').innerText = size;
-                document.getElementById('heatBlur').value = size; document.getElementById('valBlur').innerText = size;
-                
-                applyManualHeatmap(); 
-            });
-
-            document.getElementById('autoHeatmap').addEventListener('change', function(e) {
-                if(e.target.checked) {
-                    document.getElementById('rowAutoCoeff').style.opacity = '1';
-                    updateHeatmapStats();
-                    applyAutoHeatmap();
-                } else {
-                    document.getElementById('rowAutoCoeff').style.opacity = '0.4';
-                }
+            document.getElementById('heatmapAlgo').addEventListener('change', function(e) {
+                if(e.target.value !== 'manual') calculateAutoHeatmap();
             });
 
             loadInitialData();
@@ -777,7 +801,6 @@
             let subAcc = mainAccidents.filter(a => intersectedIds.has(a.Num_Acc));
             let subUsg = mainUsagers.filter(u => intersectedIds.has(u.Num_Acc));
 
-            // MODE STRICT : ON ISOLE LES VICTIMES CLIQUÉES
             let isStrict = document.getElementById('modeVictimeOnly') && document.getElementById('modeVictimeOnly').checked;
             if (isStrict) {
                 subUsg = subUsg.filter(u => {
@@ -819,9 +842,7 @@
                 document.getElementById('btnViewHeatmap').classList.add('active'); 
                 document.getElementById('heatmapControls').style.display = 'flex';
                 heatLayer.addTo(map); 
-                updateHeatmapStats();
-                if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
-                else applyManualHeatmap();
+                calculateAutoHeatmap();
             }
         }
 
@@ -851,7 +872,6 @@
             let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
             let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
             
-            // Le filtre strict passe la fonction (u) pour vérifier l'âge de CHAQUE victime
             charts.age = createBarChart('chartAge', aData, '#667eea', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
                 const acc = accidentsByIdIndex.get(u.Num_Acc);
                 if(acc && u.an_nais && acc.an) {
@@ -887,9 +907,8 @@
             
             currentHeatData = [];
             accs.forEach(acc => {
-                // IMPORTANT : Si on est en "Mode Strict", les points sur la carte affichent le gravMax de la sous-sélection (ex: juste les cyclistes)
                 const victimes = isCrossFiltering ? usgs.filter(u => u.Num_Acc === acc.Num_Acc) : (victimesFiltreesIndex.get(acc.Num_Acc) || []);
-                if(victimes.length === 0) return; // Sécurité
+                if(victimes.length === 0) return;
 
                 const lat = parseFloat(acc.lat.replace(',','.'));
                 const long = parseFloat(acc.long.replace(',','.'));
@@ -904,28 +923,18 @@
                 const m = L.circleMarker([lat, long], { radius: rad, color: 'white', weight: 1, fillColor: color, fillOpacity: 0.8 });
                 
                 m.on('click', function(e) {
-                    const content = generateDetailedPopup(acc, victimes); // Affiche le popup sur les victimes filtrées
+                    const content = generateDetailedPopup(acc, victimes);
                     L.popup({ maxWidth: 350 }).setLatLng(e.latlng).setContent(content).openOn(map);
                 });
                 pointsLayer.addLayer(m);
             });
 
-            let hr = parseInt(document.getElementById('heatRadius').value) || 12;
-            let hb = parseInt(document.getElementById('heatBlur').value) || 12;
-            let hm = parseInt(document.getElementById('heatMax').value) || 15;
-            let hmo = (parseInt(document.getElementById('heatMinOp').value) || 20) / 100;
-
-            heatLayer = L.heatLayer(currentHeatData, { 
-                radius: hr, blur: hb, maxZoom: 15, max: hm, minOpacity: hmo,
-                gradient: { 0.3: 'blue', 0.5: 'cyan', 0.7: 'lime', 0.85: 'yellow', 1.0: 'red' } 
-            });
+            heatLayer = L.heatLayer(currentHeatData, {}); 
             
             if (currentMapView === 'points') pointsLayer.addTo(map);
             else if (currentMapView === 'heatmap') { 
                 heatLayer.addTo(map); 
-                updateHeatmapStats();
-                if(document.getElementById('autoHeatmap').checked) applyAutoHeatmap();
-                else applyManualHeatmap();
+                calculateAutoHeatmap();
             } 
 
             Object.values(charts).forEach(c => { if(c) c.destroy() }); charts = {};
@@ -955,7 +964,6 @@
                     else adv.forEach(x => { let n=NOMENCLATURES.vehicules[x.catv]||'Autre'; vaCount[n]=(vaCount[n]||0)+1; if(!vaAcc[n]) vaAcc[n]=[]; vaAcc[n].push(acc.Num_Acc); });
                 });
             });
-            // Les filtres véhicules adverses/collision sont des propriétés de l'accident, on ne met pas de victimFilterFn
             charts.vAdv = createHorizontalBarChart('chartVehiculesAdverses', sortDict(vaCount), '#f7931e', (e, l) => handleCrossFilterClick(e, 'Véhicule adverse', l, new Set(vaAcc[l])));
 
             let vvCount = {}; let vvAcc = {};
@@ -972,7 +980,7 @@
 
             let cCount = {}; let cAcc = {};
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
-            charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), '#764ba2', (e, l) => handleCrossFilterClick(e, 'Type de collision', l, new Set(cAcc[l])));
+            charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), '#764ba2', (e, l) => handleCrossFilterClick(e, 'Collision', l, new Set(cAcc[l])));
 
             let hCount = {}; let hAcc = {};
             for(let i=0;i<24;i++) hCount[i+'h']=0;
@@ -1016,7 +1024,6 @@
             charts.agg = createHorizontalBarChart('chartAgglomeration', sortDict(aggCount), '#4caf50', (e, l) => handleCrossFilterClick(e, 'Agglo', l, new Set(aggAcc[l])));
         }
 
-        // --- CHART.JS FACTORIES ---
         const cOpts = (cb) => ({
             responsive: true, maintainAspectRatio: false,
             onClick: cb ? (e, els) => { if(els.length>0) cb(e.native, e.chart.data.labels[els[0].index]); } : null,
@@ -1192,4 +1199,3 @@
     </script>
 </body>
 </html>
-
