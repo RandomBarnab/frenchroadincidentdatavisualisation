@@ -53,650 +53,7 @@
         .view-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9em; }
         .view-btn.active { background: #667eea; color: white; border-color: #667eea; }
 
-        /* --- NOUVEAU LABO HEATMAP --- */
-        #heatmapControls { display: none; flex-direction: column; gap: 8px; background: #fdfdfd; padding: 15px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; margin-top: 15px; }
-        #heatmapControls h4 { margin: 0 0 10px 0; color: #1e3c72; font-size: 1em; border-bottom: 2px solid #ddd; padding-bottom: 5px;}
-        .slider-row { display: flex; align-items: center; width: 100%; }
-        .slider-row label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 150px; display: inline-block; }
-        .slider-row input { flex: 1; margin-left: 10px; }
-
-        .content { padding: 20px; }
-        .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid #667eea;}
-        
-        #crossFilterBanner { display: none; }
-        #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; font-size: 1.05em; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-cancel-filter { background: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-
-        .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 1px solid #f0f0f0; transition: all 0.3s; position: relative; min-width: 0;}
-        .chart-container h3 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 1.05em; }
-        .chart-subtitle { text-align: center; font-size: 0.8em; color: #888; font-style: italic; margin-bottom: 10px;}
-        
-        .canvas-wrapper { position: relative; height: 260px; width: 100%; min-width: 0;}
-        .canvas-wrapper-small { position: relative; height: 220px; width: 100%; min-width: 0;}
-        .canvas-wrapper-large { position: relative; height: 320px; width: 100%; min-width: 0;}
-        .canvas-wrapper-tiny { position: relative; height: 100px; width: 100%; min-width: 0;}
-
-        .charts-grid-3 { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 900px) { .charts-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-        
-        .charts-grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 900px) { .charts-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-
-        .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .stat-card .number { font-size: 1.8em; font-weight: 700; margin-bottom: 5px; }
-        .stat-card .label { font-size: 0.85em; opacity: 0.9; }
-
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; padding: 20px; text-align: center; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .progress-bar-container { width: 100%; max-width: 300px; height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
-        .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s; }
-        
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: flex-end; z-index: 10000; }
-        @media (min-width: 768px) { .modal-overlay { align-items: center; padding: 20px; } }
-        .modal-content { background: white; border-radius: 20px 20px 0 0; width: 100%; max-width: 800px; max-height: 85vh; overflow-y: auto; padding: 25px 20px; position: relative; animation: slideUp 0.3s ease-out; }
-        @media (min-width: 768px) { .modal-content { border-radius: 15px; } }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f1f1; color: #333; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
-        
-        .leaflet-popup-content { margin: 13px 15px; }
-        .accident-report { line-height: 1.6; font-size: 0.95em; }
-        .accident-report h2 { color: #1e3c72; margin-bottom: 15px; padding-right: 30px; font-size: 1.4em;}
-        .accident-report h3 { color: #667eea; margin: 15px 0 10px 0; font-size: 1.1em;}
-        .accident-report .info-section { background: #f8f9fa; padding: 12px; border-left: 4px solid #667eea; margin: 8px 0; border-radius: 6px; }
-        .accident-report .victim-card { background: #fff3e0; padding: 12px; margin: 8px 0; border-left: 4px solid #ff6b35; border-radius: 6px; }
-        .accident-report .victim-card.indemne { background: #e8f5e9; border-left-color: #4caf50; }
-        
-        .btn-voir-plus { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; text-align: center; }
-        .btn-voir-plus:hover { opacity: 0.9; }
-        .popup-victim { background: #fff3e0; padding: 8px; margin: 6px 0; border-left: 3px solid #ff6b35; border-radius: 4px; font-size: 0.9em;}
-        .popup-responsible { background: #e8f5e9; padding: 6px; margin: 4px 0 4px 8px; border-left: 3px solid #4caf50; border-radius: 4px; font-size: 0.85em; }
-
-        .age-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
-        .age-controls button { padding: 4px 10px; border-radius: 15px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.8em;}
-        .age-controls button.active { background: #667eea; color: white; border-color: #667eea; }
-    </style>
-</head>
-<body>
-    <div class="loading-overlay" id="loadingOverlay">
-        <h2>🚗 Chargement des données</h2>
-        <div class="spinner"></div>
-        <div class="progress-bar-container"><div class="progress-fill" id="progressFill"></div></div>
-        <p id="loadingText">Veuillez patienter...</p>
-    </div>
-
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeModal()">×</button>
-            <div id="modalBody" class="accident-report"></div>
-        </div>
-    </div>
-
-    <div class="container">
-        <header>
-            <h1>🚗 Analyse de la Sécurité Routière en France</h1>
-            <p>Données officielles de l'ONISR (Base BAAC 2021-2024)</p>
-        </header>
-
-        <div class="intro-banner" id="introBanner">
-            <h3>Comment utiliser cet outil ?</h3>
-            <ol>
-                <li><span>Paramétrez :</span> Sélectionnez les années ou le type de victimes ci-dessous.</li>
-                <li><span>Cadrez :</span> Déplacez la carte sur la zone qui vous intéresse (la zone visible sera analysée).</li>
-                <li><span>Analysez :</span> Cliquez sur le gros bouton vert pour générer les résultats.</li>
-                <li><span>Filtrez (Magique !) :</span> Maintenez <b>Ctrl</b> (ou Cmd sur Mac) et cliquez sur les éléments des graphiques (ex: "Tué" + "Vélo") pour croiser les filtres dynamiquement sur la carte !</li>
-            </ol>
-        </div>
-        
-        <div class="filters" id="filtersSection">
-            
-            <h2 class="section-title">⚙️ 1. Paramétrez les filtres (Optionnel)</h2>
-            <div class="filter-grid">
-                <div class="filter-group">
-                    <label>Années</label>
-                    <select id="annee" multiple size="5">
-                        <option value="all" selected>Toutes les années</option>
-                        <option value="2024">2024</option>
-                        <option value="2023">2023</option>
-                        <option value="2022">2022</option>
-                        <option value="2021">2021</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Période d'accident</label>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <input type="date" id="dateDebut" title="Date de début">
-                        <input type="date" id="dateFin" title="Date de fin">
-                    </div>
-                </div>
-                <div class="filter-group">
-                    <label>Type de victime</label>
-                    <select id="typeVictime" multiple size="8">
-                        <option value="all" selected>Tous les types</option>
-                        <option value="3">🚶 Piéton</option>
-                        <option value="07">🚗 Voiture (VL)</option>
-                        <option value="13,14,15">🚛 Camion (PL)</option>
-                        <option value="30,31,32,33,34">🏍️ Moto/Scooter</option>
-                        <option value="80">🚴 VAE</option>
-                        <option value="01">🚴 Vélo</option>
-                        <option value="50">🛴 Trottinette/EDPM</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Véhicule adverse</label>
-                    <select id="vehiculeAdverse" multiple size="8">
-                        <option value="all" selected>Tous</option>
-                        <option value="sans">⚠️ Sans tiers (Perte contrôle)</option>
-                        <option value="07">🚗 Voiture (VL)</option>
-                        <option value="13,14,15">🚛 Camion (PL)</option>
-                        <option value="30,31,32,33,34">🏍️ Moto/Scooter</option>
-                        <option value="80">🚴 VAE</option>
-                        <option value="01">🚴 Vélo</option>
-                        <option value="50">🛴 Trottinette/EDPM</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Gravité</label>
-                    <select id="gravite" multiple size="4">
-                        <option value="all" selected>Toutes (Hors indemnes)</option>
-                        <option value="2">💀 Tué</option>
-                        <option value="3">🏥 Blessé hospitalisé</option>
-                        <option value="4">🩹 Blessé léger</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Localisation</label>
-                    <select id="localisation" multiple size="3">
-                        <option value="all" selected>Toutes</option>
-                        <option value="1">Hors agglomération</option>
-                        <option value="2">En agglomération</option>
-                    </select>
-                </div>
-                <div class="filter-group">
-                    <label>Luminosité</label>
-                    <select id="lumiere" multiple size="5">
-                        <option value="all" selected>Toutes</option>
-                        <option value="1">☀️ Plein jour</option>
-                        <option value="2">🌅 Crépuscule</option>
-                        <option value="3">🌙 Nuit (sans éclairage)</option>
-                        <option value="4">🌙 Nuit (éclairage off)</option>
-                        <option value="5">💡 Nuit (éclairage on)</option>
-                    </select>
-                </div>
-            </div>
-
-            <h2 class="section-title">📍 2. Choisissez la zone d'analyse</h2>
-            <div class="map-selection-zone">
-                <p style="margin-bottom: 10px; color: #555; font-size: 0.95em;">Recherchez une ville ou déplacez la carte. <strong>Seule la zone encadrée ci-dessous sera analysée.</strong></p>
-                <div class="search-box">
-                    <input type="text" id="citySearch" placeholder="Ex: Paris, Lyon, Gironde..." />
-                    <button onclick="searchCityMap()">Rechercher & Zoomer</button>
-                </div>
-                
-                <div id="map"></div>
-                
-                <!-- BOÎTE À OUTILS CARTE -->
-                <div class="map-tools" id="mapTools">
-                    <div class="map-view-controls">
-                        <button class="view-btn active" id="btnViewPoints" onclick="setMapView('points')">📍 Afficher en Points</button>
-                        <button class="view-btn" id="btnViewHeatmap" onclick="setMapView('heatmap')">🔥 Afficher en Densité</button>
-                    </div>
-                    <div class="map-legend">
-                        <div class="legend-item"><div class="legend-marker" style="background-color: #ffd93d; width: 10px; height: 10px;"></div>Blessé léger</div>
-                        <div class="legend-item"><div class="legend-marker" style="background-color: #ff6b35; width: 14px; height: 14px;"></div>Hospitalisé</div>
-                        <div class="legend-item"><div class="legend-marker" style="background-color: #8b0000; width: 18px; height: 18px;"></div>Tué</div>
-                    </div>
-                </div>
-
-                <!-- LABORATOIRE HEATMAP -->
-                <div id="heatmapControls">
-                    <h4>🛠️ Labo Heatmap (Testez en direct)</h4>
-                    <div class="slider-row">
-                        <label for="hmRadius">Rayon : <span id="valRadius">12</span></label>
-                        <input type="range" id="hmRadius" min="1" max="50" value="12">
-                    </div>
-                    <div class="slider-row">
-                        <label for="hmBlur">Flou : <span id="valBlur">15</span></label>
-                        <input type="range" id="hmBlur" min="1" max="50" value="15">
-                    </div>
-                    <div class="slider-row">
-                        <label for="hmMax">Intensité Max : <span id="valMax">10</span></label>
-                        <input type="range" id="hmMax" min="1" max="100" value="10">
-                    </div>
-                    <div class="slider-row">
-                        <label for="hmMinOp">Opacité Min : <span id="valMinOp">0.05</span></label>
-                        <input type="range" id="hmMinOp" min="0" max="100" value="5">
-                    </div>
-                </div>
-            </div>
-
-            <button class="btn" id="analyzeBtn">🚀 Générer l'Analyse sur cette zone</button>
-        </div>
-        
-        <div class="content" id="results" style="display: none;">
-            
-            <div id="crossFilterBanner">
-                <div id="mapHighlightInfo">
-                    <div id="crossFilterText"></div>
-                    <button class="btn-cancel-filter" onclick="cancelCrossFilter()">❌ Effacer les filtres</button>
-                </div>
-            </div>
-
-            <div class="stats-summary" id="statsSummary"></div>
-            
-            <!-- GROUPE 1 : PROFILS -->
-            <h2 class="section-title">👤 Profil des Victimes</h2>
-            <div class="charts-grid-3">
-                <div class="chart-container">
-                    <h3>Sexe</h3>
-                    <p class="chart-subtitle">Répartition globale</p>
-                    <div class="canvas-wrapper-tiny"><canvas id="chartSexe"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Gravité</h3>
-                    <p class="chart-subtitle">Nombre de victimes</p>
-                    <div class="canvas-wrapper-large"><canvas id="chartGravite"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Tranches d'âge</h3>
-                    <div class="age-controls">
-                        <button id="btnAge1" onclick="changeAgeInterval(1)">1 an</button>
-                        <button id="btnAge5" class="active" onclick="changeAgeInterval(5)">5 ans</button>
-                        <button id="btnAge10" onclick="changeAgeInterval(10)">10 ans</button>
-                    </div>
-                    <div class="canvas-wrapper-large"><canvas id="chartAge"></canvas></div>
-                </div>
-            </div>
-
-            <!-- GROUPE 2 : VÉHICULES -->
-            <h2 class="section-title">🚗 Véhicules & Collisions</h2>
-            <div class="charts-grid-3">
-                <div class="chart-container">
-                    <h3>Véhicule Adverse</h3>
-                    <p class="chart-subtitle">A heurté la victime</p>
-                    <div class="canvas-wrapper-large"><canvas id="chartVehiculesAdverses"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Véhicule de la Victime</h3>
-                    <p class="chart-subtitle">Mode de déplacement</p>
-                    <div class="canvas-wrapper-large"><canvas id="chartVehicules"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Type de Collision</h3>
-                    <p class="chart-subtitle">Nature de l'impact</p>
-                    <div class="canvas-wrapper-large"><canvas id="chartCollision"></canvas></div>
-                </div>
-            </div>
-
-            <!-- GROUPE 3 : TEMPS -->
-            <h2 class="section-title">🕒 Temporalité</h2>
-            <div class="charts-grid-3">
-                <div class="chart-container">
-                    <h3>Heure de la journée</h3>
-                    <div class="canvas-wrapper"><canvas id="chartHeure"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Mois de l'année</h3>
-                    <div class="canvas-wrapper"><canvas id="chartMois"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Jours de la semaine</h3>
-                    <div class="canvas-wrapper"><canvas id="chartJourSemaine"></canvas></div>
-                </div>
-            </div>
-
-            <!-- GROUPE 4 : ENVIRONNEMENT -->
-            <h2 class="section-title">🌦️ Environnement & Infrastructure</h2>
-            <div class="charts-grid-3">
-                <div class="chart-container">
-                    <h3>Type de Route</h3>
-                    <div class="canvas-wrapper-small"><canvas id="chartTypeRoute"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Luminosité</h3>
-                    <div class="canvas-wrapper-small"><canvas id="chartLumiere"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Météo</h3>
-                    <div class="canvas-wrapper-small"><canvas id="chartMeteo"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>État de la Chaussée</h3>
-                    <div class="canvas-wrapper-small"><canvas id="chartChaussee"></canvas></div>
-                </div>
-                <div class="chart-container">
-                    <h3>Localisation (Agglomération)</h3>
-                    <div class="canvas-wrapper-small"><canvas id="chartAgglomeration"></canvas></div>
-                </div>
-            </div>
-
-        </div>
-        
-        <footer>
-            <p>© 2026 Benjamin Pannetier - Source : data.gouv.fr (BAAC)</p>
-        </footer>
-    </div>
-    
-    <script>
-        const FILES_TO_LOAD = [
-            { year: 2024, type: 'caracteristiques', url: 'data/caracteristiques-2024.csv' },
-            { year: 2024, type: 'lieux', url: 'data/lieux-2024.csv' },
-            { year: 2024, type: 'vehicules', url: 'data/vehicules-2024.csv' },
-            { year: 2024, type: 'usagers', url: 'data/usagers-2024.csv' },
-            { year: 2023, type: 'caracteristiques', url: 'data/caracteristiques-2023.csv' },
-            { year: 2023, type: 'lieux', url: 'data/lieux-2023.csv' },
-            { year: 2023, type: 'vehicules', url: 'data/vehicules-2023.csv' },
-            { year: 2023, type: 'usagers', url: 'data/usagers-2023.csv' },
-            { year: 2022, type: 'caracteristiques', url: 'data/caracteristiques-2022.csv' },
-            { year: 2022, type: 'lieux', url: 'data/lieux-2022.csv' },
-            { year: 2022, type: 'vehicules', url: 'data/vehicules-2022.csv' },
-            { year: 2022, type: 'usagers', url: 'data/usagers-2022.csv' },
-            { year: 2021, type: 'caracteristiques', url: 'data/caracteristiques-2021.csv' },
-            { year: 2021, type: 'lieux', url: 'data/lieux-2021.csv' },
-            { year: 2021, type: 'vehicules', url: 'data/vehicules-2021.csv' },
-            { year: 2021, type: 'usagers', url: 'data/usagers-2021.csv' }
-        ];
-
-        let allData = { 2021: {}, 2022: {}, 2023: {}, 2024: {} };
-        let map, pointsLayer = null, heatLayer = null;
-        let currentMapView = 'points';
-        
-        let mainAccidents = [], mainUsagers = [];
-        let activeCrossFilters = []; 
-        let currentAgeInterval = 5;
-        let lastRenderedUsgs = []; 
-        let currentHeatData = []; 
-
-        let vehiculesIndex = new Map(), lieuxIndex = new Map();
-        let usagersByAccidentIndex = new Map(), vehiculesByAccidentIndex = new Map();
-        let accidentsByIdIndex = new Map(), victimesFiltreesIndex = new Map();
-        let charts = {};
-
-        const NOMENCLATURES = {
-            vehicules: { '00': '❓ Indéterminé', '01': '🚴 Vélo', '1': '🚴 Vélo', '02': '🛵 Cyclo', '2': '🛵 Cyclo', '07': '🚗 VL', '7': '🚗 VL', '10': '🚐 VU', '13': '🚛 PL', '14': '🚛 PL', '15': '🚛 PL', '17': '🚛 Semi', '30': '🛵 Scooter', '31': '🏍️ Moto', '32': '🛵 Scooter', '33': '🏍️ Moto', '34': '🛵 Scooter', '37': '🚌 Bus', '38': '🚌 Car', '50': '🛴 EDPM', '80': '🚴 VAE' },
-            collision: { '1': '⬅️➡️ Frontale', '2': '⬅️⬅️ Arrière', '3': '⬅️⬆️ Côté', '4': '🔗 En chaîne', '5': '💥 Multiples', '6': '❓ Autre', '7': '⚠️ Sans collision' },
-            chaussee: { '1': '✅ Normale', '2': '💧 Mouillée', '3': '💧 Flaques', '4': '🌊 Inondée', '5': '❄️ Neige', '6': '🟤 Boue', '7': '🧊 Verglas', '8': '🛢️ Gras' },
-            lumiere: { '1': '☀️ Jour', '2': '🌅 Crépuscule', '3': '🌙 Nuit (sans éclairage)', '4': '🌙 Nuit (éclairage off)', '5': '💡 Nuit (éclairage on)' },
-            meteo: { '1': '☀️ Beau', '2': '🌧️ Pluie', '3': '⛈️ Forte pluie', '4': '❄️ Neige', '5': '🌫️ Brouillard', '6': '💨 Vent', '7': '😎 Éblouissant', '8': '☁️ Couvert' },
-            gravite: { '1': '✅ Indemne', '2': '💀 Tué', '3': '🏥 Hospitalisé', '4': '🩹 Blessé léger' },
-            mois: { '01': 'Jan', '02': 'Fév', '03': 'Mar', '04': 'Avr', '05': 'Mai', '06': 'Juin', '07': 'Jul', '08': 'Aoû', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Déc' },
-            catu: { '1': 'conducteur', '2': 'passager', '3': 'piéton', '4': 'piéton' },
-            typeRoute: { '1': '🛣️ Autoroute', '2': '🛣️ Nationale', '3': '🛤️ Départementale', '4': '🏘️ Communale', '5': '🏠 Hors réseau', '6': '🅿️ Parking', '7': '🏙️ Urbain' }
-        };
-
-        function showLoading(t) { document.getElementById('loadingOverlay').style.display='flex'; document.getElementById('loadingText').textContent=t; }
-        function hideLoading() { document.getElementById('loadingOverlay').style.display='none'; }
-        function updateProgress(p) { const el = document.getElementById('progressFill'); if(el) el.style.width = p + '%'; }
-        function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            map = L.map('map', { preferCanvas: true, zoomControl: true }).setView([46.603354, 1.888334], 5);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
-            pointsLayer = L.featureGroup().addTo(map);
-            
-            // --- GESTION DES SLIDERS DU LABO HEATMAP ---
-            const updateHeatmapFromSliders = () => {
-                if(!heatLayer) return;
-                let r = parseInt(document.getElementById('hmRadius').value);
-                let b = parseInt(document.getElementById('hmBlur').value);
-                let m = parseInt(document.getElementById('hmMax').value);
-                let minOp = parseInt(document.getElementById('hmMinOp').value) / 100;
-                
-                document.getElementById('valRadius').innerText = r;
-                document.getElementById('valBlur').innerText = b;
-                document.getElementById('valMax').innerText = m;
-                document.getElementById('valMinOp').innerText = minOp.toFixed(2);
-
-                heatLayer.setOptions({ radius: r, blur: b, max: m, minOpacity: minOp });
-            };
-
-            ['hmRadius', 'hmBlur', 'hmMax', 'hmMinOp'].forEach(id => {
-                document.getElementById(id).addEventListener('input', updateHeatmapFromSliders);
-            });
-            
-            loadInitialData();
-            setupSmartSelects();
-            
-            document.getElementById('citySearch')?.addEventListener('keypress', function(e) { if (e.key === 'Enter') searchCityMap(); });
-            document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-        });
-
-        function loadInitialData() {
-            let processed = 0;
-            let missingFiles = [];
-            
-            function checkFinish() {
-                if(processed === FILES_TO_LOAD.length) {
-                    setTimeout(() => { 
-                        hideLoading(); 
-                        document.getElementById('filtersSection').style.display = 'block'; 
-                        setTimeout(() => { map.invalidateSize(); }, 200); 
-                        if(missingFiles.length > 0) alert("⚠️ Fichiers introuvables :\n" + missingFiles.join("\n"));
-                    }, 500);
-                }
-            }
-
-            FILES_TO_LOAD.forEach(fileObj => {
-                Papa.parse(fileObj.url, {
-                    download: true, header: true, skipEmptyLines: true,
-                    transformHeader: h => { let c=h.replace(/^\uFEFF/,'').replace(/^"|"$/g,'').trim(); return c.toLowerCase()==='num_acc'?'Num_Acc':c; }, 
-                    transform: v => v ? v.trim() : v,
-                    complete: function(results) {
-                        allData[fileObj.year][fileObj.type] = results.data;
-                        processed++; updateProgress((processed/FILES_TO_LOAD.length)*100);
-                        checkFinish();
-                    },
-                    error: function(err) {
-                        missingFiles.push(fileObj.url);
-                        processed++; updateProgress((processed/FILES_TO_LOAD.length)*100);
-                        checkFinish();
-                    }
-                });
-            });
-        }
-
-        function setupSmartSelects() {
-            ['annee', 'typeVictime', 'vehiculeAdverse', 'gravite', 'localisation', 'lumiere'].forEach(id => {
-                const sel = document.getElementById(id);
-                if (!sel) return;
-                let last = Array.from(sel.selectedOptions).map(o => o.value);
-                sel.addEventListener('change', function() {
-                    let curr = Array.from(sel.selectedOptions).map(o => o.value);
-                    if (curr.includes('all') && !last.includes('all')) { Array.from(sel.options).forEach(o => o.selected = (o.value === 'all')); curr = ['all']; }
-                    else if (curr.includes('all') && curr.length > 1) { Array.from(sel.options).forEach(o => { if (o.value === 'all') o.selected = false; }); curr = curr.filter(v => v !== 'all'); }
-                    else if (curr.length === 0) { Array.from(sel.options).find(o => o.value === 'all').selected = true; curr = ['all']; }
-                    last = curr;
-                });
-            });
-        }
-
-        async function searchCityMap() {
-            const city = document.getElementById('citySearch').value.trim();
-            if(!city) return;
-            try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(city)},France&limit=1`);
-                const data = await res.json();
-                if(data.length > 0) map.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 12);
-            } catch(e) {}
-        }
-
-        document.getElementById('analyzeBtn').addEventListener('click', function() {
-            showLoading("Croisement et analyse en cours...");
-            document.getElementById('loadingOverlay').style.backgroundColor = 'rgba(255,255,255,0.9)'; 
-            setTimeout(() => { try { executeMainFilter(); hideLoading(); } catch(e) { hideLoading(); alert("Erreur: " + e.message); } }, 50);
-        });
-
-        const getFilterValues = (id) => {
-            const el = document.getElementById(id);
-            return el ? Array.from(el.selectedOptions).map(o=>o.value) : ['all'];
-        };
-
-        function executeMainFilter() {
-            document.getElementById('introBanner').style.display = 'none';
-            document.getElementById('mapTools').style.display = 'flex'; 
-            activeCrossFilters = [];
-            document.getElementById('crossFilterBanner').style.display = 'none';
-
-            vehiculesIndex.clear(); lieuxIndex.clear(); usagersByAccidentIndex.clear();
-            vehiculesByAccidentIndex.clear(); accidentsByIdIndex.clear(); victimesFiltreesIndex.clear();
-
-            let years = getFilterValues('annee');
-            if(years.includes('all')) years = ['2024', '2023', '2022', '2021'];
-            
-            const vType = getFilterValues('typeVictime');
-            const vAdv  = getFilterValues('vehiculeAdverse');
-            const grav  = getFilterValues('gravite');
-            const loc   = getFilterValues('localisation');
-            const lum   = getFilterValues('lumiere');
-            
-            const elDeb = document.getElementById('dateDebut');
-            const elFin = document.getElementById('dateFin');
-            const dDeb  = elDeb ? elDeb.value : '';
-            const dFin  = elFin ? elFin.value : '';
-            
-            const bounds = map.getBounds();
-
-            let allCarac = [], allLieux = [], allVeh = [], allUsg = [];
-            years.forEach(y => {
-                if(allData[y].caracteristiques) for(let i=0;i<allData[y].caracteristiques.length;i++) allCarac.push(allData[y].caracteristiques[i]);
-                if(allData[y].lieux) for(let i=0;i<allData[y].lieux.length;i++) allLieux.push(allData[y].lieux[i]);
-                if(allData[y].vehicules) for(let i=0;i<allData[y].vehicules.length;i++) allVeh.push(allData[y].vehicules[i]);
-                if(allData[y].usagers) for(let i=0;i<allData[y].usagers.length;i++) allUsg.push(allData[y].usagers[i]);
-            });
-
-            allVeh.forEach(v => vehiculesIndex.set(v.id_vehicule, v));
-            allLieux.forEach(l => lieuxIndex.set(l.Num_Acc, l));
-            allUsg.forEach(u => { if(!usagersByAccidentIndex.has(u.Num_Acc)) usagersByAccidentIndex.set(u.Num_Acc,[]); usagersByAccidentIndex.get(u.Num_Acc).push(u); });
-            allVeh.forEach(v => { if(!vehiculesByAccidentIndex.has(v.Num_Acc)) vehiculesByAccidentIndex.set(v.Num_Acc,[]); vehiculesByAccidentIndex.get(v.Num_Acc).push(v); });
-
-            let usagersPreFiltres = allUsg.filter(u => {
-                if(u.grav === '1') return false; 
-                if(!grav.includes('all') && !grav.includes(u.grav)) return false;
-                
-                if(!vType.includes('all')) {
-                    if(u.catu === '3' || u.catu === '4') { if(!vType.includes('3')) return false; }
-                    else {
-                        const veh = vehiculesIndex.get(u.id_vehicule);
-                        if(!veh || !veh.catv) return false;
-                        const c = veh.catv.trim().padStart(2,'0');
-                        if(!vType.some(f => f.includes(',') ? f.split(',').some(x=>x.padStart(2,'0')===c) : f.padStart(2,'0')===c)) return false;
-                    }
-                }
-                if(!vAdv.includes('all')) {
-                    const vacc = vehiculesByAccidentIndex.get(u.Num_Acc) || [];
-                    let va = (u.catu==='3'||u.catu==='4') ? vacc : vacc.filter(v=>v.id_vehicule!==u.id_vehicule);
-                    if(va.length===0) { if(!vAdv.includes('sans')) return false; }
-                    else {
-                        if(!va.some(v => {
-                            const c = (v.catv||'').trim().padStart(2,'0');
-                            return vAdv.some(f => f==='sans'?false: (f.includes(',') ? f.split(',').some(x=>x.padStart(2,'0')===c) : f.padStart(2,'0')===c));
-                        })) return false;
-                    }
-                }
-                return true;
-            });
-
-            const validAccIds = new Set(usagersPreFiltres.map(u => u.Num_Acc));
-
-            mainAccidents = allCarac.filter(acc => {
-                if(!validAccIds.has(acc.Num_Acc)) return false;
-                if(!loc.includes('all') && !loc.includes(acc.agg)) return false;
-                if(!lum.includes('all') && !lum.includes(acc.lum)) return false;
-                
-                if (dDeb || dFin) {
-                    let a = parseInt(acc.an); if(a<100) a+=2000;
-                    const d = new Date(a, parseInt(acc.mois)-1, parseInt(acc.jour));
-                    if(dDeb && d < new Date(dDeb)) return false;
-                    if(dFin && d > new Date(dFin)) return false;
-                }
-
-                if(acc.lat && acc.long) {
-                    const lat = parseFloat(acc.lat.replace(',','.'));
-                    const lon = parseFloat(acc.long.replace(',','.'));
-                    if(isNaN(lat) || isNaN(lon)) return false;
-                    if(!bounds.contains([lat, lon])) return false;
-                } else return false; 
-
-                return true;
-            });
-
-            const finalIds = new Set(mainAccidents.map(a => a.Num_Acc));
-            mainUsagers = usagersPreFiltres.filter(u => finalIds.has(u.Num_Acc));
-
-            mainAccidents.C'est une très bonne approche de faire de l'A/B testing par vous-même pour trouver la configuration parfaite. 
-
-Pour vous donner un peu de théorie sur la bibliothèque `Leaflet.heat` que nous utilisons, il y a **4 paramètres fondamentaux** qui changent drastiquement l'aspect de la Heatmap :
-*   **Rayon (Radius)** : La taille de la bulle autour de l'accident. Un grand rayon fusionne les points (effet blob), un petit rayon dessine des lignes (effet axes routiers).
-*   **Flou (Blur)** : Permet de fondre les couleurs entre elles. 
-*   **Seuil d'alerte (Max)** : C'est le point de bascule vers la couleur **rouge**. S'il est bas, un seul mort fera un gros point rouge. S'il est très élevé, il faudra 50 morts au même endroit pour que ça passe du jaune au rouge (le reste sera bleu/vert).
-*   **Opacité minimale (MinOpacity)** : L'opacité des zones où il n'y a qu'un seul point isolé.
-
-J'ai respecté votre consigne : **je n'ai absolument rien touché d'autre** (vos popups, la recherche Google, les graphiques et le responsive sont strictement conservés tels quels). 
-
-J'ai juste corrigé le bug de chargement infini (qui était dû à un résidu de fonction `updateHeatmapScale` qui n'existait plus) et j'ai remplacé votre slider unique par un **panneau de contrôle "Laboratoire" de la Heatmap avec 4 curseurs**. 
-
-Vous allez pouvoir tout tester en temps réel ! 
-
-Voici le code à copier-coller :
-
-```html
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Analyse des Accidents de la Route - France</title>
-    
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚗</text></svg>">
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; padding: 10px; color: #333; }
-        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
-        header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 20px; text-align: center; }
-        header h1 { font-size: clamp(1.4em, 4vw, 2.4em); margin-bottom: 5px; }
-        footer { background: #2c3e50; color: white; padding: 15px; text-align: center; font-size: 0.85em; margin-top: 20px;}
-        
-        .intro-banner { background: #e3f2fd; border-left: 5px solid #2196f3; padding: 20px; margin: 15px; border-radius: 8px; }
-        .intro-banner h3 { color: #1565c0; margin-bottom: 10px; font-size: 1.2em; }
-        .intro-banner ol { margin-left: 20px; line-height: 1.7; font-size: 0.95em; color: #2c3e50; }
-        .intro-banner li span { font-weight: bold; color: #1e3c72; }
-
-        .filters { background: #ffffff; padding: 20px; border-bottom: 3px solid #e9ecef; display: none; }
-        .filter-group { margin-bottom: 15px; }
-        .filter-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #2c3e50; font-size: 0.95em; }
-        .filter-group select, .filter-group input { width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; background: #fdfdfd; }
-        .filter-group select { min-height: 120px; }
-        
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
-        
-        .btn { background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); color: white; padding: 18px 20px; border: none; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; width: 100%; margin-top: 20px; box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); transition: all 0.3s;}
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(66, 133, 244, 0.4); }
-        
-        .map-selection-zone { background: #f8f9fa; border: 2px dashed #667eea; border-radius: 12px; padding: 15px; margin-top: 20px; }
-        .search-box { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; }
-        .search-box input { flex: 1; min-width: 200px; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
-        .search-box button { padding: 12px 20px; background: #667eea; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;}
-        
-        #map { height: 50vh; min-height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ccc; z-index: 1; }
-        @media (min-width: 768px) { #map { height: 550px; } }
-
-        .map-tools { display: flex; background: white; padding: 12px; border-radius: 8px; margin-top: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex-wrap: wrap; gap: 15px; justify-content: space-between; align-items: center;}
-        .map-view-controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center;}
-        .map-legend { display: flex; flex-wrap: wrap; gap: 12px; align-items: center;}
-        .legend-item { display: flex; align-items: center; font-size: 0.85em; font-weight: 600; }
-        .legend-marker { border-radius: 50%; margin-right: 6px; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-        .view-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.9em; }
-        .view-btn.active { background: #667eea; color: white; border-color: #667eea; }
-
-        /* Le contrôle laboratoire de la Heatmap */
+        /* Le contrôle de la Heatmap */
         #heatmapControls { display: none; flex-direction: column; gap: 8px; background: #fdfdfd; padding: 10px; border-radius: 8px; border: 1px solid #e0e0e0; width: 100%; flex: 1 1 100%; }
         #heatmapControls label { font-size: 0.85em; font-weight: 600; margin: 0; color: #1e3c72; width: 130px; display: inline-block;}
         .heatmap-slider-row { display: flex; align-items: center; gap: 10px; width: 100%; }
@@ -754,7 +111,9 @@ Voici le code à copier-coller :
         
         .btn-voir-plus { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; text-align: center; display: block;}
         .btn-voir-plus:hover { opacity: 0.9; }
-        
+        .popup-victim { background: #fff3e0; padding: 8px; margin: 6px 0; border-left: 3px solid #ff6b35; border-radius: 4px; font-size: 0.9em;}
+        .popup-responsible { background: #e8f5e9; padding: 6px; margin: 4px 0 4px 8px; border-left: 3px solid #4caf50; border-radius: 4px; font-size: 0.85em; }
+
         .age-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
         .age-controls button { padding: 4px 10px; border-radius: 15px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.8em;}
         .age-controls button.active { background: #667eea; color: white; border-color: #667eea; }
@@ -956,7 +315,7 @@ Voici le code à copier-coller :
                 </div>
             </div>
 
-            <!-- GROUPE 2 : VÉHICULES -->
+            <!-- GROUPE 2 : VÉHICULES (TOUS EN BARRES HORIZONTALES) -->
             <h2 class="section-title">🚗 Véhicules & Collisions</h2>
             <div class="charts-grid-3">
                 <div class="chart-container">
@@ -1333,6 +692,7 @@ Voici le code à copier-coller :
             currentMapView = view;
             document.getElementById('btnViewPoints').classList.remove('active');
             document.getElementById('btnViewHeatmap').classList.remove('active');
+            
             if (map && pointsLayer) map.removeLayer(pointsLayer);
             if (map && heatLayer) map.removeLayer(heatLayer);
             
@@ -1399,6 +759,7 @@ Voici le code à copier-coller :
                 const long = parseFloat(acc.long.replace(',','.'));
                 const gravMax = Math.min(...victimes.map(u => parseInt(u.grav)||4));
                 
+                // Pondération stricte
                 let weight = (gravMax === 2) ? 4 : (gravMax === 3 ? 2 : 1);
                 currentHeatData.push([lat, long, weight]);
 
@@ -1406,11 +767,15 @@ Voici le code à copier-coller :
                 let rad = gravMax === 2 ? 8 : (gravMax === 3 ? 6 : 4);
                 
                 const m = L.circleMarker([lat, long], { radius: rad, color: 'white', weight: 1, fillColor: color, fillOpacity: 0.8 });
-                m.bindPopup(() => generateDetailedPopup(acc, victimes), { maxWidth: 350 });
+                // CLIC DIRECT SUR LA CARTE (Pop-up détaillé)
+                m.on('click', function(e) {
+                    const content = generateDetailedPopup(acc, victimes);
+                    L.popup({ maxWidth: 350 }).setLatLng(e.latlng).setContent(content).openOn(map);
+                });
                 pointsLayer.addLayer(m);
             });
 
-            // Initialisation avec les valeurs des sliders
+            // Initialisation avec les valeurs des sliders HTML
             let hr = parseInt(document.getElementById('heatRadius').value) || 10;
             let hb = parseInt(document.getElementById('heatBlur').value) || 15;
             let hm = parseInt(document.getElementById('heatMax').value) || 15;
@@ -1502,6 +867,7 @@ Voici le code à copier-coller :
             charts.agg = createHorizontalBarChart('chartAgglomeration', sortDict(aggCount), '#4caf50', (e, l) => handleCrossFilterClick(e, 'Agglo', l, new Set(aggAcc[l])));
         }
 
+        // --- CHART.JS FACTORIES ---
         const cOpts = (cb) => ({
             responsive: true, maintainAspectRatio: false,
             onClick: cb ? (e, els) => { if(els.length>0) cb(e.native, e.chart.data.labels[els[0].index]); } : null,
@@ -1534,11 +900,12 @@ Voici le code à copier-coller :
             return new Chart(document.getElementById(id), { type: 'pie', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: Object.keys(dict).map(k=>colorMap[k]||'#ccc') }] }, options: o });
         }
 
-        // --- POPUPS & RECHERCHE GOOGLE ---
+        // --- POPUPS DÉTAILLÉS & RECHERCHE GOOGLE ---
         function generateDetailedPopup(acc, victimes) {
             const l = lieuxIndex.get(acc.Num_Acc); const meteo = NOMENCLATURES.meteo[acc.atm]||'?';
-            let c = `<div style="max-width:320px; font-family:sans-serif;"><strong>📅 ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
-            if(l&&l.voie) c+=`📍 ${l.voie}<br>`; c+=`☁️ ${meteo}<br><br>`;
+            let c = `<div style="max-width:350px; font-family:sans-serif; font-size:13px;">`;
+            c += `<strong style="font-size:1.1em; color:#1e3c72;">📅 ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
+            if(l&&l.voie) c += `📍 ${l.voie}<br>`; c += `☁️ Météo : ${meteo}<br><br>`;
             
             const vehiculesAcc = vehiculesByAccidentIndex.get(acc.Num_Acc) || [];
             const tousUsagers = usagersByAccidentIndex.get(acc.Num_Acc) || [];
@@ -1548,27 +915,30 @@ Voici le code à copier-coller :
             victimes.forEach((victime, index) => {
                 const age = acc.an && victime.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(victime.an_nais) : null;
                 const sexe = victime.sexe === '1' ? 'un homme' : (victime.sexe === '2' ? 'une femme' : 'une personne');
+                const graviteTexte = NOMENCLATURES.gravite[victime.grav] || 'blessé(e)';
                 
                 c += `<div class="popup-victim">`;
-                c += `<strong>⚠️ Victime ${index + 1} :</strong> ${sexe}${age ? ` de ${age} ans` : ''}, <strong>${NOMENCLATURES.gravite[victime.grav] || 'blessé(e)'}</strong><br>`;
+                c += `<strong>⚠️ Victime ${index + 1} :</strong> ${sexe}${age ? ` de ${age} ans` : ''}, <strong>${graviteTexte}</strong><br>`;
                 
                 let typeVehiculeVictime = '';
                 if (victime.catu === '3' || victime.catu === '4') typeVehiculeVictime = '(🚶 Piéton)';
                 else { const vInfo = vMap.get(victime.id_vehicule); if (vInfo) typeVehiculeVictime = `du ${vInfo.idText} (${vInfo.type})`; }
-                c += `${(NOMENCLATURES.catu[victime.catu] || 'occupant').charAt(0).toUpperCase() + (NOMENCLATURES.catu[victime.catu] || 'occupant').slice(1)} ${typeVehiculeVictime}`;
+                const role = NOMENCLATURES.catu[victime.catu] || 'occupant';
+                c += `${role.charAt(0).toUpperCase() + role.slice(1)} ${typeVehiculeVictime}`;
                 
                 let collision = NOMENCLATURES.collision[acc.col] || 'Autre collision';
                 if (collision !== '⚠️ Sans collision') {
-                    let advs = (victime.catu === '3' || victime.catu === '4') ? vehiculesAcc : vehiculesAcc.filter(v => v.id_vehicule !== victime.id_vehicule);
-                    if (advs.length > 0) {
-                        const vAdvInfo = vMap.get(advs[0].id_vehicule);
+                    let vehiculesAdverses = (victime.catu === '3' || victime.catu === '4') ? vehiculesAcc : vehiculesAcc.filter(v => v.id_vehicule !== victime.id_vehicule);
+                    if (vehiculesAdverses.length > 0) {
+                        const vehiculeAdverse = vehiculesAdverses[0];
+                        const vAdvInfo = vMap.get(vehiculeAdverse.id_vehicule);
                         const typeAdverse = vAdvInfo ? `${vAdvInfo.idText} (${vAdvInfo.type})` : 'un véhicule';
-                        const conducteur = tousUsagers.find(u => u.id_vehicule === advs[0].id_vehicule && u.catu === '1');
+                        const conducteurAdverse = tousUsagers.find(u => u.id_vehicule === vehiculeAdverse.id_vehicule && u.catu === '1');
                         
                         c += `<div class="popup-responsible">💥 ${collision} avec le ${typeAdverse}`;
-                        if (conducteur) {
-                            const ageAdv = acc.an && conducteur.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(conducteur.an_nais) : null;
-                            const sexeAdv = conducteur.sexe === '1' ? 'un homme' : (conducteur.sexe === '2' ? 'une femme' : 'une personne');
+                        if (conducteurAdverse) {
+                            const ageAdv = acc.an && conducteurAdverse.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(conducteurAdverse.an_nais) : null;
+                            const sexeAdv = conducteurAdverse.sexe === '1' ? 'un homme' : (conducteurAdverse.sexe === '2' ? 'une femme' : 'une personne');
                             c += ` conduit par ${sexeAdv}${ageAdv ? ` de ${ageAdv} ans` : ''}`;
                         }
                         c += `</div>`;
@@ -1576,8 +946,8 @@ Voici le code à copier-coller :
                 } else { c += `<div class="popup-responsible">⚠️ Sans collision (perte de contrôle)</div>`; }
                 c += `</div>`;
             });
-            c+=`<button class="btn-voir-plus" onclick="showAccidentDetails('${acc.Num_Acc}')">📋 Détails complets</button>`;
-            c+=`<button class="btn-voir-plus" data-accident-id="${acc.Num_Acc}" onclick="openGoogleSearch(this)" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); margin-top: 8px;">🔍 Rechercher sur Google</button></div>`;
+            c += `<button class="btn-voir-plus" onclick="window.showAccidentDetails('${acc.Num_Acc}')" style="margin-top: 10px;">📋 Voir le rapport complet</button>`;
+            c += `<button class="btn-voir-plus" data-accident-id="${acc.Num_Acc}" onclick="window.openGoogleSearch(this)" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); margin-top: 8px;">🔍 Rechercher sur Google</button></div>`;
             return c;
         }
 
@@ -1589,40 +959,48 @@ Voici le code à copier-coller :
                 let h = `<h2>📋 Rapport d'accident #${id}</h2>`;
                 h += `<div class="info-section"><h3>📅 Date et lieu</h3><p><strong>Date :</strong> ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</p>`;
                 if (l && l.voie) h += `<p><strong>Lieu :</strong> ${l.voie}</p>`;
-                h += `<p><strong>Commune :</strong> ${acc.com || 'Inconnue'} | ${acc.agg === '2' ? 'En agglomération' : 'Hors agglomération'}</p><p><strong>Collision :</strong> ${NOMENCLATURES.collision[acc.col] || 'Inconnue'}</p></div>`;
+                h += `<p><strong>Commune :</strong> ${acc.com || 'Inconnue'} | ${acc.agg === '2' ? 'En agglomération' : 'Hors agglomération'}</p><p><strong>Type de collision :</strong> ${NOMENCLATURES.collision[acc.col] || 'Inconnue'}</p></div>`;
                 
                 h += `<div class="info-section"><h3>🌤️ Conditions</h3><p><strong>Météo :</strong> ${NOMENCLATURES.meteo[acc.atm] || 'Inconnue'} | <strong>Luminosité :</strong> ${NOMENCLATURES.lumiere[acc.lum] || 'Inconnue'}</p>`;
-                if (l) h += `<p><strong>Chaussée :</strong> ${NOMENCLATURES.chaussee[l.surf] || 'Inconnu'} | <strong>Route :</strong> ${NOMENCLATURES.typeRoute[l.catr] || 'Inconnu'}</p>`;
+                if (l) h += `<p><strong>État de la chaussée :</strong> ${NOMENCLATURES.chaussee[l.surf] || 'Inconnu'} | <strong>Type de route :</strong> ${NOMENCLATURES.typeRoute[l.catr] || 'Inconnu'}</p>`;
                 h += `</div>`;
                 
                 const victimes = usgs.filter(u => u.grav !== '1');
-                h += `<div class="info-section"><h3>📊 Bilan humain</h3><p>Total impliqués : ${usgs.length} | Tués : ${victimes.filter(u => u.grav === '2').length} | Hosp. : ${victimes.filter(u => u.grav === '3').length} | Légers : ${victimes.filter(u => u.grav === '4').length}</p></div>`;
+                h += `<div class="info-section"><h3>📊 Bilan humain</h3><p><strong>Total impliqués :</strong> ${usgs.length}</p>`;
+                if (victimes.filter(u => u.grav === '2').length > 0) h += `<p><strong>💀 Tués :</strong> ${victimes.filter(u => u.grav === '2').length}</p>`;
+                if (victimes.filter(u => u.grav === '3').length > 0) h += `<p><strong>🏥 Blessés hospitalisés :</strong> ${victimes.filter(u => u.grav === '3').length}</p>`;
+                if (victimes.filter(u => u.grav === '4').length > 0) h += `<p><strong>🩹 Blessés légers :</strong> ${victimes.filter(u => u.grav === '4').length}</p>`;
+                h += `</div><h3>👥 Détail des personnes impliquées</h3>`;
                 
-                h += `<h3>👥 Personnes impliquées</h3>`;
                 usgs.forEach((u, index) => {
                     const className = u.grav !== '1' ? 'victim-card' : 'victim-card indemne';
-                    h += `<div class="${className}"><strong>Personne ${index + 1}</strong>`;
+                    h += `<div class="${className}"><p><strong>Personne ${index + 1}</strong></p>`;
                     const age = acc.an && u.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(u.an_nais) : null;
                     const sexe = u.sexe === '1' ? 'Homme' : (u.sexe === '2' ? 'Femme' : 'Non précisé');
-                    h += `<br>Sexe: ${sexe}${age ? ` | Âge: ${age} ans` : ''}`;
-                    let typeVehicule = (u.catu === '3' || u.catu === '4') ? '🚶 Piéton' : (vMap.get(u.id_vehicule) ? `${vMap.get(u.id_vehicule).idText} (${vMap.get(u.id_vehicule).type})` : '');
-                    h += `<br>Rôle: ${NOMENCLATURES.catu[u.catu] || 'Occupant'} ${typeVehicule ? ' - ' + typeVehicule : ''}`;
-                    h += `<br>État: <strong>${NOMENCLATURES.gravite[u.grav] || 'Inconnu'}</strong></div>`;
+                    h += `<p><strong>Sexe :</strong> ${sexe}${age ? ` | <strong>Âge :</strong> ${age} ans` : ''}</p>`;
+                    
+                    let typeVehicule = '';
+                    if (u.catu === '3' || u.catu === '4') typeVehicule = '🚶 Piéton';
+                    else { const vInfo = vMap.get(u.id_vehicule); if (vInfo) typeVehicule = `${vInfo.idText} (${vInfo.type})`; }
+                    const role = NOMENCLATURES.catu[u.catu] || 'Occupant';
+                    h += `<p><strong>Rôle :</strong> ${role.charAt(0).toUpperCase() + role.slice(1)} ${typeVehicule ? ' - ' + typeVehicule : ''}</p>`;
+                    h += `<p><strong>État : ${NOMENCLATURES.gravite[u.grav] || 'Inconnu'}</strong></p></div>`;
                 });
 
                 if (vehs.length > 0) {
-                    h += `<h3>🚗 Véhicules</h3>`;
+                    h += `<h3>🚗 Véhicules impliqués</h3>`;
                     vehs.forEach((v, index) => {
-                        const cond = usgs.find(u => u.id_vehicule === v.id_vehicule && u.catu === '1');
-                        h += `<div class="info-section"><strong>Véhicule ${index + 1} :</strong> ${NOMENCLATURES.vehicules[v.catv] || 'Type inconnu'}`;
-                        if (cond) {
-                            const ageCond = acc.an && cond.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(cond.an_nais) : null;
-                            const sexeCond = cond.sexe === '1' ? 'un homme' : (cond.sexe === '2' ? 'une femme' : 'conducteur');
-                            h += `<br>Conduit par ${sexeCond}${ageCond ? ` de ${ageCond} ans` : ''}`;
+                        const conducteur = usgs.find(u => u.id_vehicule === v.id_vehicule && u.catu === '1');
+                        h += `<div class="info-section"><p><strong>Véhicule ${index + 1} :</strong> ${NOMENCLATURES.vehicules[v.catv] || 'Type inconnu'}</p>`;
+                        if (conducteur) {
+                            const ageCond = acc.an && conducteur.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(conducteur.an_nais) : null;
+                            const sexeCond = conducteur.sexe === '1' ? 'un homme' : (conducteur.sexe === '2' ? 'une femme' : 'conducteur');
+                            h += `<p>Conduit par ${sexeCond}${ageCond ? ` de ${ageCond} ans` : ''} (voir Personne ci-dessus)</p>`;
                         }
                         h += `</div>`;
                     });
                 }
+                h += `<button class="btn-voir-plus" data-accident-id="${id}" onclick="window.openGoogleSearch(this)" style="background: #4285f4; margin-top:15px;">🔍 Chercher des infos sur Google</button>`;
                 document.getElementById('modalBody').innerHTML = h; document.getElementById('modalOverlay').style.display='flex';
             } catch(e) { console.error(e); }
         }
