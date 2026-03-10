@@ -2,6 +2,187 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analyse des Accidents de la Route - France</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🚗</text></svg>">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 10px; }
+        .container { max-width: 1600px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden; }
+        header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 15px; text-align: center; }
+        header h1 { font-size: clamp(1.2em, 4vw, 2.2em); margin-bottom: 5px; }
+        header p { font-size: clamp(0.8em, 2vw, 1em); opacity: 0.9; }
+        footer { background: #2c3e50; color: white; padding: 15px; text-align: center; font-size: 0.85em; }
+        footer a { color: #667eea; text-decoration: none; }
+        
+        .filters { background: #f8f9fa; padding: 15px; border-bottom: 3px solid #e9ecef; display: none; }
+        .filter-group { margin-bottom: 15px; }
+        .filter-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #2c3e50; font-size: 0.95em; }
+        
+        .filter-group select { width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; background: white; min-height: 100px; }
+        .filter-group input[type="date"], .filter-group input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; }
+        @media (min-width: 768px) { .filter-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); } }
+        
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 20px; border: none; border-radius: 10px; font-size: 1.1em; font-weight: bold; cursor: pointer; width: 100%; margin-top: 15px; box-shadow: 0 4px 6px rgba(102, 126, 234, 0.3); transition: all 0.3s;}
+        .btn:active { transform: scale(0.98); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
+        .btn-update { background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%); font-size: 0.95em; padding: 12px; }
+        .btn-voir-plus { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95em; margin-top: 10px; width: 100%; display: block; }
+        
+        .search-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        @media (min-width: 500px) { .search-box { flex-direction: row; } .search-box button { width: auto; } }
+        .search-box input[type="text"] { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
+        .search-box button { padding: 12px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-weight: 600; font-size: 1em; cursor: pointer;}
+        
+        .map-view-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        
+        #map { height: 50vh; min-height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ddd; z-index: 1; }
+        @media (min-width: 768px) { #map { height: 600px; } }
+        
+        .content { padding: 15px; }
+        @media (min-width: 768px) { .content { padding: 20px; } }
+        
+        .section-title { font-size: clamp(1.2em, 3vw, 1.6em); color: #2c3e50; margin: 20px 0 10px 0; padding-bottom: 8px; border-bottom: 3px solid #667eea; }
+        .section-subtitle { font-size: 0.9em; color: #666; margin-bottom: 15px; font-style: italic; }
+        
+        .map-info { background: #e3f2fd; border-left: 4px solid #2196f3; padding: 12px; margin-bottom: 15px; border-radius: 4px; font-size: 0.9em; }
+        .map-info p { margin: 5px 0; color: #1565c0; font-weight: 600; }
+        #mapHighlightInfo { background: #e3f2fd; border: 2px solid #2196f3; padding: 12px; margin-top: 15px; border-radius: 8px; color: #1565c0; display: none; font-size: 0.9em; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        .map-legend { background: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .map-legend h4 { margin-bottom: 10px; font-size: 0.95em; }
+        .legend-item { display: flex; align-items: center; margin: 6px 0; font-size: 0.85em; }
+        .legend-marker { width: 14px; height: 14px; border-radius: 50%; margin-right: 8px; border: 2px solid white; box-shadow: 0 1px 3px rgba(0,0,0,0.3); flex-shrink: 0;}
+        .definition-note { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-top: 10px; border-radius: 4px; font-size: 0.85em; color: #856404; line-height: 1.4; }
+        
+        .charts-grid { display: grid; grid-template-columns: 1fr; gap: 15px; margin-top: 20px; }
+        @media (min-width: 768px) { .charts-grid { grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; } }
+        
+        .chart-container { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid #eee; position: relative; transition: all 0.3s;}
+        .chart-container.active-filter { border: 2px solid #2196f3; box-shadow: 0 0 10px rgba(33, 150, 243, 0.3); transform: translateY(-2px);}
+        .chart-container.wide { grid-column: 1 / -1; }
+        @media (min-width: 1200px) { .chart-container.wide { grid-column: span 2; } }
+        .chart-container h3 { text-align: center; color: #2c3e50; margin-bottom: 5px; font-size: 1.05em; }
+        .chart-subtitle, .chart-hint { text-align: center; font-size: 0.8em; color: #666; font-style: italic; }
+        .chart-hint { margin-top: 10px; }
+        
+        .stats-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
+        @media (min-width: 600px) { .stats-summary { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; } }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .stat-card:nth-child(1), .stat-card:nth-child(2) { grid-column: span 2; }
+        @media (min-width: 600px) { .stat-card:nth-child(1), .stat-card:nth-child(2) { grid-column: auto; } }
+        .stat-card .number { font-size: 1.8em; font-weight: 700; margin-bottom: 5px; }
+        .stat-card .label { font-size: 0.85em; opacity: 0.9; }
+        
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.95); display: flex; justify-content: center; align-items: center; z-index: 9999; flex-direction: column; padding: 20px; text-align: center; }
+        .loading-overlay h2 { color: #1e3c72; margin-bottom: 15px; }
+        .loading-overlay p { color: #555; font-size: 0.9em; max-width: 400px; line-height: 1.5; margin-bottom: 20px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .progress-bar-container { width: 100%; max-width: 300px; height: 12px; background: #e0e0e0; border-radius: 6px; overflow: hidden; margin-bottom: 10px; }
+        .progress-fill { height: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 0%; transition: width 0.3s; }
+        
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: flex-end; z-index: 10000; }
+        @media (min-width: 768px) { .modal-overlay { align-items: center; padding: 20px; } }
+        .modal-content { background: white; border-radius: 20px 20px 0 0; width: 100%; max-width: 800px; max-height: 85vh; overflow-y: auto; padding: 25px 20px; position: relative; animation: slideUp 0.3s ease-out; }
+        @media (min-width: 768px) { .modal-content { border-radius: 15px; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-close { position: absolute; top: 15px; right: 15px; background: #f1f1f1; color: #333; border: none; border-radius: 50%; width: 35px; height: 35px; font-size: 20px; cursor: pointer; display: flex; justify-content: center; align-items: center; }
+        
+        .accident-report { line-height: 1.6; font-size: 0.95em; }
+        .accident-report h2 { color: #1e3c72; margin-bottom: 15px; font-size: 1.3em; padding-right: 30px; }
+        .accident-report h3 { color: #667eea; margin: 15px 0 10px 0; font-size: 1.1em; }
+        .accident-report .info-section { background: #f8f9fa; padding: 12px; border-left: 4px solid #667eea; margin: 8px 0; border-radius: 6px; }
+        .accident-report .victim-card { background: #fff3e0; padding: 12px; margin: 8px 0; border-left: 4px solid #ff6b35; border-radius: 6px; }
+        .accident-report .victim-card.indemne { background: #e8f5e9; border-left-color: #4caf50; }
+        
+        .leaflet-popup-content { font-size: 0.9em !important; line-height: 1.5; margin: 10px !important; }
+        .popup-victim { background: #fff3e0; padding: 8px; margin: 6px 0; border-left: 3px solid #ff6b35; border-radius: 4px; }
+        .popup-responsible { background: #e8f5e9; padding: 6px; margin: 4px 0 4px 8px; border-left: 3px solid #4caf50; border-radius: 4px; font-size: 0.9em; }
+        
+        .age-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 10px; }
+        .age-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: 600; font-size: 0.85em; transition: all 0.2s; }
+        .age-btn.active { background: #667eea; color: white; border-color: #667eea; box-shadow: 0 2px 5px rgba(102, 126, 234, 0.4); }
+        .update-indicator { display: inline-block; width: 10px; height: 10px; background: #4caf50; border-radius: 50%; margin-right: 8px; animation: pulse 2s infinite; }
+        .update-indicator.outdated { background: #ff9800; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+    <div class="loading-overlay" id="loadingOverlay">
+        <h2>🚗 Base de Données Sécurité Routière</h2>
+        <div class="spinner"></div>
+        <div class="progress-bar-container"><div class="progress-fill" id="progressFill"></div></div>
+        <p id="loadingText">Téléchargement et préparation des données...<br><small>(Cela peut prendre quelques secondes selon votre connexion)</small></p>
+    </div>
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">×</button>
+            <div id="modalBody" class="accident-report"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>🚗 Accidents de la Route en France</h1>
+            <p>Données officielles BAAC (2021-2024)</p>
+        </header>
+        
+        <div class="filters" id="filtersSection">
+            <p style="color: #666; margin-bottom: 15px; font-size: 0.85em; text-align: center;"><em>Appuyez sur un ou plusieurs éléments pour filtrer (Maintenez Ctrl/Cmd sur ordinateur).</em></p>
+            
+            <div class="search-box">
+                <input type="text" id="filtreVille" placeholder="🔍 Restreindre à une ville (ex: Bordeaux)" />
+            </div>
+
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label for="annee">Années</label>
+                    <select id="annee" multiple size="5">
+                        <option value="all">Toutes les années</option>
+                        <option value="2024" selected>2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Période d'accident</label>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input type="date" id="dateDebut" title="Date de début">
+                        <input type="date" id="dateFin" title="Date de fin">
+                    </div>
+                </div>
+
+Vous avez effectivement fait une petite erreur de "copier-coller" qui a cassé le code 😅 ! 
+
+En insérant la correction pour la RAM de l'iPhone, vous avez accidentellement imbriqué la déclaration de la fonction `analyzeData()` **à l'intérieur** du bouton de clic.
+Ce qui a donné ça : `try { await async function analyzeData() {` (C'est une syntaxe interdite en JavaScript, ce qui a fait planter l'analyse silencieusement).
+
+J'ai totalement réparé cette erreur. De plus, j'ai ajouté les **deux excellentes améliorations d'expérience utilisateur (UX)** que vous avez demandées :
+
+1. **Option "Toutes les années"** : Elle est maintenant dans le menu déroulant (et sélectionnée par défaut).
+2. **Décochage automatique (Anti-erreur)** : J'ai créé un petit script intelligent. Si on choisit "Tous les types", ça décoche tout le reste. Si "Tous les types" est coché et qu'on clique sur "Piéton", ça décoche "Tous les types" automatiquement. S'il n'y a plus rien de coché, ça recoche "Tous les types" par sécurité !
+
+Voici le code complet et propre, prêt à être collé dans votre `index.html` :
+
+```html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
     <!-- Optimisation majeure pour iOS/Safari : empêche le zoom sur les clics et adapte parfaitement la largeur -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Analyse des Accidents de la Route - France</title>
@@ -152,8 +333,9 @@
             <div class="filter-grid">
                 <div class="filter-group">
                     <label for="annee">Années</label>
-                    <select id="annee" multiple size="4">
-                        <option value="2024" selected>2024</option>
+                    <select id="annee" multiple size="5">
+                        <option value="all" selected>Toutes les années</option>
+                        <option value="2024">2024</option>
                         <option value="2023">2023</option>
                         <option value="2022">2022</option>
                         <option value="2021">2021</option>
@@ -359,7 +541,6 @@
     </div>
     
     <script>
-        // LIENS DES FICHIERS (Modifiez-les au besoin)
         const FILES_TO_LOAD = [
             { year: 2024, type: 'caracteristiques', url: 'data/caracteristiques-2024.csv' },
             { year: 2024, type: 'lieux', url: 'data/lieux-2024.csv' },
@@ -432,7 +613,6 @@
         function updateProgress(percent) { document.getElementById('progressFill').style.width = percent + '%'; }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
-        // --- CHARGEMENT AUTOMATIQUE CORRIGÉ ---
         function loadInitialData() {
             let processed = 0;
             updateProgress(0);
@@ -443,12 +623,10 @@
                     setTimeout(() => {
                         hideLoading();
                         document.getElementById('filtersSection').style.display = 'block';
-                        
                         if (missingFiles.length > 0) {
                             alert("⚠️ Attention, le code n'a pas pu lire ces fichiers :\n\n" + missingFiles.join("\n"));
-                            return; // Empêche l'analyse dans le vide si les données manquent
+                            return; 
                         }
-                        
                         document.getElementById('analyzeBtn').click();
                     }, 800);
                 }
@@ -458,7 +636,6 @@
                 Papa.parse(fileObj.url, {
                     download: true,
                     header: true,
-                    // SUPPRESSION de delimiter: ';' pour que PapaParse s'adapte automatiquement (Virgule ou Point-Virgule)
                     quoteChar: '"',
                     skipEmptyLines: true,
                     transformHeader: h => {
@@ -466,7 +643,7 @@
                         if (cleanH.toLowerCase() === 'num_acc') return 'Num_Acc';
                         return cleanH;
                     }, 
-                    transform: v => v ? v.trim() : v, // Reste robuste face aux cellules vides
+                    transform: v => v ? v.trim() : v,
                     complete: function(results) {
                         allData[fileObj.year][fileObj.type] = results.data;
                         processed++;
@@ -487,29 +664,96 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadInitialData();
             
+            // --- NOUVEAUTÉ UX : Décochage automatique intelligent pour les menus multiples ---
+            const selectsExclusifs = ['annee', 'typeVictime', 'vehiculeAdverse', 'gravite', 'localisation', 'lumiere'];
+            
+            selectsExclusifs.forEach(id => {
+                const select = document.getElementById(id);
+                if (!select) return;
+                
+                let lastSelected = Array.from(select.selectedOptions).map(o => o.value);
+
+                select.addEventListener('change', function() {
+                    let currentSelected = Array.from(select.selectedOptions).map(o => o.value);
+                    
+                    // Si l'utilisateur vient de cliquer sur "all"
+                    if (currentSelected.includes('all') && !lastSelected.includes('all')) {
+                        // On décoche tout le reste
+                        Array.from(select.options).forEach(o => o.selected = (o.value === 'all'));
+                        currentSelected = ['all'];
+                    } 
+                    // Si l'utilisateur clique sur autre chose alors que "all" était coché
+                    else if (currentSelected.includes('all') && currentSelected.length > 1) {
+                        // On décoche "all"
+                        Array.from(select.options).forEach(o => { if (o.value === 'all') o.selected = false; });
+                        currentSelected = currentSelected.filter(v => v !== 'all');
+                    }
+                    // Si l'utilisateur a tout décoché, on recoche "all" par sécurité
+                    else if (currentSelected.length === 0) {
+                        Array.from(select.options).find(o => o.value === 'all').selected = true;
+                        currentSelected = ['all'];
+                    }
+                    
+                    lastSelected = currentSelected;
+                });
+            });
+
             document.getElementById('citySearch')?.addEventListener('keypress', function(e) { if (e.key === 'Enter') searchCityMap(); });
             document.getElementById('filtreVille')?.addEventListener('keypress', function(e) { if (e.key === 'Enter') document.getElementById('analyzeBtn').click(); });
             document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
         });
 
-        document.getElementById('analyzeBtn').addEventListener('click', async function() {
+        // --- CORRECTION DU BUG DE SYNTAXE (try { await async function... ) ICI ---
+        document.getElementById('analyzeBtn').addEventListener('click', function() {
             showLoading('Préparation de l\'analyse...');
             document.getElementById('loadingOverlay').style.backgroundColor = 'rgba(255,255,255,0.9)'; 
             updateProgress(0);
+            
             setTimeout(async () => {
-                try { await async function analyzeData() {
+                try { 
+                    await analyzeData(); 
+                    hideLoading(); 
+                } catch(error) { 
+                    hideLoading(); 
+                    alert('Erreur: ' + error.message); 
+                    console.error(error); 
+                }
+            }, 50);
+        });
+        
+        function isVehicleMatchingFilter(v, advVehSelected) {
+            if (advVehSelected.includes('all')) return true;
+            if (!v || !v.catv) return false;
+            const catv = String(v.catv).trim();
+            const catvNorm = catv.padStart(2, '0');
+            return advVehSelected.some(filter => {
+                if (filter === 'sans') return false;
+                if (filter.includes(',')) {
+                    return filter.split(',').some(f => f.trim() === catv || f.trim().padStart(2, '0') === catvNorm);
+                }
+                const filtNorm = String(filter).trim().padStart(2, '0');
+                return catv === filter || catvNorm === filtNorm;
+            });
+        }
+
+        async function analyzeData() {
             updateProgress(5);
             
-            // --- CORRECTION RAM IOS --- : Vidange massive de la mémoire avant le calcul
+            // Vidange massive de la mémoire avant le calcul (Fix pour iPhone RAM)
             vehiculesIndex.clear();
             lieuxIndex.clear();
             usagersByAccidentIndex.clear();
             vehiculesByAccidentIndex.clear();
             accidentsByIdIndex.clear();
             victimesFiltreesIndex.clear();
-            if (pointsLayer) { pointsLayer.clearLayers(); } // Vide la mémoire de la carte
+            if (pointsLayer) { pointsLayer.clearLayers(); }
             
-            const years = Array.from(document.getElementById('annee').selectedOptions).map(o => o.value);
+            let years = Array.from(document.getElementById('annee').selectedOptions).map(o => o.value);
+            // --- CORRECTION "TOUTES LES ANNÉES" ---
+            if(years.includes('all')) {
+                years = ['2024', '2023', '2022', '2021'];
+            }
+
             const typeVictime = Array.from(document.getElementById('typeVictime').selectedOptions).map(o => o.value);
             const advVehSelected = Array.from(document.getElementById('vehiculeAdverse').selectedOptions).map(o => o.value);
             const gravite = Array.from(document.getElementById('gravite').selectedOptions).map(o => o.value);
@@ -539,24 +783,22 @@
             let vehiculesData = [];
             let usagersData = [];
             
-            // --- CORRECTION RAM IOS --- : Utilisation d'une boucle For classique (évite le Concat destructeur de RAM)
+            // Utilisation d'une boucle For classique (évite le Concat destructeur de RAM sur iOS)
             years.forEach(year => {
-                if(allData[year].caracteristiques) {
+                if(allData[year] && allData[year].caracteristiques) {
                     for(let i=0; i<allData[year].caracteristiques.length; i++) caracteristiquesData.push(allData[year].caracteristiques[i]);
                 }
-                if(allData[year].lieux) {
+                if(allData[year] && allData[year].lieux) {
                     for(let i=0; i<allData[year].lieux.length; i++) lieuxData.push(allData[year].lieux[i]);
                 }
-                if(allData[year].vehicules) {
+                if(allData[year] && allData[year].vehicules) {
                     for(let i=0; i<allData[year].vehicules.length; i++) vehiculesData.push(allData[year].vehicules[i]);
                 }
-                if(allData[year].usagers) {
+                if(allData[year] && allData[year].usagers) {
                     for(let i=0; i<allData[year].usagers.length; i++) usagersData.push(allData[year].usagers[i]);
                 }
             });
             updateProgress(15);
-            
-            // ... LA SUITE DE VOTRE CODE analyzeData() RESTE IDENTIQUE ...
             
             vehiculesIndex = new Map(); vehiculesData.forEach(v => vehiculesIndex.set(v.id_vehicule, v));
             lieuxIndex = new Map(); lieuxData.forEach(l => lieuxIndex.set(l.Num_Acc, l));
@@ -672,7 +914,7 @@
             document.getElementById('results').style.display = 'block';
             displayStats(accidents, usagers);
             await displayMap(accidents, usagers, lieuxData, vehiculesData);
-            displayCharts(accidents, usagers, lieuxData, vehiculesData); // LA LOGIQUE V2 EST APPELÉE ICI
+            displayCharts(accidents, usagers, lieuxData, vehiculesData);
             updateStatsDetails(accidents, usagers);
             
             currentHighlight = { label: null, chartId: null };
@@ -796,7 +1038,6 @@
         function generateDetailedPopup(acc, victimesFiltrees) {
             const lieu = lieuxIndex.get(acc.Num_Acc);
             const vehiculesAcc = vehiculesByAccidentIndex.get(acc.Num_Acc) || [];
-            const tousUsagers = usagersByAccidentIndex.get(acc.Num_Acc) || [];
             const meteo = NOMENCLATURES.meteo[acc.atm] || 'inconnues';
             const collision = NOMENCLATURES.collision[acc.col] || 'inconnue';
             
@@ -807,6 +1048,8 @@
             content += `<strong style="font-size: 1.15em; color: #1e3c72;">📅 Accident du ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
             if (lieu && lieu.voie) content += `<strong>📍 Lieu :</strong> ${lieu.voie}<br>`;
             content += `<strong>☁️ Conditions :</strong> ${meteo}, ${NOMENCLATURES.lumiere[acc.lum] || 'luminosité inconnue'}<br><br>`;
+            
+            const tousUsagers = usagersByAccidentIndex.get(acc.Num_Acc) || [];
             
             victimesFiltrees.forEach((victime, index) => {
                 const age = acc.an && victime.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(victime.an_nais) : null;
@@ -899,13 +1142,13 @@
         }
 
         async function openGoogleSearch(button) {
+            // Fix iOS pour Safari : Ouvrir le tab AVANT la requête Fetch
+            let newTab = window.open('about:blank', '_blank'); 
+            
             let searchTerms = ['accident'];
             const accidentId = button.getAttribute('data-accident-id');
             const acc = accidentsByIdIndex.get(accidentId);
             const victimesFiltrees = victimesFiltreesIndex.get(accidentId) || [];
-            
-            // --- CORRECTION IOS --- : On ouvre l'onglet IMMÉDIATEMENT au clic !
-            let newTab = window.open('about:blank', '_blank'); 
             
             button.textContent = '⏳ Chargement...'; button.disabled = true;
             const lieu = lieuxIndex.get(acc.Num_Acc);
@@ -968,9 +1211,7 @@
             
             const url = `https://www.google.com/search?q=${encodeURIComponent(searchTerms.join(' '))}`;
             
-            // --- CORRECTION IOS --- : On redirige l'onglet préalablement ouvert
             newTab.location.href = url;
-            
             button.textContent = '🔍 Rechercher des articles'; button.disabled = false;
         }
 
@@ -1101,26 +1342,22 @@
             return `${lower}-${lower + interval - 1} ans`;
         }
 
-        // --- INTEGRATION DE TOUS LES GRAPHIQUES DE LA V2 ---
         function displayCharts(accidents, usagers, lieuxData, vehiculesData) {
             Object.values(charts).forEach(c => c.destroy()); charts = {};
             currentUsagersDataForAge = usagers; 
             const advVehSelected = Array.from(document.getElementById('vehiculeAdverse').selectedOptions).map(o => o.value);
             
-            // 1. Gravité
             const graviteCount = {};
             usagers.forEach(u => { const nom = NOMENCLATURES.gravite[u.grav] || '❓ Inconnu'; graviteCount[nom] = (graviteCount[nom] || 0) + 1; });
             const graviteColors = { '💀 Tué': 'rgba(139, 0, 0, 0.9)', '🏥 Hospitalisé': 'rgba(255, 107, 53, 0.9)', '🩹 Blessé léger': 'rgba(255, 217, 61, 0.9)', '❓ Inconnu': 'rgba(200, 200, 200, 0.7)' };
             charts.gravite = createPieChartCustomColors('chartGravite', Object.keys(graviteCount), Object.values(graviteCount), graviteColors, (label) => highlightMarkersBy((data) => data.usagers.some(v => NOMENCLATURES.gravite[v.grav] === label), label, 'container-chartGravite', 'Gravité'));
             
-            // 2. Mois
             const moisCount = {}; const moisAccidents = {};
             accidents.forEach(a => { const mois = NOMENCLATURES.mois[a.mois] || a.mois; moisCount[mois] = (moisCount[mois] || 0) + 1; if (!moisAccidents[mois]) moisAccidents[mois] = []; moisAccidents[mois].push(a.Num_Acc); });
             const moisOrdre = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
             const moisLabels = moisOrdre.filter(m => moisCount[m]);
             charts.mois = createLineChartWithLabels('chartMois', moisLabels, moisLabels.map(m => moisCount[m]), (label) => highlightMarkersBy((data) => new Set(moisAccidents[label]).has(data.accidentId), label, 'container-chartMois', 'Mois'));
             
-            // 3. Jour semaine
             const jourSemaineLabels = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
             const jourSemaineCount = new Array(7).fill(0); const jourSemaineAccidents = Array.from({length: 7}, () => []);
             accidents.forEach(a => {
@@ -1133,10 +1370,8 @@
             });
             charts.jourSemaine = createBarChartWithLabels('chartJourSemaine', jourSemaineLabels, jourSemaineCount, (label) => highlightMarkersBy((data) => new Set(jourSemaineAccidents[jourSemaineLabels.indexOf(label)]).has(data.accidentId), label, 'container-chartJourSemaine', 'Jour de la semaine'));
             
-            // 4. Age
             updateAgeChart(currentAgeInterval);
             
-            // 5. Véhicules adverses
             const vAdverseCount = {}; const vAdverseAccidents = {};
             accidents.forEach(acc => {
                 const victimesFiltrees = victimesFiltreesIndex.get(acc.Num_Acc) || [];
@@ -1158,7 +1393,6 @@
             const vAdverseSorted = Object.entries(vAdverseCount).sort((a, b) => b[1] - a[1]);
             charts.vehiculesAdverses = createBarChartWithLabels('chartVehiculesAdverses', vAdverseSorted.map(e => e[0]), vAdverseSorted.map(e => e[1]), (label) => highlightMarkersBy((data) => new Set(vAdverseAccidents[label]).has(data.accidentId), label, 'container-chartVehiculesAdverses', 'Véhicules adverses'));
             
-            // 6. Véhicules victimes
             const vCount = {}; const vAccidents = {};
             usagers.forEach(u => {
                 let nom = (u.catu === '3' || u.catu === '4') ? '🚶 Piéton' : (vehiculesIndex.get(u.id_vehicule) ? NOMENCLATURES.vehicules[vehiculesIndex.get(u.id_vehicule).catv] : null);
@@ -1167,42 +1401,34 @@
             const vVictimesSorted = Object.entries(vCount).sort((a, b) => a[1] - b[1]);
             charts.vehicules = createBarChartWithLabels('chartVehicules', vVictimesSorted.map(e => e[0]), vVictimesSorted.map(e => e[1]), (label) => highlightMarkersBy((data) => new Set(vAccidents[label]).has(data.accidentId), label, 'container-chartVehicules', 'Véhicules des victimes'));
 
-            // 7. Collision
             const cCount = {}; const cAccidents = {};
             accidents.forEach(a => { const nom = NOMENCLATURES.collision[a.col] || 'Autre'; cCount[nom] = (cCount[nom] || 0) + 1; if (!cAccidents[nom]) cAccidents[nom] = []; cAccidents[nom].push(a.Num_Acc); });
             charts.collision = createPieChartWithLabels('chartCollision', Object.keys(cCount), Object.values(cCount), (label) => highlightMarkersBy((data) => new Set(cAccidents[label]).has(data.accidentId), label, 'container-chartCollision', 'Type de collision'));
             
-            // 8. Sexe
             const sCount = { '👨 Masculin': usagers.filter(u => u.sexe === '1').length, '👩 Féminin': usagers.filter(u => u.sexe === '2').length };
             const sAccidents = { '👨 Masculin': usagers.filter(u => u.sexe === '1').map(u => u.Num_Acc), '👩 Féminin': usagers.filter(u => u.sexe === '2').map(u => u.Num_Acc) };
             charts.sexe = createPieChartWithLabels('chartSexe', Object.keys(sCount), Object.values(sCount), (label) => highlightMarkersBy((data) => new Set(sAccidents[label]).has(data.accidentId), label, 'container-chartSexe', 'Sexe des victimes'));
             
-            // 9. Agglomération
             const aggCount = { '🏙️ En agglo': accidents.filter(a => a.agg === '2').length, '🌳 Hors agglo': accidents.filter(a => a.agg === '1').length };
             const aggAccidents = { '🏙️ En agglo': accidents.filter(a => a.agg === '2').map(a => a.Num_Acc), '🌳 Hors agglo': accidents.filter(a => a.agg === '1').map(a => a.Num_Acc) };
             charts.agglomeration = createPieChartWithLabels('chartAgglomeration', Object.keys(aggCount), Object.values(aggCount), (label) => highlightMarkersBy((data) => new Set(aggAccidents[label]).has(data.accidentId), label, 'container-chartAgglomeration', 'Localisation'));
             
-            // 10. Chaussée
             const chCount = {}; const chAccidents = {};
             accidents.forEach(a => { const l = lieuxIndex.get(a.Num_Acc); if (l && l.surf) { const nom = NOMENCLATURES.chaussee[l.surf] || 'Autre'; chCount[nom] = (chCount[nom] || 0) + 1; if (!chAccidents[nom]) chAccidents[nom] = []; chAccidents[nom].push(a.Num_Acc); } });
             charts.chaussee = createBarChartWithLabels('chartChaussee', Object.keys(chCount), Object.values(chCount), (label) => highlightMarkersBy((data) => new Set(chAccidents[label]).has(data.accidentId), label, 'container-chartChaussee', 'État de la chaussée'));
 
-            // 11. Lumière
             const lCount = {}; const lAccidents = {};
             accidents.forEach(a => { const nom = NOMENCLATURES.lumiere[a.lum] || 'Autre'; lCount[nom] = (lCount[nom] || 0) + 1; if (!lAccidents[nom]) lAccidents[nom] = []; lAccidents[nom].push(a.Num_Acc); });
             charts.lumiere = createPieChartWithLabels('chartLumiere', Object.keys(lCount), Object.values(lCount), (label) => highlightMarkersBy((data) => new Set(lAccidents[label]).has(data.accidentId), label, 'container-chartLumiere', 'Luminosité'));
             
-            // 12. Heures
             const hCount = new Array(24).fill(0); const hAccidents = Array.from({length: 24}, () => []);
             accidents.forEach(a => { if (a.hrmn) { const h = parseInt(a.hrmn.substring(0, 2)); if (!isNaN(h) && h >= 0 && h < 24) { hCount[h]++; hAccidents[h].push(a.Num_Acc); } } });
             charts.heure = createLineChartWithLabels('chartHeure', Array.from({length: 24}, (_, i) => i+'h'), hCount, (label) => highlightMarkersBy((data) => new Set(hAccidents[parseInt(label)]).has(data.accidentId), label, 'container-chartHeure', 'Heure'));
 
-            // 13. Météo
             const mCount = {}; const mAccidents = {};
             accidents.forEach(a => { const nom = NOMENCLATURES.meteo[a.atm] || 'Autre'; mCount[nom] = (mCount[nom] || 0) + 1; if (!mAccidents[nom]) mAccidents[nom] = []; mAccidents[nom].push(a.Num_Acc); });
             charts.meteo = createBarChartWithLabels('chartMeteo', Object.keys(mCount), Object.values(mCount), (label) => highlightMarkersBy((data) => new Set(mAccidents[label]).has(data.accidentId), label, 'container-chartMeteo', 'Météo'));
 
-            // 14. Type Route
             const typeRouteCount = {}; const typeRouteAccidents = {};
             accidents.forEach(a => { const l = lieuxIndex.get(a.Num_Acc); if (l && l.catr) { const nom = NOMENCLATURES.typeRoute[l.catr] || 'Autre'; typeRouteCount[nom] = (typeRouteCount[nom] || 0) + 1; if (!typeRouteAccidents[nom]) typeRouteAccidents[nom] = []; typeRouteAccidents[nom].push(a.Num_Acc); } });
             charts.typeRoute = createPieChartWithLabels('chartTypeRoute', Object.keys(typeRouteCount), Object.values(typeRouteCount), (label) => highlightMarkersBy((data) => new Set(typeRouteAccidents[label]).has(data.accidentId), label, 'container-chartTypeRoute', 'Type de route'));
@@ -1210,14 +1436,14 @@
 
         const commonChartOptions = (clickCallback) => ({
             responsive: true, 
-            maintainAspectRatio: false, // Permet au graphique de s'adapter
+            maintainAspectRatio: false,
             onClick: clickCallback ? (evt, activeElements) => { if (activeElements.length > 0) clickCallback(evt.chart.data.labels[activeElements[0].index]); } : undefined,
             plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } }
         });
 
         function createBarChartWithLabels(id, labels, data, cb) {
             const canvas = document.getElementById(id);
-            canvas.style.height = '280px'; // On applique la hauteur au canvas directement !
+            canvas.style.height = '280px'; 
             return new Chart(canvas, { type: 'bar', data: {labels, datasets: [{data, backgroundColor: '#667eea'}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
         }
         function createPieChartWithLabels(id, labels, data, cb) {
@@ -1235,8 +1461,6 @@
             canvas.style.height = '280px';
             return new Chart(canvas, { type: 'line', data: {labels, datasets: [{data, borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.2)', fill: true, tension: 0.4}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
         }
-        
     </script>
 </body>
 </html>
-
