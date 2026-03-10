@@ -265,7 +265,7 @@
                         <div class="heatmap-slider-row" id="rowAutoCoeff">
                             <label for="heatAutoCoeff" style="color: #4caf50;">⚖️ Coef. (C) :</label>
                             <input type="range" id="heatAutoCoeff" min="1000" max="3000000" step="10000" value="500000">
-                            <span id="valAutoCoeff" style="width: 45px;">500000</span>
+                            <span id="valAutoCoeff" style="width: 65px;">500000</span>
                         </div>
 
                         <div class="heatmap-slider-row">
@@ -297,10 +297,17 @@
         
         <div class="content" id="results" style="display: none;">
             
-            <div id="crossFilterBanner">
+            <!-- NOUVELLE BANNIÈRE DE FILTRE CROISÉ AVEC LE TOGGLE "MODE STRICT" -->
+            <div id="crossFilterBanner" style="display:none;">
                 <div id="mapHighlightInfo">
                     <div id="crossFilterText"></div>
-                    <button class="btn-cancel-filter" onclick="cancelCrossFilter()">❌ Effacer les filtres</button>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <label style="font-size: 0.9em; font-weight: bold; color: #1e3c72; display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                            <input type="checkbox" id="modeVictimeOnly" checked onchange="window.reapplyCrossFilters()">
+                            🎯 Mode strict (Isoler ces victimes)
+                        </label>
+                        <button class="btn-cancel-filter" onclick="window.cancelCrossFilter()">❌ Effacer les filtres</button>
+                    </div>
                 </div>
             </div>
 
@@ -453,13 +460,12 @@
         function updateProgress(p) { const el = document.getElementById('progressFill'); if(el) el.style.width = p + '%'; }
         function closeModal() { document.getElementById('modalOverlay').style.display = 'none'; }
 
-        // --- GESTION DES STATS EN TEMPS RÉEL ---
         window.updateHeatmapStats = function() {
             if (!heatLayer || currentMapView !== 'heatmap' || currentHeatData.length === 0) return;
             const bounds = map.getBounds();
             currentP = 0;
             currentHeatData.forEach(pt => {
-                if (bounds.contains([pt[0], pt[1]])) currentP++; // On compte les points purs à l'écran
+                if (bounds.contains([pt[0], pt[1]])) currentP++; 
             });
             currentZ = map.getZoom();
             currentRatio = currentP > 0 ? (currentZ / currentP) : currentZ;
@@ -469,7 +475,6 @@
             document.getElementById('statRatio').innerText = currentRatio.toFixed(5);
         };
 
-        // --- APPLICATION MANUELLE DES SLIDERS ---
         window.applyManualHeatmap = function() {
             if (!heatLayer || currentMapView !== 'heatmap') return;
             let r = parseInt(document.getElementById('heatRadius').value);
@@ -485,22 +490,19 @@
             heatLayer.setOptions({ radius: r, blur: b, max: m, minOpacity: mo });
         };
 
-        // --- APPLICATION AUTOMATIQUE (Formule Mathématique) ---
         window.applyAutoHeatmap = function() {
             if (!heatLayer || currentMapView !== 'heatmap') return;
             
             let c = parseFloat(document.getElementById('heatAutoCoeff').value);
             let rawSize = c * currentRatio;
-            let size = Math.floor(Math.max(2, Math.min(60, rawSize))); // Borne entre 2px et 60px
+            let size = Math.floor(Math.max(2, Math.min(60, rawSize))); 
 
-            // Application de vos règles strictes de seuil et d'opacité
             let m, mo;
             if (currentP <= 20) { m = 2; mo = 0.66; }
             else if (currentZ <= 6) { m = 5; mo = 0.23; }
             else if (currentZ >= 13 && currentP > 100) { m = 2; mo = 0.30; }
             else { m = 2; mo = 0.21; }
 
-            // Mise à jour visuelle des sliders pour qu'ils s'alignent avec l'Auto
             document.getElementById('heatRadius').value = size; document.getElementById('valRadius').innerText = size;
             document.getElementById('heatBlur').value = size; document.getElementById('valBlur').innerText = size;
             document.getElementById('heatMax').value = m; document.getElementById('valMax').innerText = m;
@@ -514,7 +516,6 @@
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
             pointsLayer = L.featureGroup().addTo(map);
             
-            // Listeners de carte pour MAJ temps réel
             map.on('moveend', function() {
                 if(currentMapView === 'heatmap') {
                     updateHeatmapStats();
@@ -528,7 +529,6 @@
                 }
             });
 
-            // Listeners des sliders manuels : désactivent l'auto
             ['heatRadius', 'heatBlur', 'heatMax', 'heatMinOp'].forEach(id => {
                 let el = document.getElementById(id);
                 if(el) el.addEventListener('input', function() {
@@ -538,22 +538,18 @@
                 });
             });
 
-            // Listener du slider Coef C : agit directement sur la formule et applique
             document.getElementById('heatAutoCoeff').addEventListener('input', function(e) {
                 document.getElementById('valAutoCoeff').innerText = e.target.value;
                 let c = parseFloat(e.target.value);
                 let rawSize = c * currentRatio;
                 let size = Math.floor(Math.max(2, Math.min(60, rawSize)));
                 
-                // Mise à jour de la Taille et du Flou uniquement
                 document.getElementById('heatRadius').value = size; document.getElementById('valRadius').innerText = size;
                 document.getElementById('heatBlur').value = size; document.getElementById('valBlur').innerText = size;
                 
-                // On applique manuellement pour ne pas écraser les choix potentiels de Max/MinOp de l'utilisateur
                 applyManualHeatmap(); 
             });
 
-            // Activation/Désactivation de la case Auto
             document.getElementById('autoHeatmap').addEventListener('change', function(e) {
                 if(e.target.checked) {
                     document.getElementById('rowAutoCoeff').style.opacity = '1';
@@ -745,37 +741,54 @@
             renderDashboard(mainAccidents, mainUsagers);
         }
 
-        // --- FILTRE CROISÉ MULTIPLE ---
-        function handleCrossFilterClick(e, title, label, validAccIdsSet) {
+        // --- FILTRE CROISÉ MULTIPLE (BI) AVEC MODE STRICT ---
+        function handleCrossFilterClick(e, title, label, validAccIdsSet, victimFilterFn = null) {
             let isMulti = e && (e.ctrlKey || e.metaKey);
             let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
 
             if (isMulti) {
                 if (existingIdx >= 0) activeCrossFilters.splice(existingIdx, 1);
-                else activeCrossFilters.push({ title, label, idsSet: validAccIdsSet });
+                else activeCrossFilters.push({ title, label, idsSet: validAccIdsSet, vFilter: victimFilterFn });
             } else {
                 if (existingIdx >= 0 && activeCrossFilters.length === 1) activeCrossFilters = [];
-                else activeCrossFilters = [{ title, label, idsSet: validAccIdsSet }];
+                else activeCrossFilters = [{ title, label, idsSet: validAccIdsSet, vFilter: victimFilterFn }];
             }
 
+            window.reapplyCrossFilters();
+        }
+
+        window.reapplyCrossFilters = function() {
             if (activeCrossFilters.length === 0) {
                 document.getElementById('crossFilterBanner').style.display = 'none';
                 renderDashboard(mainAccidents, mainUsagers, true);
-            } else {
-                document.getElementById('crossFilterBanner').style.display = 'block';
-                let text = activeCrossFilters.map(f => `<b>${f.label}</b>`).join(' <span style="color:#dc3545">ET</span> ');
-                document.getElementById('crossFilterText').innerHTML = `🔵 <strong>Filtres croisés actifs :</strong> ${text}`;
-
-                let intersectedIds = new Set(activeCrossFilters[0].idsSet);
-                for (let i = 1; i < activeCrossFilters.length; i++) {
-                    let currentSet = activeCrossFilters[i].idsSet;
-                    intersectedIds = new Set([...intersectedIds].filter(x => currentSet.has(x)));
-                }
-
-                let subAcc = mainAccidents.filter(a => intersectedIds.has(a.Num_Acc));
-                let subUsg = mainUsagers.filter(u => intersectedIds.has(u.Num_Acc));
-                renderDashboard(subAcc, subUsg, true);
+                return;
             }
+
+            document.getElementById('crossFilterBanner').style.display = 'block';
+            let text = activeCrossFilters.map(f => `<b>${f.label}</b>`).join(' <span style="color:#dc3545">ET</span> ');
+            document.getElementById('crossFilterText').innerHTML = `🔵 <strong>Filtres croisés actifs :</strong> ${text}`;
+
+            let intersectedIds = new Set(activeCrossFilters[0].idsSet);
+            for (let i = 1; i < activeCrossFilters.length; i++) {
+                let currentSet = activeCrossFilters[i].idsSet;
+                intersectedIds = new Set([...intersectedIds].filter(x => currentSet.has(x)));
+            }
+
+            let subAcc = mainAccidents.filter(a => intersectedIds.has(a.Num_Acc));
+            let subUsg = mainUsagers.filter(u => intersectedIds.has(u.Num_Acc));
+
+            // MODE STRICT : ON ISOLE LES VICTIMES CLIQUÉES
+            let isStrict = document.getElementById('modeVictimeOnly') && document.getElementById('modeVictimeOnly').checked;
+            if (isStrict) {
+                subUsg = subUsg.filter(u => {
+                    return activeCrossFilters.every(filter => {
+                        if (filter.vFilter) return filter.vFilter(u);
+                        return true;
+                    });
+                });
+            }
+
+            renderDashboard(subAcc, subUsg, true);
         }
 
         window.cancelCrossFilter = function() {
@@ -837,7 +850,22 @@
             });
             let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
             let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
-            charts.age = createBarChart('chartAge', aData, '#667eea', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l])));
+            
+            // Le filtre strict passe la fonction (u) pour vérifier l'âge de CHAQUE victime
+            charts.age = createBarChart('chartAge', aData, '#667eea', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
+                const acc = accidentsByIdIndex.get(u.Num_Acc);
+                if(acc && u.an_nais && acc.an) {
+                    let a=parseInt(acc.an); if(a<100) a+=2000;
+                    let age = a - parseInt(u.an_nais);
+                    if(age>=0 && age<=120) {
+                        let lower = Math.floor(age/currentAgeInterval)*currentAgeInterval;
+                        let n = currentAgeInterval === 1 ? `${lower} ans` : `${lower}-${lower+currentAgeInterval-1} ans`;
+                        if(age>=90) n="90+ ans";
+                        return n === l;
+                    }
+                }
+                return false;
+            }));
         }
 
         function renderDashboard(accs, usgs, isCrossFiltering = false) {
@@ -859,7 +887,10 @@
             
             currentHeatData = [];
             accs.forEach(acc => {
-                const victimes = victimesFiltreesIndex.get(acc.Num_Acc) || [];
+                // IMPORTANT : Si on est en "Mode Strict", les points sur la carte affichent le gravMax de la sous-sélection (ex: juste les cyclistes)
+                const victimes = isCrossFiltering ? usgs.filter(u => u.Num_Acc === acc.Num_Acc) : (victimesFiltreesIndex.get(acc.Num_Acc) || []);
+                if(victimes.length === 0) return; // Sécurité
+
                 const lat = parseFloat(acc.lat.replace(',','.'));
                 const long = parseFloat(acc.long.replace(',','.'));
                 const gravMax = Math.min(...victimes.map(u => parseInt(u.grav)||4));
@@ -873,13 +904,21 @@
                 const m = L.circleMarker([lat, long], { radius: rad, color: 'white', weight: 1, fillColor: color, fillOpacity: 0.8 });
                 
                 m.on('click', function(e) {
-                    const content = generateDetailedPopup(acc, victimes);
-                    L.popup({ maxWidth: 380 }).setLatLng(e.latlng).setContent(content).openOn(map);
+                    const content = generateDetailedPopup(acc, victimes); // Affiche le popup sur les victimes filtrées
+                    L.popup({ maxWidth: 350 }).setLatLng(e.latlng).setContent(content).openOn(map);
                 });
                 pointsLayer.addLayer(m);
             });
 
-            heatLayer = L.heatLayer(currentHeatData, {}); 
+            let hr = parseInt(document.getElementById('heatRadius').value) || 12;
+            let hb = parseInt(document.getElementById('heatBlur').value) || 12;
+            let hm = parseInt(document.getElementById('heatMax').value) || 15;
+            let hmo = (parseInt(document.getElementById('heatMinOp').value) || 20) / 100;
+
+            heatLayer = L.heatLayer(currentHeatData, { 
+                radius: hr, blur: hb, maxZoom: 15, max: hm, minOpacity: hmo,
+                gradient: { 0.3: 'blue', 0.5: 'cyan', 0.7: 'lime', 0.85: 'yellow', 1.0: 'red' } 
+            });
             
             if (currentMapView === 'points') pointsLayer.addTo(map);
             else if (currentMapView === 'heatmap') { 
@@ -893,11 +932,15 @@
             
             let sCount = {'👨 Hommes':0, '👩 Femmes':0}; let sAcc = {'👨 Hommes':[], '👩 Femmes':[]};
             usgs.forEach(u => { if(u.sexe==='1'){ sCount['👨 Hommes']++; sAcc['👨 Hommes'].push(u.Num_Acc); } else if(u.sexe==='2'){ sCount['👩 Femmes']++; sAcc['👩 Femmes'].push(u.Num_Acc); } });
-            charts.sexe = createSingleStackedBar('chartSexe', sCount, {'👨 Hommes':'#2196f3', '👩 Femmes':'#e91e63'}, (e, l) => handleCrossFilterClick(e, 'Sexe', l, new Set(sAcc[l])));
+            charts.sexe = createSingleStackedBar('chartSexe', sCount, {'👨 Hommes':'#2196f3', '👩 Femmes':'#e91e63'}, 
+                (e, l) => handleCrossFilterClick(e, 'Sexe', l, new Set(sAcc[l]), (u) => (l === '👨 Hommes' ? u.sexe === '1' : u.sexe === '2'))
+            );
 
             let gCount = {}; let gAcc = {};
             usgs.forEach(u => { let n=NOMENCLATURES.gravite[u.grav]||'?'; gCount[n]=(gCount[n]||0)+1; if(!gAcc[n]) gAcc[n]=[]; gAcc[n].push(u.Num_Acc); });
-            charts.grav = createPieChart('chartGravite', gCount, {'💀 Tué':'#8b0000', '🏥 Hospitalisé':'#ff6b35', '🩹 Blessé léger':'#ffd93d'}, (e, l) => handleCrossFilterClick(e, 'Gravité', l, new Set(gAcc[l])));
+            charts.grav = createPieChart('chartGravite', gCount, {'💀 Tué':'#8b0000', '🏥 Hospitalisé':'#ff6b35', '🩹 Blessé léger':'#ffd93d'}, 
+                (e, l) => handleCrossFilterClick(e, 'Gravité', l, new Set(gAcc[l]), (u) => NOMENCLATURES.gravite[u.grav] === l)
+            );
 
             drawAgeChart(usgs);
 
@@ -912,6 +955,7 @@
                     else adv.forEach(x => { let n=NOMENCLATURES.vehicules[x.catv]||'Autre'; vaCount[n]=(vaCount[n]||0)+1; if(!vaAcc[n]) vaAcc[n]=[]; vaAcc[n].push(acc.Num_Acc); });
                 });
             });
+            // Les filtres véhicules adverses/collision sont des propriétés de l'accident, on ne met pas de victimFilterFn
             charts.vAdv = createHorizontalBarChart('chartVehiculesAdverses', sortDict(vaCount), '#f7931e', (e, l) => handleCrossFilterClick(e, 'Véhicule adverse', l, new Set(vaAcc[l])));
 
             let vvCount = {}; let vvAcc = {};
@@ -919,11 +963,16 @@
                 let n = (u.catu==='3'||u.catu==='4')?'🚶 Piéton':(NOMENCLATURES.vehicules[(vehiculesIndex.get(u.id_vehicule)||{}).catv]||'Autre');
                 vvCount[n]=(vvCount[n]||0)+1; if(!vvAcc[n]) vvAcc[n]=[]; vvAcc[n].push(u.Num_Acc);
             });
-            charts.vVic = createHorizontalBarChart('chartVehicules', sortDict(vvCount), '#2196f3', (e, l) => handleCrossFilterClick(e, 'Véhicule victime', l, new Set(vvAcc[l])));
+            charts.vVic = createHorizontalBarChart('chartVehicules', sortDict(vvCount), '#2196f3', 
+                (e, l) => handleCrossFilterClick(e, 'Véhicule victime', l, new Set(vvAcc[l]), (u) => {
+                    let n = (u.catu==='3'||u.catu==='4') ? '🚶 Piéton' : (NOMENCLATURES.vehicules[(vehiculesIndex.get(u.id_vehicule)||{}).catv]||'Autre');
+                    return n === l;
+                })
+            );
 
             let cCount = {}; let cAcc = {};
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
-            charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), '#764ba2', (e, l) => handleCrossFilterClick(e, 'Collision', l, new Set(cAcc[l])));
+            charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), '#764ba2', (e, l) => handleCrossFilterClick(e, 'Type de collision', l, new Set(cAcc[l])));
 
             let hCount = {}; let hAcc = {};
             for(let i=0;i<24;i++) hCount[i+'h']=0;
@@ -967,6 +1016,7 @@
             charts.agg = createHorizontalBarChart('chartAgglomeration', sortDict(aggCount), '#4caf50', (e, l) => handleCrossFilterClick(e, 'Agglo', l, new Set(aggAcc[l])));
         }
 
+        // --- CHART.JS FACTORIES ---
         const cOpts = (cb) => ({
             responsive: true, maintainAspectRatio: false,
             onClick: cb ? (e, els) => { if(els.length>0) cb(e.native, e.chart.data.labels[els[0].index]); } : null,
@@ -999,15 +1049,12 @@
             return new Chart(document.getElementById(id), { type: 'pie', data: { labels: Object.keys(dict), datasets: [{ data: Object.values(dict), backgroundColor: Object.keys(dict).map(k=>colorMap[k]||'#ccc') }] }, options: o });
         }
 
-        // --- POPUPS & RECHERCHE GOOGLE (Restaurés comme avant) ---
+        // --- POPUPS & RECHERCHE GOOGLE ---
         function generateDetailedPopup(acc, victimes) {
-            const l = lieuxIndex.get(acc.Num_Acc); 
-            const meteo = NOMENCLATURES.meteo[acc.atm] || 'inconnues';
-            
+            const l = lieuxIndex.get(acc.Num_Acc); const meteo = NOMENCLATURES.meteo[acc.atm]||'?';
             let c = `<div style="max-width:350px; font-family:sans-serif; font-size:14px; line-height:1.5;">`;
             c += `<strong style="color:#1e3c72; font-size:15px;">📅 ${acc.jour}/${acc.mois}/${acc.an} à ${acc.hrmn}</strong><br>`;
-            if(l && l.voie) c += `📍 ${l.voie}<br>`;
-            c += `☁️ Météo : ${meteo}<br><br>`;
+            if(l&&l.voie) c += `📍 ${l.voie}<br>`; c += `☁️ Météo : ${meteo}<br><br>`;
             
             const vehiculesAcc = vehiculesByAccidentIndex.get(acc.Num_Acc) || [];
             const tousUsagers = usagersByAccidentIndex.get(acc.Num_Acc) || [];
@@ -1019,15 +1066,12 @@
                 const sexe = victime.sexe === '1' ? 'un homme' : (victime.sexe === '2' ? 'une femme' : 'une personne');
                 const graviteTexte = NOMENCLATURES.gravite[victime.grav] || 'blessé(e)';
                 
-                c += `<div style="background:#fff3e0; padding:10px; margin:8px 0; border-left:4px solid #ff6b35; border-radius:4px;">`;
+                c += `<div class="popup-victim">`;
                 c += `<strong>⚠️ Victime ${index + 1} :</strong> ${sexe}${age ? ` de ${age} ans` : ''}, <strong>${graviteTexte}</strong><br>`;
                 
                 let typeVehiculeVictime = '';
                 if (victime.catu === '3' || victime.catu === '4') typeVehiculeVictime = '(🚶 Piéton)';
-                else { 
-                    const vInfo = vMap.get(victime.id_vehicule); 
-                    if (vInfo) typeVehiculeVictime = `du ${vInfo.idText} (${vInfo.type})`; 
-                }
+                else { const vInfo = vMap.get(victime.id_vehicule); if (vInfo) typeVehiculeVictime = `du ${vInfo.idText} (${vInfo.type})`; }
                 const role = NOMENCLATURES.catu[victime.catu] || 'occupant';
                 c += `${role.charAt(0).toUpperCase() + role.slice(1)} ${typeVehiculeVictime}`;
                 
@@ -1040,8 +1084,7 @@
                         const typeAdverse = vAdvInfo ? `${vAdvInfo.idText} (${vAdvInfo.type})` : 'un véhicule';
                         const conducteurAdverse = tousUsagers.find(u => u.id_vehicule === vehiculeAdverse.id_vehicule && u.catu === '1');
                         
-                        c += `<div style="background:#e8f5e9; padding:8px; margin-top:8px; border-left:3px solid #4caf50; border-radius:4px; font-size:0.95em;">`;
-                        c += `💥 ${collision} avec le ${typeAdverse}`;
+                        c += `<div class="popup-responsible">💥 ${collision} avec le ${typeAdverse}`;
                         if (conducteurAdverse) {
                             const ageAdv = acc.an && conducteurAdverse.an_nais ? (parseInt(acc.an)<100?parseInt(acc.an)+2000:parseInt(acc.an)) - parseInt(conducteurAdverse.an_nais) : null;
                             const sexeAdv = conducteurAdverse.sexe === '1' ? 'un homme' : (conducteurAdverse.sexe === '2' ? 'une femme' : 'une personne');
@@ -1049,15 +1092,11 @@
                         }
                         c += `</div>`;
                     }
-                } else { 
-                    c += `<div style="background:#f1f8e9; padding:8px; margin-top:8px; border-left:3px solid #9e9e9e; border-radius:4px; font-size:0.95em;">⚠️ Sans collision (perte de contrôle)</div>`; 
-                }
+                } else { c += `<div class="popup-responsible">⚠️ Sans collision (perte de contrôle)</div>`; }
                 c += `</div>`;
             });
-            
-            c += `<button onclick="window.showAccidentDetails('${acc.Num_Acc}')" style="background:#f7931e; color:white; padding:10px; width:100%; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:5px;">📋 Voir le rapport complet</button>`;
-            c += `<button data-accident-id="${acc.Num_Acc}" onclick="window.openGoogleSearch(this)" style="background:#4285f4; color:white; padding:10px; width:100%; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:8px;">🔍 Rechercher sur Google</button>`;
-            c += `</div>`;
+            c += `<button class="btn-voir-plus" onclick="window.showAccidentDetails('${acc.Num_Acc}')" style="margin-top: 10px;">📋 Voir le rapport complet</button>`;
+            c += `<button class="btn-voir-plus" data-accident-id="${acc.Num_Acc}" onclick="window.openGoogleSearch(this)" style="background: linear-gradient(135deg, #4285f4 0%, #34a853 100%); margin-top: 8px;">🔍 Rechercher sur Google</button></div>`;
             return c;
         }
 
@@ -1153,5 +1192,3 @@
     </script>
 </body>
 </html>
-
-
