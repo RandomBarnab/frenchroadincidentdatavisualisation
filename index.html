@@ -1,7 +1,7 @@
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <!-- Optimisation majeure pour iOS/Safari : empêche le zoom sur les clics et adapte parfaitement la largeur -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Analyse des Accidents de la Route - France</title>
     
@@ -27,7 +27,6 @@
         .filter-group { margin-bottom: 15px; }
         .filter-group label { display: block; font-weight: 600; margin-bottom: 8px; color: #2c3e50; font-size: 0.95em; }
         
-        /* Optimisation des selects pour le tactile mobile */
         .filter-group select { width: 100%; padding: 8px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; background: white; min-height: 100px; }
         .filter-group input[type="date"], .filter-group input[type="text"] { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 16px; }
         
@@ -47,7 +46,6 @@
         
         .map-view-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 15px; }
         
-        /* Ajustement hauteur carte mobile vs desktop */
         #map { height: 50vh; min-height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ddd; z-index: 1; }
         @media (min-width: 768px) { #map { height: 600px; } }
         
@@ -78,6 +76,9 @@
         .chart-subtitle, .chart-hint { text-align: center; font-size: 0.8em; color: #666; font-style: italic; }
         .chart-hint { margin-top: 10px; }
         
+        /* 🚨 LE CORRECTIF ABSOLU POUR CHART.JS 🚨 */
+        .canvas-wrapper { position: relative; height: 280px; width: 100%; margin-top: 10px; }
+
         .stats-summary { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0; }
         @media (min-width: 600px) { .stats-summary { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; } }
         .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -277,18 +278,18 @@
             <div class="charts-grid">
                 <div class="chart-container" id="container-chartGravite">
                     <h3>💀 Gravité des victimes</h3>
-                    <p class="chart-subtitle">Nombre de victimes filtrées (hors indemnes)</p>
-                    <canvas id="chartGravite"></canvas>
+                    <p class="chart-subtitle">Nombre de victimes filtrées</p>
+                    <div class="canvas-wrapper"><canvas id="chartGravite"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartMois">
                     <h3>📅 Répartition mensuelle</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartMois"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartMois"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartJourSemaine">
                     <h3>📊 Jours de la semaine</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartJourSemaine"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartJourSemaine"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartAge">
                     <h3>🎂 Âge des victimes</h3>
@@ -298,57 +299,57 @@
                         <button class="age-btn active" id="btnAge5" onclick="updateAgeChart(5)">5 ans</button>
                         <button class="age-btn" id="btnAge10" onclick="updateAgeChart(10)">10 ans</button>
                     </div>
-                    <canvas id="chartAge"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartAge"></canvas></div>
                 </div>
                 <div class="chart-container wide" id="container-chartVehiculesAdverses">
                     <h3>🚙 Véhicules adverses</h3>
                     <p class="chart-subtitle">Véhicules ayant heurté les victimes filtrées</p>
-                    <canvas id="chartVehiculesAdverses"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartVehiculesAdverses"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartVehicules">
                     <h3>🚗 Véhicules des victimes</h3>
                     <p class="chart-subtitle">Véhicules des victimes filtrées uniquement</p>
-                    <canvas id="chartVehicules"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartVehicules"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartCollision">
                     <h3>💥 Type de collision</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartCollision"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartCollision"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartSexe">
                     <h3>👤 Sexe des victimes</h3>
                     <p class="chart-subtitle">Nombre de victimes filtrées</p>
-                    <canvas id="chartSexe"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartSexe"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartAgglomeration">
                     <h3>🏙️ Localisation</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartAgglomeration"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartAgglomeration"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartChaussee">
                     <h3>🛣️ État de la chaussée</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartChaussee"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartChaussee"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartLumiere">
                     <h3>💡 Luminosité</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartLumiere"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartLumiere"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartHeure">
                     <h3>🕐 Heure de la journée</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartHeure"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartHeure"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartMeteo">
                     <h3>🌦️ Météo</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartMeteo"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartMeteo"></canvas></div>
                 </div>
                 <div class="chart-container" id="container-chartTypeRoute">
                     <h3>🚦 Type de route</h3>
                     <p class="chart-subtitle">Nombre d'accidents</p>
-                    <canvas id="chartTypeRoute"></canvas>
+                    <div class="canvas-wrapper"><canvas id="chartTypeRoute"></canvas></div>
                 </div>
             </div>
         </div>
@@ -482,7 +483,6 @@
         document.addEventListener('DOMContentLoaded', function() {
             loadInitialData();
             
-            // --- NOUVEAUTÉ UX : Décochage automatique intelligent pour les menus multiples ---
             const selectsExclusifs = ['annee', 'typeVictime', 'vehiculeAdverse', 'gravite', 'localisation', 'lumiere'];
             
             selectsExclusifs.forEach(id => {
@@ -494,20 +494,13 @@
                 select.addEventListener('change', function() {
                     let currentSelected = Array.from(select.selectedOptions).map(o => o.value);
                     
-                    // Si l'utilisateur vient de cliquer sur "all"
                     if (currentSelected.includes('all') && !lastSelected.includes('all')) {
-                        // On décoche tout le reste
                         Array.from(select.options).forEach(o => o.selected = (o.value === 'all'));
                         currentSelected = ['all'];
-                    } 
-                    // Si l'utilisateur clique sur autre chose alors que "all" était coché
-                    else if (currentSelected.includes('all') && currentSelected.length > 1) {
-                        // On décoche "all"
+                    } else if (currentSelected.includes('all') && currentSelected.length > 1) {
                         Array.from(select.options).forEach(o => { if (o.value === 'all') o.selected = false; });
                         currentSelected = currentSelected.filter(v => v !== 'all');
-                    }
-                    // Si l'utilisateur a tout décoché, on recoche "all" par sécurité
-                    else if (currentSelected.length === 0) {
+                    } else if (currentSelected.length === 0) {
                         Array.from(select.options).find(o => o.value === 'all').selected = true;
                         currentSelected = ['all'];
                     }
@@ -521,7 +514,6 @@
             document.getElementById('modalOverlay').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
         });
 
-        // --- CORRECTION DU BUG DE SYNTAXE (try { await async function... ) ICI ---
         document.getElementById('analyzeBtn').addEventListener('click', function() {
             showLoading('Préparation de l\'analyse...');
             document.getElementById('loadingOverlay').style.backgroundColor = 'rgba(255,255,255,0.9)'; 
@@ -557,7 +549,6 @@
         async function analyzeData() {
             updateProgress(5);
             
-            // Vidange massive de la mémoire avant le calcul (Fix pour iPhone RAM)
             vehiculesIndex.clear();
             lieuxIndex.clear();
             usagersByAccidentIndex.clear();
@@ -567,10 +558,7 @@
             if (pointsLayer) { pointsLayer.clearLayers(); }
             
             let years = Array.from(document.getElementById('annee').selectedOptions).map(o => o.value);
-            // --- CORRECTION "TOUTES LES ANNÉES" ---
-            if(years.includes('all')) {
-                years = ['2024', '2023', '2022', '2021'];
-            }
+            if(years.includes('all')) { years = ['2024', '2023', '2022', '2021']; }
 
             const typeVictime = Array.from(document.getElementById('typeVictime').selectedOptions).map(o => o.value);
             const advVehSelected = Array.from(document.getElementById('vehiculeAdverse').selectedOptions).map(o => o.value);
@@ -601,7 +589,6 @@
             let vehiculesData = [];
             let usagersData = [];
             
-            // Utilisation d'une boucle For classique (évite le Concat destructeur de RAM sur iOS)
             years.forEach(year => {
                 if(allData[year] && allData[year].caracteristiques) {
                     for(let i=0; i<allData[year].caracteristiques.length; i++) caracteristiquesData.push(allData[year].caracteristiques[i]);
@@ -960,7 +947,6 @@
         }
 
         async function openGoogleSearch(button) {
-            // Fix iOS pour Safari : Ouvrir le tab AVANT la requête Fetch
             let newTab = window.open('about:blank', '_blank'); 
             
             let searchTerms = ['accident'];
@@ -1260,24 +1246,16 @@
         });
 
         function createBarChartWithLabels(id, labels, data, cb) {
-            const canvas = document.getElementById(id);
-            canvas.style.height = '280px'; 
-            return new Chart(canvas, { type: 'bar', data: {labels, datasets: [{data, backgroundColor: '#667eea'}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
+            return new Chart(document.getElementById(id), { type: 'bar', data: {labels, datasets: [{data, backgroundColor: '#667eea'}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
         }
         function createPieChartWithLabels(id, labels, data, cb) {
-            const canvas = document.getElementById(id); 
-            canvas.style.height = '280px';
-            return new Chart(canvas, { type: 'pie', data: {labels, datasets: [{data, backgroundColor: ['#667eea', '#ff6b35', '#ffd93d', '#4ecdc4', '#764ba2', '#ccc']}]}, options: commonChartOptions(cb) });
+            return new Chart(document.getElementById(id), { type: 'pie', data: {labels, datasets: [{data, backgroundColor: ['#667eea', '#ff6b35', '#ffd93d', '#4ecdc4', '#764ba2', '#ccc']}]}, options: commonChartOptions(cb) });
         }
         function createPieChartCustomColors(id, labels, data, colorMap, cb) {
-            const canvas = document.getElementById(id); 
-            canvas.style.height = '280px';
-            return new Chart(canvas, { type: 'pie', data: {labels, datasets: [{data, backgroundColor: labels.map(l => colorMap[l] || '#ccc')}]}, options: commonChartOptions(cb) });
+            return new Chart(document.getElementById(id), { type: 'pie', data: {labels, datasets: [{data, backgroundColor: labels.map(l => colorMap[l] || '#ccc')}]}, options: commonChartOptions(cb) });
         }
         function createLineChartWithLabels(id, labels, data, cb) {
-            const canvas = document.getElementById(id); 
-            canvas.style.height = '280px';
-            return new Chart(canvas, { type: 'line', data: {labels, datasets: [{data, borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.2)', fill: true, tension: 0.4}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
+            return new Chart(document.getElementById(id), { type: 'line', data: {labels, datasets: [{data, borderColor: '#667eea', backgroundColor: 'rgba(102,126,234,0.2)', fill: true, tension: 0.4}]}, options: { ...commonChartOptions(cb), plugins: {legend: {display: false}} } });
         }
     </script>
 </body>
