@@ -72,15 +72,17 @@
 
         .content { padding: 20px; }
         .section-title { font-size: 1.4em; color: #1e3c72; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 3px solid; }
-
-        /* BANDEAU FLOTTANT UNIQUE EN BAS (Regroupe tout proprement) */
+        
+        #crossFilterBanner { display: none; }
+        #mapHighlightInfo { background: #fff3cd; border: 2px solid #ffc107; padding: 15px; margin-bottom: 20px; border-radius: 8px; color: #856404; font-size: 1.05em; font-weight: 500; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* Bandeau collant */
         #stickySummary { position: fixed; bottom: 15px; left: 50%; transform: translateX(-50%); background: rgba(30, 60, 114, 0.95); color: white; padding: 10px 15px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); z-index: 10000; display: none; align-items: center; justify-content: center; gap: 8px; font-size: 0.85em; width: 95vw; max-width: 1000px; backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.2); flex-direction: column; text-align: center; max-height: 40vh; overflow-y: auto; pointer-events: auto; }
         @media (min-width: 768px) { #stickySummary { font-size: 0.9em; border-radius: 30px; width: auto; max-width: 90vw; padding: 12px 25px; flex-direction: row; text-align: left; } }
         
         .sticky-cross-filters { display: none; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); width: 100%;}
         @media (min-width: 768px) { .sticky-cross-filters { border-top: none; padding-top: 0; padding-left: 10px; border-left: 1px solid rgba(255,255,255,0.2); width: auto;} }
 
-        /* Bouton Mobile Multi-Select (Universel) */
         .multi-toggle-btn { background: #fdfdfd; border: 2px solid #ddd; padding: 8px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.3s; color: #555;}
         .multi-toggle-btn.active { background: #e3f2fd; border-color: #2196f3; color: #1565c0; }
 
@@ -99,7 +101,6 @@
         .charts-grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media (min-width: 900px) { .charts-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
-        /* Style des KPI et Moyennes */
         .stats-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; margin-bottom: 20px; }
         .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 10px; border-radius: 12px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; }
         .stat-card .number { font-size: 1.8em; font-weight: 700; margin-bottom: 2px; }
@@ -138,7 +139,7 @@
 
         .age-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
         .age-controls button { padding: 4px 10px; border-radius: 15px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.8em;}
-        .age-controls button.active { background: #34495E; color: white; border-color: #34495E; }
+        .age-controls button.active { background: #4A90E2; color: white; border-color: #4A90E2; }
     </style>
 </head>
 <body>
@@ -149,11 +150,11 @@
         <p id="loadingText">Veuillez patienter...</p>
     </div>
 
-    <!-- BANNIÈRE STICKY (RÉSUMÉ ET FILTRES ACTIFS MULTIPLES) -->
+    <!-- BANNIÈRE STICKY -->
     <div id="stickySummary">
         <div id="stickyBaseText">🔍 Base : -</div>
         <div id="stickyCrossFilters" class="sticky-cross-filters">
-            <span style="color: #ffd93d; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center;" id="stickyFiltersList">
+            <span style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-items: center;" id="stickyFiltersList">
             </span>
             <label style="cursor: pointer; display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.2); padding: 4px 10px; border-radius: 15px; font-size: 0.9em; margin-left: 5px;">
                 <input type="checkbox" id="modeVictimeOnly" checked onchange="window.reapplyCrossFilters()">
@@ -174,8 +175,9 @@
         <header>
             <h1>🚗 Analyse de la Sécurité Routière en France</h1>
             <p class="desc">
-                Cet outil interactif a pour vocation de rendre les données de l'accidentalité routière parfaitement intelligibles et exploitables.<br>
-                Que vous soyez un usager de la route ou un décideur public élaborant une politique de mobilité, vous pouvez générer en quelques clics des statistiques précises à l'échelle nationale, régionale ou locale.
+                Cet outil interactif a pour vocation de rendre les données de l'accidentalité routière parfaitement intelligibles et exploitables. 
+                Que vous soyez un usager de la route ou un décideur public élaborant une politique de mobilité, 
+                vous pouvez générer en quelques clics des statistiques précises à l'échelle nationale, régionale ou locale.
             </p>
         </header>
 
@@ -798,10 +800,18 @@
                 }
             }
 
+            // Sécurité absolue lors du téléchargement : Normalisation des vieux noms de colonnes ONISR
             FILES_TO_LOAD.forEach(fileObj => {
                 Papa.parse(fileObj.url, {
                     download: true, header: true, skipEmptyLines: true, quoteChar: '"',
-                    transformHeader: h => { let c=h.replace(/^\uFEFF/,'').replace(/^"|"$/g,'').trim(); return c.toLowerCase()==='num_acc'?'Num_Acc':c; }, 
+                    transformHeader: h => { 
+                        let c = h.replace(/^\uFEFF/,'').replace(/^"|"$/g,'').trim(); 
+                        let low = c.toLowerCase();
+                        if(low === 'num_acc' || low === 'accident_id') return 'Num_Acc';
+                        if(low === 'id_vehicule' || low === 'num_veh') return 'id_vehicule';
+                        if(low === 'lon') return 'long';
+                        return c; 
+                    }, 
                     transform: v => v ? v.trim() : v,
                     complete: function(results) {
                         allData[fileObj.year][fileObj.type] = results.data;
@@ -885,7 +895,7 @@
             let parts = [];
             
             if (currentSearchedCityMap) parts.push(`📍 ${currentSearchedCityMap}`);
-            else parts.push(`📍 Zone visible`);
+            else parts.push(`📍 France`);
 
             if (years.includes('all') || years.length === 8) parts.push(`📅 2017-2024`);
             else {
@@ -990,12 +1000,14 @@
                     if(dFin && d > new Date(dFin)) return false;
                 }
 
-                if(acc.lat && acc.long) {
-                    const lat = parseFloat(acc.lat.replace(',','.'));
-                    const lon = parseFloat(acc.long.replace(',','.'));
-                    if(isNaN(lat) || isNaN(lon)) return false;
-                    if(!bounds.contains([lat, lon])) return false;
-                } else return false; 
+                // Safely parse Coordinates
+                const rawLat = acc.lat ? String(acc.lat).replace(',','.') : '';
+                const rawLon = acc.long ? String(acc.long).replace(',','.') : '';
+                const lat = parseFloat(rawLat);
+                const lon = parseFloat(rawLon);
+                
+                if(isNaN(lat) || isNaN(lon)) return false;
+                if(!bounds.contains([lat, lon])) return false;
 
                 return true;
             });
@@ -1013,6 +1025,7 @@
             renderDashboard(mainAccidents, mainUsagers);
         }
 
+        // --- FILTRE CROISÉ MULTIPLE ---
         function handleCrossFilterClick(e, title, label, validAccIdsSet, victimFilterFn = null) {
             let isMulti = isMultiSelectEnabled;
             let existingIdx = activeCrossFilters.findIndex(f => f.title === title && f.label === label);
@@ -1144,7 +1157,7 @@
             let aSorted = Object.keys(aCount).sort((a,b)=>parseInt(a)-parseInt(b));
             let aData = {}; aSorted.forEach(k => aData[k]=aCount[k]);
             
-            charts.age = createBarChart('chartAge', aData, '#34495E', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
+            charts.age = createBarChart('chartAge', aData, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Âge', l, new Set(aAcc[l]), (u) => {
                 const acc = accidentsByIdIndex.get(u.Num_Acc);
                 if(acc && u.an_nais && acc.an) {
                     let a=parseInt(acc.an); if(a<100) a+=2000;
@@ -1200,6 +1213,7 @@
             `);
         }
 
+        // Un seul event listener pour toute la carte
         function handleMarkerClick(e) {
             if(e.layer && e.layer.accidentId) {
                 const accId = e.layer.accidentId;
@@ -1226,8 +1240,10 @@
                 let victimes = isCrossFiltering ? usgs.filter(u => u.Num_Acc === acc.Num_Acc) : (victimesFiltreesIndex.get(acc.Num_Acc) || []);
                 if(victimes.length === 0) continue;
 
-                let lat = parseFloat(acc.lat.replace(',','.'));
-                let long = parseFloat(acc.long.replace(',','.'));
+                let lat = parseFloat(String(acc.lat).replace(',','.'));
+                let long = parseFloat(String(acc.long || acc.lon || '').replace(',','.'));
+                if(isNaN(lat) || isNaN(long)) continue;
+
                 let gravMax = Math.min(...victimes.map(u => parseInt(u.grav)||4));
                 
                 let weight = (gravMax === 2) ? 4 : (gravMax === 3 ? 2 : 1);
@@ -1274,7 +1290,7 @@
             // --- GR 1 : Profil ---
             let sCount = {'👨 Hommes':0, '👩 Femmes':0}; let sAcc = {'👨 Hommes':[], '👩 Femmes':[]};
             usgs.forEach(u => { if(u.sexe==='1'){ sCount['👨 Hommes']++; sAcc['👨 Hommes'].push(u.Num_Acc); } else if(u.sexe==='2'){ sCount['👩 Femmes']++; sAcc['👩 Femmes'].push(u.Num_Acc); } });
-            charts.sexe = createSingleStackedBar('chartSexe', sCount, {'👨 Hommes':'#34495E', '👩 Femmes':'#E53935'}, 
+            charts.sexe = createSingleStackedBar('chartSexe', sCount, {'👨 Hommes':'#4A90E2', '👩 Femmes':'#E53935'}, 
                 (e, l) => handleCrossFilterClick(e, 'Sexe', l, new Set(sAcc[l]), (u) => (l === '👨 Hommes' ? u.sexe === '1' : u.sexe === '2'))
             );
 
@@ -1316,7 +1332,7 @@
             accs.forEach(a => { let n=NOMENCLATURES.collision[a.col]||'Autre'; cCount[n]=(cCount[n]||0)+1; if(!cAcc[n]) cAcc[n]=[]; cAcc[n].push(a.Num_Acc); });
             charts.col = createHorizontalBarChart('chartCollision', sortDict(cCount), generateGradient('#7F8C8D', '#D5D8DC', Object.keys(cCount).length), (e, l) => handleCrossFilterClick(e, 'Type de collision', l, new Set(cAcc[l])));
 
-            // --- GR 3 : Temps (Couleur Unique #4A90E2) ---
+            // --- GR 3 : Temps ---
             let anCount = {}; let anAcc = {};
             for(let i=2017; i<=2024; i++) { anCount[i.toString()] = 0; anAcc[i.toString()] = []; }
             accs.forEach(a => { 
