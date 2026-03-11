@@ -307,19 +307,12 @@
                     <div id="heatmapAdvancedControls">
                         <div style="font-size: 0.9em; font-weight: bold; color: #1e3c72; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between;">
                             <span>🎛️ Laboratoire de la Densité</span>
-                            <label style="width: auto; cursor: pointer; color: #d32f2f;"><input type="checkbox" id="autoHeatmap" checked> 🪄 Auto-ajuster</label>
                         </div>
                         
                         <div class="heat-stats">
                             <span>Zoom (Z): <span id="statZ">-</span></span>
                             <span>Points (P): <span id="statP">-</span></span>
                             <span>Ratio (Z/P): <span id="statRatio">-</span></span>
-                        </div>
-
-                        <div class="heatmap-slider-row" id="rowAutoCoeff">
-                            <label for="heatAutoCoeff" style="color: #4caf50;">⚖️ Coef. (C) :</label>
-                            <input type="range" id="heatAutoCoeff" min="1000" max="3000000" step="10000" value="500000">
-                            <span id="valAutoCoeff" style="width: 65px;">500000</span>
                         </div>
 
                         <div class="heatmap-slider-row">
@@ -662,30 +655,6 @@
             heatLayer.setOptions({ radius: r, blur: b, max: m, minOpacity: mo });
         };
 
-        window.applyAutoHeatmap = function() {
-            if (!heatLayer || currentMapView !== 'heatmap') return;
-            
-            let cEl = document.getElementById('heatAutoCoeff');
-            if(!cEl) return;
-            let c = parseFloat(cEl.value);
-            let rawSize = c * currentRatio;
-            let size = Math.floor(Math.max(2, Math.min(60, rawSize))); 
-
-            let m, mo;
-            if (currentP <= 20) { m = 2; mo = 0.66; }
-            else if (currentZ <= 6) { m = 5; mo = 0.23; }
-            else if (currentZ >= 13 && currentP > 100) { m = 2; mo = 0.30; }
-            else { m = 2; mo = 0.21; }
-
-            DOM.val('heatRadius', size); DOM.text('valRadius', size);
-            DOM.val('heatBlur', size); DOM.text('valBlur', size);
-            
-            let mUI = document.getElementById('heatMax') ? parseInt(document.getElementById('heatMax').value) : m;
-            let moUI = document.getElementById('heatMinOp') ? (parseInt(document.getElementById('heatMinOp').value)/100) : mo;
-
-            heatLayer.setOptions({ radius: size, blur: size, max: mUI, minOpacity: moUI });
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             map = L.map('map', { preferCanvas: true, zoomControl: true }).setView([46.603354, 1.888334], 5);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '© CARTO', maxZoom: 19 }).addTo(map);
@@ -693,57 +662,22 @@
             map.on('moveend', function() {
                 if(currentMapView === 'heatmap') {
                     updateHeatmapStats();
-                    const autoEl = document.getElementById('autoHeatmap');
-                    if(autoEl && autoEl.checked) applyAutoHeatmap();
+                    applyManualHeatmap();
                 }
             });
             map.on('zoomend', function() {
                 if(currentMapView === 'heatmap') {
                     updateHeatmapStats();
-                    const autoEl = document.getElementById('autoHeatmap');
-                    if(autoEl && autoEl.checked) applyAutoHeatmap();
+                    applyManualHeatmap();
                 }
             });
 
             ['heatRadius', 'heatBlur', 'heatMax', 'heatMinOp'].forEach(id => {
                 let el = document.getElementById(id);
                 if(el) el.addEventListener('input', function() {
-                    const autoCb = document.getElementById('autoHeatmap');
-                    if(autoCb) autoCb.checked = false;
-                    const rowCoef = document.getElementById('rowAutoCoeff');
-                    if(rowCoef) rowCoef.style.opacity = '0.4';
                     applyManualHeatmap();
                 });
             });
-
-            const coefEl = document.getElementById('heatAutoCoeff');
-            if(coefEl) {
-                coefEl.addEventListener('input', function(e) {
-                    DOM.text('valAutoCoeff', e.target.value);
-                    let c = parseFloat(e.target.value);
-                    let rawSize = c * currentRatio;
-                    let size = Math.floor(Math.max(2, Math.min(60, rawSize)));
-                    
-                    DOM.val('heatRadius', size); DOM.text('valRadius', size);
-                    DOM.val('heatBlur', size); DOM.text('valBlur', size);
-                    
-                    applyManualHeatmap(); 
-                });
-            }
-
-            const autoHeatmapCb = document.getElementById('autoHeatmap');
-            if(autoHeatmapCb) {
-                autoHeatmapCb.addEventListener('change', function(e) {
-                    const rowCoef = document.getElementById('rowAutoCoeff');
-                    if(e.target.checked) {
-                        if(rowCoef) rowCoef.style.opacity = '1';
-                        updateHeatmapStats();
-                        applyAutoHeatmap();
-                    } else {
-                        if(rowCoef) rowCoef.style.opacity = '0.4';
-                    }
-                });
-            }
 
             const toggleFltBtn = document.getElementById('toggleFiltersBtn');
             if(toggleFltBtn) {
@@ -814,6 +748,27 @@
                     }, 
                     transform: v => v ? v.trim() : v,
                     complete: function(results) {
+                        // Correction pour les coordonnées géographiques des années 2017 et 2018
+                        // qui ne contenaient pas de point décimal et devaient être divisées par 100 000.
+                        if (fileObj.type === 'caracteristiques' && (fileObj.year === 2017 || fileObj.year === 2018)) {
+                            results.data.forEach(row => {
+                                if (row.lat) {
+                                    let lat = parseFloat(String(row.lat).replace(',', '.'));
+                                    if (!isNaN(lat) && Math.abs(lat) > 90) row.lat = lat / 100000;
+                                }
+                                if (row.long) {
+                                    let lon = parseFloat(String(row.long).replace(',', '.'));
+                                    if (!isNaN(lon) && Math.abs(lon) > 180) row.long = lon / 100000;
+                                } else if (row.lon) {
+                                    let lon = parseFloat(String(row.lon).replace(',', '.'));
+                                    if (!isNaN(lon) && Math.abs(lon) > 180) {
+                                        row.lon = lon / 100000;
+                                        row.long = row.lon;
+                                    }
+                                }
+                            });
+                        }
+
                         allData[fileObj.year][fileObj.type] = results.data;
                         processed++; updateProgress((processed/FILES_TO_LOAD.length)*100);
                         checkFinish();
@@ -1124,9 +1079,7 @@
                 
                 if(heatLayer) heatLayer.addTo(map); 
                 updateHeatmapStats();
-                const autoEl = document.getElementById('autoHeatmap');
-                if(autoEl && autoEl.checked) applyAutoHeatmap();
-                else applyManualHeatmap();
+                applyManualHeatmap();
             }
         }
 
@@ -1213,7 +1166,6 @@
             `);
         }
 
-        // Un seul event listener pour toute la carte
         function handleMarkerClick(e) {
             if(e.layer && e.layer.accidentId) {
                 const accId = e.layer.accidentId;
@@ -1280,9 +1232,7 @@
             } else if (currentMapView === 'heatmap') { 
                 if(heatLayer) map.addLayer(heatLayer); 
                 updateHeatmapStats();
-                const autoEl = document.getElementById('autoHeatmap');
-                if(autoEl && autoEl.checked) applyAutoHeatmap();
-                else applyManualHeatmap();
+                applyManualHeatmap();
             } 
 
             Object.values(charts).forEach(c => { if(c) c.destroy() }); charts = {};
