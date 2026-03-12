@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GPS Sécurité - Analyse de Trajet</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🧭</text></svg>">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 100%); min-height:100vh; padding:10px; color:#333; }
+        .container { max-width:1600px; margin:0 auto; background:white; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.1); overflow:hidden; padding-bottom:40px; }
+        header { background:linear-gradient(135deg,#1e3c72 0%,#2a5298 100%); color:white; padding:25px 20px; text-align:center; }
+        header h1 { font-size:clamp(1.4em,4vw,2.4em); margin-bottom:10px; }
+        header p.desc { font-size:clamp(0.9em,1.5vw,1.05em); font-weight:300; font-style:italic; color:rgba(255,255,255,0.85); max-width:900px; margin:0 auto 15px auto; line-height:1.5; }
+        nav.page-nav { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:15px; }
+        nav.page-nav a { background:rgba(255,255,255,0.15); color:white; padding:8px 20px; border-radius:20px; text-decoration:none; font-weight:600; font-size:0.9em; transition:background 0.2s; border:1px solid rgba(255,255,255,0.3); }
+        nav.page-nav a:hover, nav.page-nav a.active { background:rgba(255,255,255,0.3); }
+        footer { background:#2c3e50; color:white; padding:15px; text-align:center; font-size:0.85em; margin-top:20px; }
+        .section-panel { background:#fff; padding:20px; border-bottom:3px solid #e9ecef; }
+        .section-title { font-size:1.3em; color:#1e3c72; margin:0 0 15px 0; padding-bottom:8px; border-bottom:3px solid #667eea; }
+        .filter-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:15px; margin-top:15px; }
+        .filter-group label { display:block; font-weight:600; margin-bottom:8px; color:#2c3e50; font-size:0.95em; }
+        .filter-group select, .filter-group input[type="date"] { width:100%; padding:10px; border:2px solid #ddd; border-radius:8px; font-size:15px; background:#fdfdfd; }
+        .filter-group select { min-height:80px; }
+        .mode-selector { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+        .mode-btn { flex:1; min-width:80px; padding:12px 10px; border:2px solid #ddd; border-radius:10px; background:white; cursor:pointer; font-size:1.2em; text-align:center; transition:all 0.2s; font-weight:600; }
+        .mode-btn:hover { border-color:#667eea; background:#f0f4ff; }
+        .mode-btn.active { border-color:#1e3c72; background:#1e3c72; color:white; }
+        .mode-btn .mode-label { font-size:0.65em; display:block; margin-top:3px; }
+        .route-inputs { display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px; }
+        @media (max-width:600px) { .route-inputs { grid-template-columns:1fr; } }
+        .point-input-group { background:#f8f9fa; border-radius:10px; padding:15px; border:2px solid #e0e0e0; }
+        .point-input-group.start { border-color:#2ecc71; background:#f0fff4; }
+        .point-input-group.end { border-color:#e74c3c; background:#fff5f5; }
+        .point-input-group > label { font-weight:700; margin-bottom:10px; display:block; }
+        .point-input-group.start > label { color:#27ae60; }
+        .point-input-group.end > label { color:#c0392b; }
+        .input-with-btn { display:flex; gap:8px; }
+        .input-with-btn input { flex:1; padding:10px; border:2px solid #ddd; border-radius:8px; font-size:14px; }
+        .input-with-btn button { padding:10px 12px; border:none; border-radius:8px; cursor:pointer; font-weight:600; font-size:0.9em; white-space:nowrap; }
+        .btn-search-start { background:#2ecc71; color:white; }
+        .btn-search-end { background:#e74c3c; color:white; }
+        .btn-pick-map { background:#3498db; color:white; transition:all 0.2s; }
+        .btn-pick-map.picking { background:#e67e22; animation:pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+        .point-info { font-size:0.82em; color:#666; margin-top:6px; font-style:italic; min-height:18px; }
+        #map { height:50vh; min-height:400px; width:100%; border-radius:8px; border:1px solid #ccc; z-index:1; }
+        @media (min-width:768px) { #map { height:520px; } }
+        .radius-row { display:flex; align-items:center; gap:10px; background:#f0f4ff; padding:10px 15px; border-radius:8px; margin-top:10px; }
+        .radius-row label { font-weight:600; color:#1e3c72; font-size:0.9em; white-space:nowrap; }
+        .radius-row input[type="range"] { flex:1; }
+        .radius-row span { font-weight:bold; color:#1e3c72; min-width:45px; }
+        .map-tools { display:flex; background:white; padding:12px; border-radius:8px; margin-top:10px; box-shadow:0 2px 4px rgba(0,0,0,0.1); flex-wrap:wrap; gap:15px; justify-content:space-between; align-items:flex-start; }
+        .map-view-controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+        .map-legend { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+        .legend-item { display:flex; align-items:center; font-size:0.85em; font-weight:600; }
+        .legend-marker { border-radius:50%; margin-right:6px; border:2px solid white; box-shadow:0 1px 3px rgba(0,0,0,0.3); }
+        .view-btn { background:#f0f0f0; border:1px solid #ddd; padding:8px 15px; border-radius:20px; cursor:pointer; font-weight:600; transition:all 0.2s; font-size:0.9em; }
+        .view-btn.active { background:#667eea; color:white; border-color:#667eea; }
+        #btnToggleHeat { background:#fff3e0; color:#e65100; border:1px solid #ffcc80; padding:6px 12px; border-radius:15px; font-size:0.85em; cursor:pointer; font-weight:bold; display:none; }
+        #heatAdvanced { display:none; flex-direction:column; gap:10px; background:#fdfdfd; padding:15px; border-radius:8px; border:1px solid #e0e0e0; width:100%; margin-top:10px; }
+        .slider-row { display:flex; align-items:center; gap:10px; width:100%; }
+        .slider-row label { font-size:0.85em; font-weight:600; color:#1e3c72; width:140px; }
+        .slider-row input[type="range"] { flex:1; }
+        .slider-row span { font-size:0.8em; font-weight:bold; width:55px; text-align:right; background:#e3f2fd; padding:3px 6px; border-radius:4px; color:#1565c0; }
+        .btn-main { background:linear-gradient(135deg,#4285f4 0%,#34a853 100%); color:white; padding:18px 20px; border:none; border-radius:10px; font-size:1.2em; font-weight:bold; cursor:pointer; width:100%; margin-top:20px; box-shadow:0 4px 10px rgba(66,133,244,0.3); transition:all 0.3s; }
+        .btn-main:hover:not(:disabled) { transform:translateY(-2px); }
+        .btn-main:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+        .loading-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); display:flex; justify-content:center; align-items:center; z-index:9999; flex-direction:column; padding:20px; text-align:center; }
+        .spinner { border:4px solid #f3f3f3; border-top:4px solid #667eea; border-radius:50%; width:50px; height:50px; animation:spin 1s linear infinite; margin-bottom:20px; }
+        @keyframes spin { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
+        .progress-bar-container { width:100%; max-width:300px; height:12px; background:#e0e0e0; border-radius:6px; overflow:hidden; margin-bottom:10px; }
+        .progress-fill { height:100%; background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); width:0%; transition:width 0.3s; }
+        .content { padding:20px; }
+        .stats-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:15px; margin-bottom:25px; }
+        .stat-card { color:white; padding:15px 10px; border-radius:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+        .stat-card .number { font-size:1.8em; font-weight:700; margin-bottom:2px; }
+        .stat-card .label { font-size:0.82em; opacity:0.9; font-weight:600; }
+        .stat-card .sublabel { font-size:0.72em; opacity:0.75; margin-top:5px; background:rgba(0,0,0,0.15); padding:2px 5px; border-radius:4px; display:inline-block; }
+        .chart-box { background:white; padding:15px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06); border:1px solid #f0f0f0; margin-bottom:25px; }
+        .chart-box h3 { color:#2c3e50; margin-bottom:4px; font-size:1.1em; }
+        .chart-subtitle { font-size:0.8em; color:#888; font-style:italic; margin-bottom:12px; }
+        .canvas-wrap { position:relative; height:300px; width:100%; }
+        .danger-zone-card { background:white; border-radius:10px; padding:15px; margin-bottom:12px; display:flex; gap:15px; align-items:flex-start; box-shadow:0 2px 6px rgba(0,0,0,0.08); border-left:5px solid #e74c3c; }
+        .danger-zone-card.warning { border-left-color:#ff6b35; }
+        .danger-zone-card.caution { border-left-color:#F1C40F; }
+        .dz-km { font-size:1.3em; font-weight:700; color:#1e3c72; min-width:75px; text-align:center; padding-top:2px; }
+        .dz-info h4 { color:#2c3e50; margin-bottom:5px; font-size:0.95em; }
+        .dz-info p { font-size:0.85em; color:#666; line-height:1.5; }
+        .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:0.75em; font-weight:700; margin-right:4px; margin-top:4px; }
+        .b-tue { background:#8b0000; color:white; }
+        .b-hosp { background:#ff6b35; color:white; }
+        .b-bles { background:#F1C40F; color:#333; }
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:none; justify-content:center; align-items:flex-end; z-index:10000; }
+        @media (min-width:768px) { .modal-overlay { align-items:center; padding:20px; } }
+        .modal-content { background:white; border-radius:20px 20px 0 0; width:100%; max-width:800px; max-height:85vh; overflow-y:auto; padding:25px 20px; position:relative; animation:slideUp 0.3s ease-out; }
+        @media (min-width:768px) { .modal-content { border-radius:15px; } }
+        @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+        .modal-close { position:absolute; top:15px; right:15px; background:#f1f1f1; color:#333; border:none; border-radius:50%; width:35px; height:35px; font-size:20px; cursor:pointer; display:flex; justify-content:center; align-items:center; }
+        .acc-item { background:#f8f9fa; border-radius:8px; padding:12px; margin-bottom:10px; border-left:4px solid #667eea; cursor:pointer; transition:background 0.2s; }
+        .acc-item:hover { background:#e9ecef; }
+        .acc-item .ah { font-weight:700; color:#1e3c72; margin-bottom:4px; font-size:0.95em; }
+        .acc-item .ad { font-size:0.85em; color:#555; }
+        .popup-victim { background:#fff3e0; padding:8px; margin:6px 0; border-left:3px solid #ff6b35; border-radius:4px; font-size:0.9em; }
+        .popup-adverse { background:#e8f5e9; padding:6px; margin:4px 0 4px 10px; border-left:3px solid #4caf50; border-radius:4px; font-size:0.85em; }
+        .victim-card { background:#fff3e0; padding:12px; margin:8px 0; border-left:4px solid #ff6b35; border-radius:6px; }
+        .victim-card.indemne { background:#e8f5e9; border-left-color:#4caf50; }
+        .info-section { background:#f8f9fa; padding:12px; border-left:4px solid #667eea; margin:8px 0; border-radius:6px; }
+        .info-tip { background:#e3f2fd; border-left:4px solid #2196f3; padding:12px 15px; border-radius:6px; margin-bottom:15px; font-size:0.92em; color:#1565c0; }
+        .btn-details { background:linear-gradient(135deg,#ff6b35 0%,#f7931e 100%); color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer; font-weight:600; width:100%; margin-top:10px; }
+        .btn-google { background:linear-gradient(135deg,#4285f4 0%,#34a853 100%); color:white; padding:8px 15px; border:none; border-radius:8px; cursor:pointer; font-weight:600; width:100%; margin-top:6px; }
+    </style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <h2>🧭 Chargement des données</h2>
+    <div class="spinner"></div>
+    <div class="progress-bar-container"><div class="progress-fill" id="progressFill"></div></div>
+    <p id="loadingText">Initialisation...</p>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<div class="container">
+    <header>
+        <h1>🧭 GPS Sécurité Routière</h1>
+        <p class="desc">Analysez la dangerosité de votre itinéraire : visualisez les accidents survenus le long de votre trajet et identifiez les zones à risque.</p>
+        <nav class="page-nav">
+            <a href="index.html">🗺️ Analyse par zone</a>
+            <a href="page2.html" class="active">🧭 Analyse de trajet</a>
+        </nav>
+    </header>
+
+    <div class="section-panel" id="filtersSection" style="display:none;">
+
+        <h2 class="section-title">⚙️ 1. Paramétrez les filtres</h2>
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label>Années des accidents</label>
+                <select id="annee" multiple size="5">
+                    <option value="all">Toutes les années</option>
+                    <option value="2024" selected>2024</option>
+                    <option value="2023" selected>2023</option>
+                    <option value="2022" selected>2022</option>
+                    <option value="2021">2021</option>
+                    <option value="2020">2020</option>
+                    <option value="2019">2019</option>
+                    <option value="2018">2018</option>
+                    <option value="2017">2017</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Type de victime affiché</label>
+                <select id="typeVictime" multiple size="5">
+                    <option value="all" selected>Tous les types</option>
+                    <option value="3">🚶 Piéton</option>
+                    <option value="07">🚗 Voiture (VL)</option>
+                    <option value="13,14,15">🚛 Camion (PL)</option>
+                    <option value="30,31,32,33,34">🏍️ Moto/Scooter</option>
+                    <option value="80">🚴 VAE</option>
+                    <option value="01">🚴 Vélo</option>
+                    <option value="50">🛴 Trottinette/EDPM</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Gravité</label>
+                <select id="gravite" multiple size="4">
+                    <option value="all" selected>Toutes (hors indemnes)</option>
+                    <option value="2">💀 Tué</option>
+                    <option value="3">🏥 Blessé hospitalisé</option>
+                    <option value="4">🩹 Blessé léger</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Période (optionnel)</label>
+                <div style="display:flex;flex-direction:column;gap:8px;">
+                    <input type="date" id="dateDebut" title="Début">
+                    <input type="date" id="dateFin" title="Fin">
+                </div>
+            </div>
+        </div>
+
+        <div class="filter-group" style="margin-top:18px;">
+            <label>Votre mode de déplacement</label>
+            <div class="mode-selector">
+                <button class="mode-btn active" data-mode="driving" onclick="selectMode(this)">🚗<span class="mode-label">Voiture</span></button>
+                <button class="mode-btn" data-mode="driving" onclick="selectMode(this)">🏍️<span class="mode-label">Moto</span></button>
+                <button class="mode-btn" data-mode="cycling" onclick="selectMode(this)">🚴<span class="mode-label">Vélo</span></button>
+                <button class="mode-btn" data-mode="foot" onclick="selectMode(this)">🚶<span class="mode-label">Piéton</span></button>
+            </div>
+        </div>
+
+        <h2 class="section-title" style="margin-top:25px;">📍 2. Définissez votre trajet</h2>
+        <div class="info-tip">
+            💡 <strong>Astuce :</strong> Tapez une adresse et cliquez 🔍, <em>ou</em> cliquez sur 📌 puis pointez directement sur la carte pour placer un marqueur.
+        </div>
+        <div class="route-inputs">
+            <div class="point-input-group start">
+                <label>🟢 Départ</label>
+                <div class="input-with-btn">
+                    <input type="text" id="startInput" placeholder="Ex : Gare de Lyon, Paris" />
+                    <button class="btn-search-start" onclick="searchPoint('start')" title="Chercher">🔍</button>
+                    <button class="btn-pick-map" id="btnPickStart" onclick="togglePick('start')" title="Pointer sur la carte">📌</button>
+                </div>
+                <div class="point-info" id="startInfo">Non défini</div>
+            </div>
+            <div class="point-input-group end">
+                <label>🔴 Arrivée</label>
+                <div class="input-with-btn">
+                    <input type="text" id="endInput" placeholder="Ex : Arc de Triomphe, Paris" />
+                    <button class="btn-search-end" onclick="searchPoint('end')" title="Chercher">🔍</button>
+                    <button class="btn-pick-map" id="btnPickEnd" onclick="togglePick('end')" title="Pointer sur la carte">📌</button>
+                </div>
+                <div class="point-info" id="endInfo">Non défini</div>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="radius-row">
+            <label>Rayon d'analyse autour du trajet :</label>
+            <input type="range" id="radiusSlider" min="20" max="300" value="50" step="10"
+                   oninput="document.getElementById('radiusVal').textContent=this.value+'m'">
+            <span id="radiusVal">50m</span>
+        </div>
+
+        <div class="map-tools" id="mapTools" style="display:none;">
+            <div class="map-view-controls">
+                <button class="view-btn active" id="btnViewPoints" onclick="setMapView('points')">📍 Points</button>
+                <button class="view-btn" id="btnViewHeatmap" onclick="setMapView('heatmap')">🔥 Densité</button>
+                <button id="btnToggleHeat">⚙️ Paramètres densité</button>
+            </div>
+            <div class="map-legend">
+                <div class="legend-item"><div class="legend-marker" style="background:#F1C40F;width:10px;height:10px;"></div>Blessé léger</div>
+                <div class="legend-item"><div class="legend-marker" style="background:#ff6b35;width:14px;height:14px;"></div>Hospitalisé</div>
+                <div class="legend-item"><div class="legend-marker" style="background:#8b0000;width:18px;height:18px;"></div>Tué</div>
+            </div>
+            <div id="heatAdvanced">
+                <div class="slider-row">
+                    <label>Taille (Radius) :</label>
+                    <input type="range" id="heatRadius" min="2" max="60" value="15" oninput="updateHeat()">
+                    <span id="valRadius">15</span>
+                </div>
+                <div class="slider-row">
+                    <label>Flou (Blur) :</label>
+                    <input type="range" id="heatBlur" min="2" max="60" value="15" oninput="updateHeat()">
+                    <span id="valBlur">15</span>
+                </div>
+                <div class="slider-row">
+                    <label>Seuil d'alerte :</label>
+                    <input type="range" id="heatMax" min="1" max="20" value="3" oninput="updateHeat()">
+                    <span id="valMax">3</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-main" id="analyzeBtn" disabled>🚀 Analyser la dangerosité du trajet</button>
+    </div>
+
+    <!-- RÉSULTATS -->
+    <div class="content" id="results" style="display:none;">
+        <h2 class="section-title">📊 Résultats sur votre trajet</h2>
+        <div class="stats-summary" id="statsSummary"></div>
+
+        <div class="chart-box">
+            <h3>📈 Fréquence des accidents le long du trajet</h3>
+            <p class="chart-subtitle">Cliquez sur un pic pour afficher le détail des accidents à cet endroit. Pondération : Blessé léger = 1 pt · Hospitalisé = 5 pts · Tué = 7 pts</p>
+            <div class="canvas-wrap"><canvas id="chartTrajet"></canvas></div>
+        </div>
+
+        <h2 class="section-title" style="border-bottom-color:#e74c3c; margin-top:30px;">⚠️ Zones les plus dangereuses</h2>
+        <div id="dangerZones"></div>
+    </div>
+
+    <footer>
+        <p>© 2026 Benjamin Pannetier · Source : data.gouv.fr (BAAC) · Itinéraires : OSRM / OpenStreetMap</p>
+    </footer>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// CONFIG & ÉTAT GLOBAL
+// ═══════════════════════════════════════════
+const FILES_TO_LOAD = [
+    {year:2024,type:'caracteristiques',url:'data/caracteristiques-2024.csv'},
+    {year:2024,type:'lieux',url:'data/lieux-2024.csv'},
+    {year:2024,type:'vehicules',url:'data/vehicules-2024.csv'},
+    {year:2024,type:'usagers',url:'data/usagers-2024.csv'},
+    {year:2023,type:'caracteristiques',url:'data/caracteristiques-2023.csv'},
+    {year:2023,type:'lieux',url:'data/lieux-2023.csv'},
+    {year:2023,type:'vehicules',url:'data/vehicules-2023.csv'},
+    {year:2023,type:'usagers',url:'data/usagers-2023.csv'},
+    {year:2022,type:'caracteristiques',url:'data/caracteristiques-2022.csv'},
+    {year:2022,type:'lieux',url:'data/lieux-2022.csv'},
+    {year:2022,type:'vehicules',url:'data/vehicules-2022.csv'},
+    {year:2022,type:'usagers',url:'data/usagers-2022.csv'},
+    {year:2021,type:'caracteristiques',url:'data/caracteristiques-2021.csv'},
+    {year:2021,type:'lieux',url:'data/lieux-2021.csv'},
+    {year:2021,type:'vehicules',url:'data/vehicules-2021.csv'},
+    {year:2021,type:'usagers',url:'data/usagers-2021.csv'},
+    {year:2020,type:'caracteristiques',url:'data/caracteristiques-2020.csv'},
+    {year:2020,type:'lieux',url:'data/lieux-2020.csv'},
+    {year:2020,type:'vehicules',url:'data/vehicules-2020.csv'},
+    {year:2020,type:'usagers',url:'data/usagers-2020.csv'},
+    {year:2019,type:'caracteristiques',url:'data/caracteristiques-2019.csv'},
+    {year:2019,type:'lieux',url:'data/lieux-2019.csv'},
+    {year:2019,type:'vehicules',url:'data/vehicules-2019.csv'},
+    {year:2019,type:'usagers',url:'data/usagers-2019.csv'},
+    {year:2018,type:'caracteristiques',url:'data/caracteristiques-2018.csv'},
+    {year:2018,type:'lieux',url:'data/lieux-2018.csv'},
+    {year:2018,type:'vehicules',url:'data/vehicules-2018.csv'},
+    {year:2018,type:'usagers',url:'data/usagers-2018.csv'},
+    {year:2017,type:'caracteristiques',url:'data/caracteristiques-2017.csv'},
+    {year:2017,type:'lieux',url:'data/lieux-2017.csv'},
+    {year:2017,type:'vehicules',url:'data/vehicules-2017.csv'},
+    {year:2017,type:'usagers',url:'data/usagers-2017.csv'}
+];
+
+let allData = {2017:{},2018:{},2019:{},2020:{},2021:{},2022:{},2023:{},2024:{}};
+let map, pointsLayer=null, heatLayer=null, routePolyline=null;
+let startMarker=null, endMarker=null;
+let startPoint=null, endPoint=null;
+let pickMode=null;
+let selectedOsmProfile='driving';
+let currentMapView='points';
+let routeCoords=[];
+let chartBins=[];
+let chartInstance=null;
+
+// Indexes
+let vehiculesIndex=new Map(), lieuxIndex=new Map();
+let usagersByAccidentIndex=new Map(), vehiculesByAccidentIndex=new Map();
+let accidentsByIdIndex=new Map(), victimesFiltreesIndex=new Map();
+
+const NOMENCLATURES = {
+    vehicules:{'00':'❓ Indét.','01':'🚴 Vélo','1':'🚴 Vélo','02':'🛵 Cyclo','2':'🛵 Cyclo','07':'🚗 VL','7':'🚗 VL','10':'🚐 VU','13':'🚛 PL','14':'🚛 PL','15':'🚛 PL','17':'🚛 Semi','30':'🛵 Scooter','31':'🏍️ Moto','32':'🛵 Scooter','33':'🏍️ Moto','34':'🛵 Scooter','37':'🚌 Bus','38':'🚌 Car','50':'🛴 EDPM','80':'🚴 VAE'},
+    collision:{'1':'⬅️➡️ Frontale','2':'⬅️⬅️ Arrière','3':'⬅️⬆️ Côté','4':'🔗 En chaîne','5':'💥 Multiples','6':'❓ Autre','7':'⚠️ Sans collision'},
+    lumiere:{'1':'☀️ Jour','2':'🌅 Crépuscule','3':'🌙 Nuit (sans écl.)','4':'🌙 Nuit (écl. off)','5':'💡 Nuit (écl. on)'},
+    meteo:{'1':'☀️ Beau','2':'🌧️ Pluie','3':'⛈️ Forte pluie','4':'❄️ Neige','5':'🌫️ Brouillard','6':'💨 Vent','7':'😎 Éblouissant','8':'☁️ Couvert'},
+    gravite:{'1':'✅ Indemne','2':'💀 Tué','3':'🏥 Hospitalisé','4':'🩹 Blessé léger'},
+    mois:{'01':'Janvier','02':'Février','03':'Mars','04':'Avril','05':'Mai','06':'Juin','07':'Juillet','08':'Août','09':'Septembre','10':'Octobre','11':'Novembre','12':'Décembre'},
+    catu:{'1':'conducteur','2':'passager','3':'piéton','4':'piéton'},
+    typeRoute:{'1':'🛣️ Autoroute','2':'🛣️ Nationale','3':'🛤️ Dép.','4':'🏘️ Communale','5':'🏠 Hors réseau','6':'🅿️ Parking','7':'🏙️ Urbain'},
+    chaussee:{'1':'✅ Normale','2':'💧 Mouillée','3':'💧 Flaques','4':'🌊 Inondée','5':'❄️ Neige','6':'🟤 Boue','7':'🧊 Verglas','8':'🛢️ Gras'}
+};
+
+// ═══════════════════════════════════════════
+// UTILITAIRES DOM
+// ═══════════════════════════════════════════
+const DOM = {
+    show:(id)=>{const e=document.getElementById(id);if(e)e.style.display='block';},
+    hide:(id)=>{const e=document.getElementById(id);if(e)e.style.display='none';},
+    flex:(id)=>{const e=document.getElementById(id);if(e)e.style.display='flex';},
+    text:(id,t)=>{const e=document.getElementById(id);if(e)e.innerText=t;},
+    html:(id,h)=>{const e=document.getElementById(id);if(e)e.innerHTML=h;},
+    val:(id)=>{const e=document.getElementById(id);return e?e.value:'';}
+};
+
+function showLoading(t){DOM.flex('loadingOverlay');DOM.text('loadingText',t);}
+function hideLoading(){DOM.hide('loadingOverlay');}
+function updateProgress(p){const e=document.getElementById('progressFill');if(e)e.style.width=p+'%';}
+function closeModal(){DOM.hide('modalOverlay');}
+
+function getFilterValues(id){
+    const el=document.getElementById(id);
+    return el?Array.from(el.selectedOptions).map(o=>o.value):['all'];
+}
+
+// ═══════════════════════════════════════════
+// CHARGEMENT DONNÉES (identique page 1)
+// ═══════════════════════════════════════════
+function loadInitialData(){
+    let processed=0; let missing=[];
+    function check(){
+        if(processed===FILES_TO_LOAD.length){
+            setTimeout(()=>{
+                hideLoading();
+                DOM.show('filtersSection');
+                setTimeout(()=>map.invalidateSize(),200);
+                if(missing.length>0) console.warn('Fichiers manquants:',missing);
+            },400);
+        }
+    }
+    FILES_TO_LOAD.forEach(f=>{
+        Papa.parse(f.url,{
+            download:true,header:true,skipEmptyLines:true,quoteChar:'"',
+            transformHeader:h=>{
+                let c=h.replace(/^\uFEFF/,'').replace(/^"|"$/g,'').trim();
+                let low=c.toLowerCase();
+                if(low==='num_acc'||low==='accident_id') return 'Num_Acc';
+                if(low==='id_vehicule'||low==='num_veh') return 'id_vehicule';
+                if(low==='lon') return 'long';
+                return c;
+            },
+            transform:v=>v?v.trim():v,
+            complete:function(res){
+                if(f.type==='caracteristiques'&&(f.year===2017||f.year===2018)){
+                    res.data.forEach(row=>{
+                        if(row.lat){let lat=parseFloat(String(row.lat).replace(',','.'));if(!isNaN(lat)&&Math.abs(lat)>90)row.lat=lat/100000;}
+                        if(row.long){let lon=parseFloat(String(row.long).replace(',','.'));if(!isNaN(lon)&&Math.abs(lon)>180)row.long=lon/100000;}
+                        else if(row.lon){let lon=parseFloat(String(row.lon).replace(',','.'));if(!isNaN(lon)&&Math.abs(lon)>180){row.lon=lon/100000;row.long=row.lon;}}
+                    });
+                }
+                allData[f.year][f.type]=res.data;
+                processed++;updateProgress((processed/FILES_TO_LOAD.length)*100);check();
+            },
+            error:function(){missing.push(f.url);processed++;updateProgress((processed/FILES_TO_LOAD.length)*100);check();}
+        });
+    });
+}
+
+// ═══════════════════════════════════════════
+// CARTE & SÉLECTION DE POINTS
+// ═══════════════════════════════════════════
+function initMap(){
+    map=L.map('map',{preferCanvas:true}).setView([46.603354,1.888334],6);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{attribution:'© CARTO',maxZoom:19}).addTo(map);
+    map.on('click',onMapClick);
+}
+
+function onMapClick(e){
+    if(!pickMode) return;
+    const {lat,lng}=e.latlng;
+    setPoint(pickMode,lat,lng,`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    // reverse geocode pour afficher une adresse
+    fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=17`)
+        .then(r=>r.json()).then(d=>{
+            const addr=d.display_name||`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+            DOM.text(pickMode==='start'?'startInfo':'endInfo',addr);
+            const inp=document.getElementById(pickMode==='start'?'startInput':'endInput');
+            if(inp) inp.value=addr.split(',').slice(0,2).join(',');
+        }).catch(()=>{});
+    togglePick(null);
+}
+
+function togglePick(type){
+    const prev=pickMode;
+    pickMode=null;
+    ['start','end'].forEach(t=>{
+        const b=document.getElementById('btnPick'+t.charAt(0).toUpperCase()+t.slice(1));
+        if(b) b.classList.remove('picking');
+    });
+    if(type&&prev!==type){
+        pickMode=type;
+        const b=document.getElementById('btnPick'+type.charAt(0).toUpperCase()+type.slice(1));
+        if(b) b.classList.add('picking');
+        map.getContainer().style.cursor='crosshair';
+    } else {
+        map.getContainer().style.cursor='';
+    }
+}
+
+function setPoint(type,lat,lng,label){
+    if(type==='start'){
+        startPoint={lat,lng};
+        if(startMarker) map.removeLayer(startMarker);
+        startMarker=L.marker([lat,lng],{icon:L.divIcon({html:'<div style="background:#2ecc71;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);
+        DOM.text('startInfo',label||`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    } else {
+        endPoint={lat,lng};
+        if(endMarker) map.removeLayer(endMarker);
+        endMarker=L.marker([lat,lng],{icon:L.divIcon({html:'<div style="background:#e74c3c;width:18px;height:18px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4)"></div>',iconSize:[18,18],iconAnchor:[9,9]})}).addTo(map);
+        DOM.text('endInfo',label||`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+    }
+    updateAnalyzeBtn();
+}
+
+function updateAnalyzeBtn(){
+    const btn=document.getElementById('analyzeBtn');
+    if(btn) btn.disabled=!(startPoint&&endPoint);
+}
+
+async function searchPoint(type){
+    const inputId=type==='start'?'startInput':'endInput';
+    const query=document.getElementById(inputId).value.trim();
+    if(!query) return;
+    try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)},France&limit=1`);
+        const d=await r.json();
+        if(d.length>0){
+            const lat=parseFloat(d[0].lat), lng=parseFloat(d[0].lon);
+            setPoint(type,lat,lng,d[0].display_name.split(',').slice(0,2).join(','));
+            map.setView([lat,lng],14);
+        } else { alert('Lieu introuvable. Essayez d\'être plus précis.'); }
+    }catch(e){alert('Erreur lors de la recherche.');}
+}
+
+function selectMode(btn){
+    document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedOsmProfile=btn.getAttribute('data-mode');
+}
+
+// ═══════════════════════════════════════════
+// ROUTAGE OSRM
+// ═══════════════════════════════════════════
+async function fetchRoute(startLat,startLng,endLat,endLng,profile){
+    const url=`https://router.project-osrm.org/route/v1/${profile}/${startLng},${startLat};${endLng},${endLat}?geometries=geojson&overview=full&steps=false`;
+    const r=await fetch(url);
+    const d=await r.json();
+    if(!d.routes||d.routes.length===0) throw new Error('Itinéraire introuvable');
+    return d.routes[0];
+}
+
+function sampleCoords(coords,maxPts){
+    if(coords.length<=maxPts) return coords;
+    const step=(coords.length-1)/(maxPts-1);
+    return Array.from({length:maxPts},(_,i)=>coords[Math.round(i*step)]);
+}
+
+// ═══════════════════════════════════════════
+// GÉOMÉTRIE
+// ═══════════════════════════════════════════
+function haversineM(lat1,lon1,lat2,lon2){
+    const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+function ptSegDist(pLat,pLon,aLat,aLon,bLat,bLon){
+    const dxAB=bLon-aLon, dyAB=bLat-aLat;
+    const lenSq=dxAB*dxAB+dyAB*dyAB;
+    if(lenSq===0) return{dist:haversineM(pLat,pLon,aLat,aLon),t:0};
+    const t=Math.max(0,Math.min(1,((pLon-aLon)*dxAB+(pLat-aLat)*dyAB)/lenSq));
+    return{dist:haversineM(pLat,pLon,aLat+t*dyAB,aLon+t*dxAB),t};
+}
+
+// ═══════════════════════════════════════════
+// ANALYSE PRINCIPALE
+// ═══════════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+    initMap();
+    loadInitialData();
+
+    document.getElementById('startInput').addEventListener('keypress',e=>{if(e.key==='Enter')searchPoint('start');});
+    document.getElementById('endInput').addEventListener('keypress',e=>{if(e.key==='Enter')searchPoint('end');});
+
+    document.getElementById('analyzeBtn').addEventListener('click',runAnalysis);
+
+    document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+
+    document.getElementById('btnToggleHeat').addEventListener('click',function(){
+        const p=document.getElementById('heatAdvanced');
+        if(p.style.display==='none'||p.style.display===''){
+            p.style.display='flex';this.innerHTML='⚙️ Masquer';
+        }else{p.style.display='none';this.innerHTML='⚙️ Paramètres densité';}
+    });
+
+    // Smart selects
+    ['annee','typeVictime','gravite'].forEach(id=>{
+        const sel=document.getElementById(id);if(!sel)return;
+        let last=Array.from(sel.selectedOptions).map(o=>o.value);
+        sel.addEventListener('change',function(){
+            let curr=Array.from(sel.selectedOptions).map(o=>o.value);
+            if(curr.includes('all')&&!last.includes('all')){Array.from(sel.options).forEach(o=>o.selected=(o.value==='all'));curr=['all'];}
+            else if(curr.includes('all')&&curr.length>1){Array.from(sel.options).forEach(o=>{if(o.value==='all')o.selected=false;});curr=curr.filter(v=>v!=='all');}
+            else if(curr.length===0){Array.from(sel.options).find(o=>o.value==='all').selected=true;curr=['all'];}
+            last=curr;
+        });
+    });
+});
+
+async function runAnalysis(){
+    if(!startPoint||!endPoint){alert('Définissez un départ et une arrivée.');return;}
+    showLoading('Calcul de l\'itinéraire...');
+    try{
+        // 1. Itinéraire OSRM
+        const route=await fetchRoute(startPoint.lat,startPoint.lng,endPoint.lat,endPoint.lng,selectedOsmProfile);
+        const totalDistanceM=route.distance;
+
+        // 2. Coordonnées de la route [lat,lon]
+        const rawCoords=route.geometry.coordinates.map(c=>({lat:c[1],lon:c[0]}));
+        routeCoords=sampleCoords(rawCoords,600);
+
+        // 3. Distances cumulées
+        const cumDist=[0];
+        for(let i=1;i<routeCoords.length;i++){
+            cumDist.push(cumDist[i-1]+haversineM(routeCoords[i-1].lat,routeCoords[i-1].lon,routeCoords[i].lat,routeCoords[i].lon));
+        }
+        const totalDist=cumDist[cumDist.length-1];
+
+        // 4. Dessiner le trajet
+        if(routePolyline) map.removeLayer(routePolyline);
+        routePolyline=L.polyline(routeCoords.map(c=>[c.lat,c.lon]),{color:'#3498db',weight:4,opacity:0.8,dashArray:'8,4'}).addTo(map);
+        map.fitBounds(routePolyline.getBounds(),{padding:[40,40]});
+
+        // 5. Filtrage des données
+        DOM.text('loadingText','Filtrage des données...');
+        await new Promise(r=>setTimeout(r,30));
+
+        let years=getFilterValues('annee');
+        if(years.includes('all')) years=['2024','2023','2022','2021','2020','2019','2018','2017'];
+        const vType=getFilterValues('typeVictime');
+        const grav=getFilterValues('gravite');
+        const dDeb=DOM.val('dateDebut'), dFin=DOM.val('dateFin');
+
+        // Réinitialiser les index
+        vehiculesIndex.clear();lieuxIndex.clear();usagersByAccidentIndex.clear();
+        vehiculesByAccidentIndex.clear();accidentsByIdIndex.clear();victimesFiltreesIndex.clear();
+
+        let allCarac=[],allVeh=[],allUsg=[],allLieux=[];
+        years.forEach(y=>{
+            if(allData[y]&&allData[y].caracteristiques) allCarac.push(...allData[y].caracteristiques);
+            if(allData[y]&&allData[y].vehicules) allVeh.push(...allData[y].vehicules);
+            if(allData[y]&&allData[y].usagers) allUsg.push(...allData[y].usagers);
+            if(allData[y]&&allData[y].lieux) allLieux.push(...allData[y].lieux);
+        });
+
+        allVeh.forEach(v=>vehiculesIndex.set(v.id_vehicule,v));
+        allLieux.forEach(l=>lieuxIndex.set(l.Num_Acc,l));
+        allUsg.forEach(u=>{if(!usagersByAccidentIndex.has(u.Num_Acc))usagersByAccidentIndex.set(u.Num_Acc,[]);usagersByAccidentIndex.get(u.Num_Acc).push(u);});
+        allVeh.forEach(v=>{if(!vehiculesByAccidentIndex.has(v.Num_Acc))vehiculesByAccidentIndex.set(v.Num_Acc,[]);vehiculesByAccidentIndex.get(v.Num_Acc).push(v);});
+
+        // Pré-filtrer usagers
+        const usagersPreFiltres=allUsg.filter(u=>{
+            if(u.grav==='1') return false;
+            if(!grav.includes('all')&&!grav.includes(u.grav)) return false;
+            if(!vType.includes('all')){
+                if(u.catu==='3'||u.catu==='4'){if(!vType.includes('3'))return false;}
+                else{
+                    const veh=vehiculesIndex.get(u.id_vehicule);
+                    if(!veh||!veh.catv) return false;
+                    const c=veh.catv.trim().padStart(2,'0');
+                    if(!vType.some(f=>f.includes(',')?f.split(',').some(x=>x.padStart(2,'0')===c):f.padStart(2,'0')===c))return false;
+                }
+            }
+            return true;
+        });
+        const validAccIds=new Set(usagersPreFiltres.map(u=>u.Num_Acc));
+
+        // 6. Pré-filtrer accidents par bbox du trajet + rayon
+        DOM.text('loadingText','Analyse de la zone...');
+        await new Promise(r=>setTimeout(r,30));
+
+        const radius=parseInt(document.getElementById('radiusSlider').value)||50;
+        const marginDeg=(radius+500)/111000;
+        const lats=routeCoords.map(c=>c.lat), lons=routeCoords.map(c=>c.lon);
+        const minLat=Math.min(...lats)-marginDeg, maxLat=Math.max(...lats)+marginDeg;
+        const minLon=Math.min(...lons)-marginDeg, maxLon=Math.max(...lons)+marginDeg;
+
+        const candidateAccidents=allCarac.filter(acc=>{
+            if(!validAccIds.has(acc.Num_Acc)) return false;
+            if(dDeb||dFin){
+                let a=parseInt(acc.an);if(a<100)a+=2000;
+                const d=new Date(a,parseInt(acc.mois)-1,parseInt(acc.jour));
+                if(dDeb&&d<new Date(dDeb))return false;
+                if(dFin&&d>new Date(dFin))return false;
+            }
+            const lat=parseFloat(String(acc.lat||'').replace(',','.'));
+            const lon=parseFloat(String(acc.long||acc.lon||'').replace(',','.'));
+            if(isNaN(lat)||isNaN(lon))return false;
+            return lat>=minLat&&lat<=maxLat&&lon>=minLon&&lon<=maxLon;
+        });
+
+        // 7. Calcul distance au trajet (précis)
+        DOM.text('loadingText',`Calcul de la distance pour ${candidateAccidents.length} accidents...`);
+        await new Promise(r=>setTimeout(r,30));
+
+        const accAlongRoute=[];
+        for(const acc of candidateAccidents){
+            const aLat=parseFloat(String(acc.lat||'').replace(',','.'));
+            const aLon=parseFloat(String(acc.long||acc.lon||'').replace(',','.'));
+            let minDist=Infinity, distAlong=0;
+            for(let i=0;i<routeCoords.length-1;i++){
+                const {dist,t}=ptSegDist(aLat,aLon,routeCoords[i].lat,routeCoords[i].lon,routeCoords[i+1].lat,routeCoords[i+1].lon);
+                if(dist<minDist){
+                    minDist=dist;
+                    distAlong=cumDist[i]+t*(cumDist[i+1]-cumDist[i]);
+                }
+                if(minDist<5) break; // assez proche, on arrête
+            }
+            if(minDist<=radius){
+                accAlongRoute.push({acc,distAlong,distFromRoute:minDist});
+            }
+        }
+
+        const finalIds=new Set(accAlongRoute.map(a=>a.acc.Num_Acc));
+        const finalUsagers=usagersPreFiltres.filter(u=>finalIds.has(u.Num_Acc));
+
+        accAlongRoute.forEach(({acc})=>{
+            accidentsByIdIndex.set(acc.Num_Acc,acc);
+            victimesFiltreesIndex.set(acc.Num_Acc,finalUsagers.filter(u=>u.Num_Acc===acc.Num_Acc));
+        });
+
+        // 8. Affichage carte
+        DOM.text('loadingText','Rendu de la carte...');
+        await new Promise(r=>setTimeout(r,30));
+
+        renderMap(accAlongRoute,finalUsagers);
+        renderStats(accAlongRoute,finalUsagers,totalDist);
+        renderChart(accAlongRoute,finalUsagers,totalDist);
+        renderDangerZones();
+
+        DOM.show('results');
+        DOM.flex('mapTools');
+        document.getElementById('btnToggleHeat').style.display='inline-block';
+        document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+        hideLoading();
+
+    }catch(err){
+        hideLoading();
+        alert('Erreur : '+err.message+'\n\nVérifiez votre connexion internet. L\'API de routage OSRM est nécessaire.');
+        console.error(err);
+    }
+}
+
+// ═══════════════════════════════════════════
+// RENDU CARTE
+// ═══════════════════════════════════════════
+function renderMap(accAlongRoute,usagers){
+    if(pointsLayer){map.removeLayer(pointsLayer);pointsLayer=null;}
+    if(heatLayer){map.removeLayer(heatLayer);heatLayer=null;}
+
+    const heatData=[];
+    const markers=[];
+
+    accAlongRoute.forEach(({acc})=>{
+        const lat=parseFloat(String(acc.lat||'').replace(',','.'));
+        const lon=parseFloat(String(acc.long||acc.lon||'').replace(',','.'));
+        if(isNaN(lat)||isNaN(lon))return;
+        const victimes=victimesFiltreesIndex.get(acc.Num_Acc)||[];
+        if(victimes.length===0)return;
+        const gravMax=Math.min(...victimes.map(u=>parseInt(u.grav)||4));
+        const color=gravMax===2?'#8b0000':(gravMax===3?'#ff6b35':'#F1C40F');
+        const rad=gravMax===2?9:(gravMax===3?7:5);
+        const weight=gravMax===2?7:(gravMax===3?5:1);
+        heatData.push([lat,lon,weight]);
+        const m=L.circleMarker([lat,lon],{radius:rad,color:'white',weight:1,fillColor:color,fillOpacity:0.85});
+        m.accId=acc.Num_Acc;
+        m.on('click',()=>showPopup(acc.Num_Acc));
+        markers.push(m);
+    });
+
+    pointsLayer=L.featureGroup(markers).addTo(map);
+    heatLayer=L.heatLayer(heatData,{radius:15,blur:15,max:3,minOpacity:0.2,gradient:{0.2:'blue',0.4:'cyan',0.6:'lime',0.8:'yellow',1.0:'red'}});
+    if(currentMapView==='heatmap'){map.removeLayer(pointsLayer);heatLayer.addTo(map);}
+}
+
+function setMapView(v){
+    currentMapView=v;
+    ['btnViewPoints','btnViewHeatmap'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+    document.getElementById(v==='points'?'btnViewPoints':'btnViewHeatmap')?.classList.add('active');
+    if(pointsLayer)v==='points'?map.addLayer(pointsLayer):map.removeLayer(pointsLayer);
+    if(heatLayer)v==='heatmap'?map.addLayer(heatLayer):map.removeLayer(heatLayer);
+}
+
+function updateHeat(){
+    const r=parseInt(document.getElementById('heatRadius').value)||15;
+    const b=parseInt(document.getElementById('heatBlur').value)||15;
+    const mx=parseInt(document.getElementById('heatMax').value)||3;
+    DOM.text('valRadius',r);DOM.text('valBlur',b);DOM.text('valMax',mx);
+    if(heatLayer)heatLayer.setOptions({radius:r,blur:b,max:mx});
+}
+
+// ═══════════════════════════════════════════
+// STATS KPI
+// ═══════════════════════════════════════════
+function renderStats(accAlongRoute,usagers,totalDistM){
+    const tues=usagers.filter(u=>u.grav==='2').length;
+    const hosp=usagers.filter(u=>u.grav==='3').length;
+    const bles=usagers.filter(u=>u.grav==='4').length;
+    const km=(totalDistM/1000).toFixed(1);
+    DOM.html('statsSummary',`
+        <div class="stat-card" style="background:#1e3c72">
+            <div class="number">${km} km</div><div class="label">Distance du trajet</div>
+        </div>
+        <div class="stat-card" style="background:#2a5298">
+            <div class="number">${accAlongRoute.length}</div><div class="label">Accidents sur le trajet</div>
+            <div class="sublabel">rayon ±${document.getElementById('radiusSlider').value}m</div>
+        </div>
+        <div class="stat-card" style="background:#8b0000">
+            <div class="number">${tues}</div><div class="label">💀 Tués</div>
+        </div>
+        <div class="stat-card" style="background:#ff6b35">
+            <div class="number">${hosp}</div><div class="label">🏥 Hospitalisés</div>
+        </div>
+        <div class="stat-card" style="background:#F1C40F;color:#856404">
+            <div class="number">${bles}</div><div class="label">🩹 Blessés légers</div>
+        </div>
+    `);
+}
+
+// ═══════════════════════════════════════════
+// GRAPHIQUE LINÉAIRE
+// ═══════════════════════════════════════════
+function renderChart(accAlongRoute,usagers,totalDist){
+    if(chartInstance){chartInstance.destroy();chartInstance=null;}
+
+    const NUM_BINS=Math.min(120,Math.max(20,Math.floor(totalDist/150)));
+    const BIN_SIZE=totalDist/NUM_BINS;
+
+    chartBins=Array.from({length:NUM_BINS},(_,i)=>({
+        kmLabel:(i*BIN_SIZE/1000).toFixed(2)+' km',
+        kmMid:((i+0.5)*BIN_SIZE/1000),
+        accidents:[],weight:0,tues:0,hosp:0,bles:0
+    }));
+
+    accAlongRoute.forEach(({acc,distAlong})=>{
+        const idx=Math.min(NUM_BINS-1,Math.floor(distAlong/BIN_SIZE));
+        chartBins[idx].accidents.push(acc);
+        const vics=victimesFiltreesIndex.get(acc.Num_Acc)||[];
+        vics.forEach(u=>{
+            if(u.grav==='2'){chartBins[idx].weight+=7;chartBins[idx].tues++;}
+            else if(u.grav==='3'){chartBins[idx].weight+=5;chartBins[idx].hosp++;}
+            else if(u.grav==='4'){chartBins[idx].weight+=1;chartBins[idx].bles++;}
+        });
+    });
+
+    const labels=chartBins.map(b=>b.kmLabel);
+    const weights=chartBins.map(b=>b.weight);
+    const colors=chartBins.map(b=>b.tues>0?'rgba(139,0,0,0.75)':b.hosp>0?'rgba(255,107,53,0.75)':b.bles>0?'rgba(241,196,15,0.75)':'rgba(200,200,200,0.3)');
+
+    const ctx=document.getElementById('chartTrajet').getContext('2d');
+    chartInstance=new Chart(ctx,{
+        type:'bar',
+        data:{labels,datasets:[{data:weights,backgroundColor:colors,borderRadius:2,borderSkipped:false}]},
+        options:{
+            responsive:true,maintainAspectRatio:false,
+            plugins:{
+                legend:{display:false},
+                tooltip:{callbacks:{
+                    title:i=>`📍 ${i[0].label}`,
+                    label:i=>{
+                        const b=chartBins[i.dataIndex];
+                        const parts=[`Score de risque : ${b.weight}`];
+                        if(b.tues>0) parts.push(`💀 Tués : ${b.tues}`);
+                        if(b.hosp>0) parts.push(`🏥 Hospitalisés : ${b.hosp}`);
+                        if(b.bles>0) parts.push(`🩹 Blessés légers : ${b.bles}`);
+                        parts.push(`📋 ${b.accidents.length} accident(s) — cliquez pour détails`);
+                        return parts;
+                    }
+                }}
+            },
+            scales:{
+                x:{ticks:{maxTicksLimit:12,maxRotation:0},grid:{display:false}},
+                y:{title:{display:true,text:'Score de risque pondéré'},beginAtZero:true}
+            },
+            onClick:(e,els)=>{
+                if(els.length>0){
+                    const b=chartBins[els[0].index];
+                    if(b.accidents.length>0) showBinDetail(b);
+                }
+            }
+        }
+    });
+}
+
+// ═══════════════════════════════════════════
+// ZONES DANGEREUSES
+// ═══════════════════════════════════════════
+function renderDangerZones(){
+    // Tri des bins par score et regroupement
+    const sorted=[...chartBins].filter(b=>b.weight>0).sort((a,b)=>b.weight-a.weight);
+    // Déduplication : garder les 5 premiers suffisamment espacés (> 300m)
+    const zones=[];
+    for(const bin of sorted){
+        if(zones.length>=5) break;
+        const tooClose=zones.some(z=>Math.abs(z.kmMid-bin.kmMid)<0.3);
+        if(!tooClose) zones.push(bin);
+    }
+
+    if(zones.length===0){
+        DOM.html('dangerZones','<p style="color:#888;font-style:italic;padding:15px;">Aucune zone dangereuse identifiée sur ce trajet avec les filtres actuels. 🎉</p>');
+        return;
+    }
+
+    let html='';
+    zones.forEach((bin,rank)=>{
+        // Chercher un nom de rue dans les accidents du bin
+        let streetName='';
+        for(const acc of bin.accidents){
+            const lieu=lieuxIndex.get(acc.Num_Acc);
+            if(lieu&&lieu.voie&&lieu.voie.trim().length>2){streetName=lieu.voie.trim();break;}
+        }
+        const addr=streetName||`environ km ${bin.kmMid.toFixed(1)}`;
+        const level=bin.tues>0?'':'warning';
+        const icon=bin.tues>0?'🔴':bin.hosp>0?'🟠':'🟡';
+        const badgesTue=bin.tues>0?`<span class="badge b-tue">💀 ${bin.tues} tué${bin.tues>1?'s':''}</span>`:'';
+        const badgesHosp=bin.hosp>0?`<span class="badge b-hosp">🏥 ${bin.hosp} hospit.</span>`:'';
+        const badgesBles=bin.bles>0?`<span class="badge b-bles">🩹 ${bin.bles} léger${bin.bles>1?'s':''}</span>`:'';
+        html+=`
+        <div class="danger-zone-card ${level}" onclick="showBinDetail(chartBins.find(b=>Math.abs(b.kmMid-${bin.kmMid})<0.01))" style="cursor:pointer;">
+            <div class="dz-km">${icon}<br/><span style="font-size:0.75em;display:block;margin-top:3px;">km ${bin.kmMid.toFixed(1)}</span></div>
+            <div class="dz-info">
+                <h4>${addr}</h4>
+                <p>${bin.accidents.length} accident${bin.accidents.length>1?'s':''} recensé${bin.accidents.length>1?'s':''} dans la zone · Score : ${bin.weight} pts</p>
+                <div style="margin-top:6px;">${badgesTue}${badgesHosp}${badgesBles}</div>
+            </div>
+        </div>`;
+    });
+    DOM.html('dangerZones',html);
+}
+
+// ═══════════════════════════════════════════
+// POPUPS & MODALES
+// ═══════════════════════════════════════════
+function showBinDetail(bin){
+    if(!bin||bin.accidents.length===0) return;
+    let h=`<h2 style="color:#1e3c72;margin-bottom:15px;">📍 Accidents au km ${bin.kmMid.toFixed(2)}</h2>`;
+    h+=`<p style="margin-bottom:15px;color:#555;">Zone de ${(50).toFixed(0)}m autour du km ${bin.kmMid.toFixed(2)} — ${bin.accidents.length} accident(s)</p>`;
+    bin.accidents.forEach(acc=>{
+        const vics=victimesFiltreesIndex.get(acc.Num_Acc)||[];
+        const tues=vics.filter(v=>v.grav==='2').length;
+        const hosp=vics.filter(v=>v.grav==='3').length;
+        const bles=vics.filter(v=>v.grav==='4').length;
+        const lieu=lieuxIndex.get(acc.Num_Acc);
+        let y=parseInt(acc.an);if(y<100)y+=2000;
+        const badgeT=tues>0?`<span class="badge b-tue">💀 ${tues}</span>`:'';
+        const badgeH=hosp>0?`<span class="badge b-hosp">🏥 ${hosp}</span>`:'';
+        const badgeB=bles>0?`<span class="badge b-bles">🩹 ${bles}</span>`:'';
+        h+=`<div class="acc-item" onclick="showAccidentDetails('${acc.Num_Acc}')">
+            <div class="ah">📅 ${acc.jour}/${acc.mois}/${y} à ${acc.hrmn} ${badgeT}${badgeH}${badgeB}</div>
+            <div class="ad">${lieu&&lieu.voie?'📍 '+lieu.voie+' · ':''} ${NOMENCLATURES.meteo[acc.atm]||''} · ${NOMENCLATURES.collision[acc.col]||''}</div>
+        </div>`;
+    });
+    DOM.html('modalBody',h);
+    DOM.flex('modalOverlay');
+}
+
+function showPopup(accId){
+    const acc=accidentsByIdIndex.get(accId);
+    const victimes=victimesFiltreesIndex.get(accId)||[];
+    if(!acc) return;
+    const vehiculesAcc=vehiculesByAccidentIndex.get(accId)||[];
+    const tousUsagers=usagersByAccidentIndex.get(accId)||[];
+    const vMap=new Map();
+    vehiculesAcc.forEach((v,i)=>vMap.set(v.id_vehicule,{idx:i+1,type:NOMENCLATURES.vehicules[v.catv]||'?'}));
+    let y=parseInt(acc.an);if(y<100)y+=2000;
+    let h=`<h2 style="color:#1e3c72;margin-bottom:10px;font-size:1.3em;">📋 Accident du ${acc.jour}/${acc.mois}/${y} à ${acc.hrmn}</h2>`;
+    const lieu=lieuxIndex.get(accId);
+    if(lieu&&lieu.voie)h+=`<p style="margin-bottom:10px;color:#555;">📍 ${lieu.voie}</p>`;
+    h+=`<p style="margin-bottom:15px;color:#555;">☁️ ${NOMENCLATURES.meteo[acc.atm]||'?'} · ${NOMENCLATURES.collision[acc.col]||'?'} · ${NOMENCLATURES.lumiere[acc.lum]||'?'}</p>`;
+    victimes.forEach((u,i)=>{
+        const age=acc.an&&u.an_nais?y-parseInt(u.an_nais):null;
+        const sexe=u.sexe==='1'?'Homme':(u.sexe==='2'?'Femme':'?');
+        const grav=NOMENCLATURES.gravite[u.grav]||'?';
+        const vi=vMap.get(u.id_vehicule);
+        const typeV=(u.catu==='3'||u.catu==='4')?'🚶 Piéton':(vi?`Véhicule ${vi.idx} (${vi.type})`:'?');
+        h+=`<div class="popup-victim"><strong>Victime ${i+1} :</strong> ${sexe}${age?', '+age+' ans':''} · <strong>${grav}</strong><br>${NOMENCLATURES.catu[u.catu]||'?'} · ${typeV}`;
+        const adv=vehiculesAcc.filter(v=>v.id_vehicule!==u.id_vehicule);
+        if(adv.length>0){
+            const av=adv[0];const avi=vMap.get(av.id_vehicule);
+            const cond=tousUsagers.find(x=>x.id_vehicule===av.id_vehicule&&x.catu==='1');
+            let yc=y;
+            h+=`<div class="popup-adverse">💥 ${NOMENCLATURES.collision[acc.col]||'?'} avec ${avi?avi.type:'?'}${cond?(' · conduit par '+(cond.sexe==='1'?'homme':'femme')+(acc.an&&cond.an_nais?' '+age+'ans':'')):''}</div>`;
+        }
+        h+=`</div>`;
+    });
+    h+=`<button class="btn-details" onclick="showAccidentDetails('${accId}')">📋 Rapport complet</button>`;
+    h+=`<button class="btn-google" data-id="${accId}" onclick="openGoogleSearch(this)">🔍 Chercher sur Google</button>`;
+    DOM.html('modalBody',h);
+    DOM.flex('modalOverlay');
+}
+
+function showAccidentDetails(id){
+    const acc=accidentsByIdIndex.get(id);
+    const l=lieuxIndex.get(id);
+    const usgs=usagersByAccidentIndex.get(id)||[];
+    const vehs=vehiculesByAccidentIndex.get(id)||[];
+    if(!acc) return;
+    let y=parseInt(acc.an);if(y<100)y+=2000;
+    const vMap=new Map();vehs.forEach((v,i)=>vMap.set(v.id_vehicule,{idx:i+1,type:NOMENCLATURES.vehicules[v.catv]||'?'}));
+    let h=`<h2 style="color:#1e3c72;margin-bottom:15px;">📋 Rapport #${id}</h2>`;
+    h+=`<div class="info-section"><strong>Date :</strong> ${acc.jour}/${acc.mois}/${y} à ${acc.hrmn}<br>`;
+    if(l&&l.voie)h+=`<strong>Lieu :</strong> ${l.voie}<br>`;
+    h+=`<strong>Commune :</strong> ${acc.com||'?'} · ${acc.agg==='2'?'En agglomération':'Hors agglo'}<br>`;
+    h+=`<strong>Collision :</strong> ${NOMENCLATURES.collision[acc.col]||'?'}</div>`;
+    h+=`<div class="info-section"><strong>Météo :</strong> ${NOMENCLATURES.meteo[acc.atm]||'?'} · <strong>Luminosité :</strong> ${NOMENCLATURES.lumiere[acc.lum]||'?'}<br>`;
+    if(l)h+=`<strong>Chaussée :</strong> ${NOMENCLATURES.chaussee[l.surf]||'?'} · <strong>Route :</strong> ${NOMENCLATURES.typeRoute[l.catr]||'?'}`;
+    h+=`</div>`;
+    const vic=usgs.filter(u=>u.grav!=='1');
+    h+=`<div class="info-section">Bilan : ${usgs.length} impliqués · ${vic.filter(u=>u.grav==='2').length} tué(s) · ${vic.filter(u=>u.grav==='3').length} hospit. · ${vic.filter(u=>u.grav==='4').length} léger(s)</div>`;
+    usgs.forEach((u,i)=>{
+        const age=acc.an&&u.an_nais?y-parseInt(u.an_nais):null;
+        const sexe=u.sexe==='1'?'Homme':(u.sexe==='2'?'Femme':'Non précisé');
+        const vi=vMap.get(u.id_vehicule);
+        const typeV=(u.catu==='3'||u.catu==='4')?'🚶 Piéton':(vi?`Véhicule ${vi.idx} (${vi.type})`:'?');
+        h+=`<div class="${u.grav!=='1'?'victim-card':'victim-card indemne'}">
+            <strong>Personne ${i+1}</strong> · ${sexe}${age?', '+age+' ans':''}<br>
+            Rôle : ${NOMENCLATURES.catu[u.catu]||'?'} · ${typeV}<br>
+            <strong>État : ${NOMENCLATURES.gravite[u.grav]||'?'}</strong>
+        </div>`;
+    });
+    h+=`<button class="btn-google" data-id="${id}" onclick="openGoogleSearch(this)" style="margin-top:15px;">🔍 Chercher sur Google</button>`;
+    DOM.html('modalBody',h);
+    DOM.flex('modalOverlay');
+}
+
+async function openGoogleSearch(btn){
+    const id=btn.getAttribute('data-id');
+    const acc=accidentsByIdIndex.get(id);
+    if(!acc) return;
+    const tab=window.open('about:blank','_blank');
+    let y=parseInt(acc.an);if(y<100)y+=2000;
+    const s=['accident'];
+    const l=lieuxIndex.get(id);
+    if(l&&l.voie)s.push(l.voie.replace(/^\d+\s*-?\s*/,'').trim());
+    try{
+        const lat=parseFloat(String(acc.lat||'').replace(',','.'));
+        const lon=parseFloat(String(acc.long||acc.lon||'').replace(',','.'));
+        const r=await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=10`);
+        const d=await r.json();
+        const city=d.address?.city||d.address?.town||d.address?.village;
+        if(city)s.push(city);else if(acc.com)s.push(acc.com);
+    }catch(e){if(acc.com)s.push(acc.com);}
+    s.push(`${acc.jour} ${NOMENCLATURES.mois[String(acc.mois).padStart(2,'0')]||acc.mois} ${y}`);
+    const vics=victimesFiltreesIndex.get(id)||[];
+    if(vics.filter(v=>v.grav==='2').length>0)s.push('mortel');else s.push('blessé');
+    tab.location.href=`https://www.google.com/search?q=${encodeURIComponent(s.join(' '))}`;
+}
+
+// Exposition globale pour les onclick inline
+window.showBinDetail=showBinDetail;
+window.showAccidentDetails=showAccidentDetails;
+window.openGoogleSearch=openGoogleSearch;
+window.setMapView=setMapView;
+window.updateHeat=updateHeat;
+window.selectMode=selectMode;
+window.togglePick=togglePick;
+window.searchPoint=searchPoint;
+window.closeModal=closeModal;
+window.chartBins=chartBins;
+</script>
+</body>
+</html>
