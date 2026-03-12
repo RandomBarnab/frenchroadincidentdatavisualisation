@@ -744,6 +744,7 @@
                         if(low === 'num_acc' || low === 'accident_id') return 'Num_Acc';
                         if(low === 'id_vehicule' || low === 'num_veh') return 'id_vehicule';
                         if(low === 'lon') return 'long';
+                        if(low === 'mois') return 'mois';
                         return c; 
                     }, 
                     transform: v => v ? v.trim() : v,
@@ -1295,7 +1296,14 @@
             let mCount = {}; let mAcc = {};
             const moisOrdre = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
             moisOrdre.forEach(m => mCount[m]=0);
-            accs.forEach(a => { let n=NOMENCLATURES.mois[a.mois]; if(n && mCount[n]!==undefined){ mCount[n]++; if(!mAcc[n]) mAcc[n]=[]; mAcc[n].push(a.Num_Acc);} });
+            accs.forEach(a => { 
+                let n = NOMENCLATURES.mois[String(a.mois).padStart(2, '0')]; 
+                if(n && mCount[n]!==undefined){ 
+                    mCount[n]++; 
+                    if(!mAcc[n]) mAcc[n]=[]; 
+                    mAcc[n].push(a.Num_Acc);
+                } 
+            });
             charts.mois = createLineChart('chartMois', mCount, '#4A90E2', (e, l) => handleCrossFilterClick(e, 'Mois', l, new Set(mAcc[l])));
 
             let jCount = {'Lundi':0,'Mardi':0,'Mercredi':0,'Jeudi':0,'Vendredi':0,'Samedi':0,'Dimanche':0}; let jAcc = {};
@@ -1495,7 +1503,7 @@
             
             if (acc.jour && acc.mois && acc.an) {
                 let annee = parseInt(acc.an); if (annee < 100) annee += 2000;
-                s.push(`${acc.jour} ${NOMENCLATURES.mois[acc.mois] || acc.mois} ${annee}`);
+                s.push(`${acc.jour} ${NOMENCLATURES.mois[String(acc.mois).padStart(2, '0')] || acc.mois} ${annee}`);
             }
             
             const typesVehicules = new Set();
