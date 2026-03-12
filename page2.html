@@ -610,11 +610,12 @@ async function runAnalysis(){
         vehiculesByAccidentIndex.clear();accidentsByIdIndex.clear();victimesFiltreesIndex.clear();
 
         let allCarac=[],allVeh=[],allUsg=[],allLieux=[];
+        // ✅ APRÈS — boucle for comme dans la page 1
         years.forEach(y=>{
-            if(allData[y]&&allData[y].caracteristiques) allCarac.push(...allData[y].caracteristiques);
-            if(allData[y]&&allData[y].vehicules) allVeh.push(...allData[y].vehicules);
-            if(allData[y]&&allData[y].usagers) allUsg.push(...allData[y].usagers);
-            if(allData[y]&&allData[y].lieux) allLieux.push(...allData[y].lieux);
+            if(allData[y]&&allData[y].caracteristiques) { for(let i=0;i<allData[y].caracteristiques.length;i++) allCarac.push(allData[y].caracteristiques[i]); }
+            if(allData[y]&&allData[y].vehicules) { for(let i=0;i<allData[y].vehicules.length;i++) allVeh.push(allData[y].vehicules[i]); }
+            if(allData[y]&&allData[y].usagers) { for(let i=0;i<allData[y].usagers.length;i++) allUsg.push(allData[y].usagers[i]); }
+            if(allData[y]&&allData[y].lieux) { for(let i=0;i<allData[y].lieux.length;i++) allLieux.push(allData[y].lieux[i]); }
         });
 
         allVeh.forEach(v=>vehiculesIndex.set(v.id_vehicule,v));
