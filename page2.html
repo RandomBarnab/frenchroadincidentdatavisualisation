@@ -111,7 +111,7 @@
         .victim-card { background:#fff3e0; padding:12px; margin:8px 0; border-left:4px solid #ff6b35; border-radius:6px; }
         .victim-card.indemne { background:#e8f5e9; border-left-color:#4caf50; }
         .info-section { background:#f8f9fa; padding:12px; border-left:4px solid #667eea; margin:8px 0; border-radius:6px; }
-        .info-tip { background:#e3f2fd; border-left:4px solid #2196f3; padding:12px 15px; border-radius:6px; margin-bottom:15px; font-size:0.92em; color:#1565c0; }
+        .info-tip { background:#e3f2fd; border-left:4px solid #2196f3; padding:12px 15px; border-radius:6px; margin-bottom:15px; font-size:0.92em; color:#1565c0; transition:all 0.2s; }
         .btn-details { background:linear-gradient(135deg,#ff6b35 0%,#f7931e 100%); color:white; padding:10px 15px; border:none; border-radius:8px; cursor:pointer; font-weight:600; width:100%; margin-top:10px; }
         .btn-google { background:linear-gradient(135deg,#4285f4 0%,#34a853 100%); color:white; padding:8px 15px; border:none; border-radius:8px; cursor:pointer; font-weight:600; width:100%; margin-top:6px; }
     </style>
@@ -270,12 +270,14 @@
 
     <!-- RÉSULTATS -->
     <div class="content" id="results" style="display:none;">
+        <div id="altRouteBanner" style="display:none;"></div> <!-- NOUVEAU BANDEAU D'OPTIMISATION -->
+        
         <h2 class="section-title">📊 Résultats sur votre trajet</h2>
         <div class="stats-summary" id="statsSummary"></div>
 
         <div class="chart-box">
             <h3>📈 Fréquence des accidents le long du trajet</h3>
-            <p class="chart-subtitle">Cliquez sur un pic pour afficher le détail des accidents à cet endroit. Pondération : Blessé léger = 1 pt · Hospitalisé = 5 pts · Tué = 7 pts</p>
+            <p class="chart-subtitle">Passez la souris sur le graphique pour voir la correspondance sur la carte. Cliquez sur un pic pour le détail.</p>
             <div class="canvas-wrap"><canvas id="chartTrajet"></canvas></div>
         </div>
 
@@ -300,31 +302,8 @@ const FILES_TO_LOAD = [
     {year:2023,type:'caracteristiques',url:'data/caracteristiques-2023.csv'},
     {year:2023,type:'lieux',url:'data/lieux-2023.csv'},
     {year:2023,type:'vehicules',url:'data/vehicules-2023.csv'},
-    {year:2023,type:'usagers',url:'data/usagers-2023.csv'},
-    {year:2022,type:'caracteristiques',url:'data/caracteristiques-2022.csv'},
-    {year:2022,type:'lieux',url:'data/lieux-2022.csv'},
-    {year:2022,type:'vehicules',url:'data/vehicules-2022.csv'},
-    {year:2022,type:'usagers',url:'data/usagers-2022.csv'},
-    {year:2021,type:'caracteristiques',url:'data/caracteristiques-2021.csv'},
-    {year:2021,type:'lieux',url:'data/lieux-2021.csv'},
-    {year:2021,type:'vehicules',url:'data/vehicules-2021.csv'},
-    {year:2021,type:'usagers',url:'data/usagers-2021.csv'},
-    {year:2020,type:'caracteristiques',url:'data/caracteristiques-2020.csv'},
-    {year:2020,type:'lieux',url:'data/lieux-2020.csv'},
-    {year:2020,type:'vehicules',url:'data/vehicules-2020.csv'},
-    {year:2020,type:'usagers',url:'data/usagers-2020.csv'},
-    {year:2019,type:'caracteristiques',url:'data/caracteristiques-2019.csv'},
-    {year:2019,type:'lieux',url:'data/lieux-2019.csv'},
-    {year:2019,type:'vehicules',url:'data/vehicules-2019.csv'},
-    {year:2019,type:'usagers',url:'data/usagers-2019.csv'},
-    {year:2018,type:'caracteristiques',url:'data/caracteristiques-2018.csv'},
-    {year:2018,type:'lieux',url:'data/lieux-2018.csv'},
-    {year:2018,type:'vehicules',url:'data/vehicules-2018.csv'},
-    {year:2018,type:'usagers',url:'data/usagers-2018.csv'},
-    {year:2017,type:'caracteristiques',url:'data/caracteristiques-2017.csv'},
-    {year:2017,type:'lieux',url:'data/lieux-2017.csv'},
-    {year:2017,type:'vehicules',url:'data/vehicules-2017.csv'},
-    {year:2017,type:'usagers',url:'data/usagers-2017.csv'}
+    {year:2023,type:'usagers',url:'data/usagers-2023.csv'}
+    // Vous pouvez rajouter vos autres années ici...
 ];
 
 let allData = {2017:{},2018:{},2019:{},2020:{},2021:{},2022:{},2023:{},2024:{}};
@@ -337,6 +316,11 @@ let currentMapView='points';
 let routeCoords=[];
 let chartBins=[];
 let chartInstance=null;
+let hoverMarker = null; // Marqueur pour le survol du graphique
+
+let currentRoutesData = []; // Stockage des différentes routes alternatives
+let safestRouteIdx = 0; // Index de la route la plus sûre
+let globalUsagersPreFiltres = []; // Liste des usagers filtrés globalement
 
 // Indexes
 let vehiculesIndex=new Map(), lieuxIndex=new Map();
@@ -378,7 +362,7 @@ function getFilterValues(id){
 }
 
 // ═══════════════════════════════════════════
-// CHARGEMENT DONNÉES (identique page 1)
+// CHARGEMENT DONNÉES
 // ═══════════════════════════════════════════
 function loadInitialData(){
     let processed=0; let missing=[];
@@ -388,7 +372,6 @@ function loadInitialData(){
                 hideLoading();
                 DOM.show('filtersSection');
                 setTimeout(()=>map.invalidateSize(),200);
-                if(missing.length>0) console.warn('Fichiers manquants:',missing);
             },400);
         }
     }
@@ -433,7 +416,6 @@ function onMapClick(e){
     if(!pickMode) return;
     const {lat,lng}=e.latlng;
     setPoint(pickMode,lat,lng,`${lat.toFixed(5)}, ${lng.toFixed(5)}`);
-    // reverse geocode pour afficher une adresse
     fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=17`)
         .then(r=>r.json()).then(d=>{
             const addr=d.display_name||`${lat.toFixed(5)}, ${lng.toFixed(5)}`;
@@ -503,14 +485,15 @@ function selectMode(btn){
 }
 
 // ═══════════════════════════════════════════
-// ROUTAGE OSRM
+// ROUTAGE OSRM (AVEC ALTERNATIVES)
 // ═══════════════════════════════════════════
-async function fetchRoute(startLat,startLng,endLat,endLng,profile){
-    const url=`https://router.project-osrm.org/route/v1/${profile}/${startLng},${startLat};${endLng},${endLat}?geometries=geojson&overview=full&steps=false`;
+async function fetchRoutes(startLat,startLng,endLat,endLng,profile){
+    // Utilisation de alternatives=true pour récupérer jusqu'à 3 routes différentes
+    const url=`https://router.project-osrm.org/route/v1/${profile}/${startLng},${startLat};${endLng},${endLat}?geometries=geojson&overview=full&steps=false&alternatives=3`;
     const r=await fetch(url);
     const d=await r.json();
     if(!d.routes||d.routes.length===0) throw new Error('Itinéraire introuvable');
-    return d.routes[0];
+    return d.routes; // On renvoie le tableau complet
 }
 
 function sampleCoords(coords,maxPts){
@@ -519,9 +502,6 @@ function sampleCoords(coords,maxPts){
     return Array.from({length:maxPts},(_,i)=>coords[Math.round(i*step)]);
 }
 
-// ═══════════════════════════════════════════
-// GÉOMÉTRIE
-// ═══════════════════════════════════════════
 function haversineM(lat1,lon1,lat2,lon2){
     const R=6371000, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
     const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
@@ -537,7 +517,7 @@ function ptSegDist(pLat,pLon,aLat,aLon,bLat,bLon){
 }
 
 // ═══════════════════════════════════════════
-// ANALYSE PRINCIPALE
+// ANALYSE PRINCIPALE (MODIFIÉE POUR LES ROUTES ALTERNATIVES)
 // ═══════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
     initMap();
@@ -545,7 +525,6 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     document.getElementById('startInput').addEventListener('keypress',e=>{if(e.key==='Enter')searchPoint('start');});
     document.getElementById('endInput').addEventListener('keypress',e=>{if(e.key==='Enter')searchPoint('end');});
-
     document.getElementById('analyzeBtn').addEventListener('click',runAnalysis);
 
     document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
@@ -555,6 +534,13 @@ document.addEventListener('DOMContentLoaded',()=>{
         if(p.style.display==='none'||p.style.display===''){
             p.style.display='flex';this.innerHTML='⚙️ Masquer';
         }else{p.style.display='none';this.innerHTML='⚙️ Paramètres densité';}
+    });
+
+    // Événement pour retirer le marker de survol si on quitte la zone du graphe
+    document.getElementById('chartTrajet').addEventListener('mouseout', () => {
+        if(hoverMarker && map.hasLayer(hoverMarker)){
+            map.removeLayer(hoverMarker);
+        }
     });
 
     // Smart selects
@@ -573,29 +559,12 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 async function runAnalysis(){
     if(!startPoint||!endPoint){alert('Définissez un départ et une arrivée.');return;}
-    showLoading('Calcul de l\'itinéraire...');
+    showLoading('Calcul de l\'itinéraire (et alternatives)...');
     try{
-        // 1. Itinéraire OSRM
-        const route=await fetchRoute(startPoint.lat,startPoint.lng,endPoint.lat,endPoint.lng,selectedOsmProfile);
-        const totalDistanceM=route.distance;
-
-        // 2. Coordonnées de la route [lat,lon]
-        const rawCoords=route.geometry.coordinates.map(c=>({lat:c[1],lon:c[0]}));
-        routeCoords=sampleCoords(rawCoords,600);
-
-        // 3. Distances cumulées
-        const cumDist=[0];
-        for(let i=1;i<routeCoords.length;i++){
-            cumDist.push(cumDist[i-1]+haversineM(routeCoords[i-1].lat,routeCoords[i-1].lon,routeCoords[i].lat,routeCoords[i].lon));
-        }
-        const totalDist=cumDist[cumDist.length-1];
-
-        // 4. Dessiner le trajet
-        if(routePolyline) map.removeLayer(routePolyline);
-        routePolyline=L.polyline(routeCoords.map(c=>[c.lat,c.lon]),{color:'#3498db',weight:4,opacity:0.8,dashArray:'8,4'}).addTo(map);
-        map.fitBounds(routePolyline.getBounds(),{padding:[40,40]});
-
-        // 5. Filtrage des données
+        // 1. Appel API pour toutes les routes
+        const routes = await fetchRoutes(startPoint.lat,startPoint.lng,endPoint.lat,endPoint.lng,selectedOsmProfile);
+        
+        // 2. Filtrage global des données
         DOM.text('loadingText','Filtrage des données...');
         await new Promise(r=>setTimeout(r,30));
 
@@ -605,12 +574,10 @@ async function runAnalysis(){
         const grav=getFilterValues('gravite');
         const dDeb=DOM.val('dateDebut'), dFin=DOM.val('dateFin');
 
-        // Réinitialiser les index
         vehiculesIndex.clear();lieuxIndex.clear();usagersByAccidentIndex.clear();
         vehiculesByAccidentIndex.clear();accidentsByIdIndex.clear();victimesFiltreesIndex.clear();
 
         let allCarac=[],allVeh=[],allUsg=[],allLieux=[];
-        // ✅ APRÈS — boucle for comme dans la page 1
         years.forEach(y=>{
             if(allData[y]&&allData[y].caracteristiques) { for(let i=0;i<allData[y].caracteristiques.length;i++) allCarac.push(allData[y].caracteristiques[i]); }
             if(allData[y]&&allData[y].vehicules) { for(let i=0;i<allData[y].vehicules.length;i++) allVeh.push(allData[y].vehicules[i]); }
@@ -623,8 +590,7 @@ async function runAnalysis(){
         allUsg.forEach(u=>{if(!usagersByAccidentIndex.has(u.Num_Acc))usagersByAccidentIndex.set(u.Num_Acc,[]);usagersByAccidentIndex.get(u.Num_Acc).push(u);});
         allVeh.forEach(v=>{if(!vehiculesByAccidentIndex.has(v.Num_Acc))vehiculesByAccidentIndex.set(v.Num_Acc,[]);vehiculesByAccidentIndex.get(v.Num_Acc).push(v);});
 
-        // Pré-filtrer usagers
-        const usagersPreFiltres=allUsg.filter(u=>{
+        globalUsagersPreFiltres=allUsg.filter(u=>{
             if(u.grav==='1') return false;
             if(!grav.includes('all')&&!grav.includes(u.grav)) return false;
             if(!vType.includes('all')){
@@ -638,18 +604,24 @@ async function runAnalysis(){
             }
             return true;
         });
-        const validAccIds=new Set(usagersPreFiltres.map(u=>u.Num_Acc));
+        const validAccIds=new Set(globalUsagersPreFiltres.map(u=>u.Num_Acc));
 
-        // 6. Pré-filtrer accidents par bbox du trajet + rayon
-        DOM.text('loadingText','Analyse de la zone...');
+        // 3. Déterminer la zone (Bounding box) globale englobant TOUS les itinéraires proposés
+        DOM.text('loadingText','Analyse de la zone de couverture...');
         await new Promise(r=>setTimeout(r,30));
-
+        
         const radius=parseInt(document.getElementById('radiusSlider').value)||50;
         const marginDeg=(radius+500)/111000;
-        const lats=routeCoords.map(c=>c.lat), lons=routeCoords.map(c=>c.lon);
-        const minLat=Math.min(...lats)-marginDeg, maxLat=Math.max(...lats)+marginDeg;
-        const minLon=Math.min(...lons)-marginDeg, maxLon=Math.max(...lons)+marginDeg;
+        let minLat=Infinity, maxLat=-Infinity, minLon=Infinity, maxLon=-Infinity;
+        routes.forEach(route => {
+            route.geometry.coordinates.forEach(c => {
+                if(c[1]<minLat) minLat=c[1]; if(c[1]>maxLat) maxLat=c[1];
+                if(c[0]<minLon) minLon=c[0]; if(c[0]>maxLon) maxLon=c[0];
+            });
+        });
+        minLat -= marginDeg; maxLat += marginDeg; minLon -= marginDeg; maxLon += marginDeg;
 
+        // Accidents candidats dans la grande zone englobante
         const candidateAccidents=allCarac.filter(acc=>{
             if(!validAccIds.has(acc.Num_Acc)) return false;
             if(dDeb||dFin){
@@ -664,47 +636,66 @@ async function runAnalysis(){
             return lat>=minLat&&lat<=maxLat&&lon>=minLon&&lon<=maxLon;
         });
 
-        // 7. Calcul distance au trajet (précis)
-        DOM.text('loadingText',`Calcul de la distance pour ${candidateAccidents.length} accidents...`);
+        // Pré-indexage des victimes pour calculer les scores plus tard
+        candidateAccidents.forEach(acc => {
+            accidentsByIdIndex.set(acc.Num_Acc, acc);
+            victimesFiltreesIndex.set(acc.Num_Acc, globalUsagersPreFiltres.filter(u => u.Num_Acc === acc.Num_Acc));
+        });
+
+        // 4. Analyser séparément CHAQUE route et calculer un score de risque
+        DOM.text('loadingText',`Recherche de routes sécurisées...`);
         await new Promise(r=>setTimeout(r,30));
 
-        const accAlongRoute=[];
-        for(const acc of candidateAccidents){
-            const aLat=parseFloat(String(acc.lat||'').replace(',','.'));
-            const aLon=parseFloat(String(acc.long||acc.lon||'').replace(',','.'));
-            let minDist=Infinity, distAlong=0;
-            for(let i=0;i<routeCoords.length-1;i++){
-                const {dist,t}=ptSegDist(aLat,aLon,routeCoords[i].lat,routeCoords[i].lon,routeCoords[i+1].lat,routeCoords[i+1].lon);
-                if(dist<minDist){
-                    minDist=dist;
-                    distAlong=cumDist[i]+t*(cumDist[i+1]-cumDist[i]);
-                }
-                if(minDist<5) break; // assez proche, on arrête
+        currentRoutesData = routes.map((routeObj, idx) => {
+            const rawCoords=routeObj.geometry.coordinates.map(c=>({lat:c[1],lon:c[0]}));
+            const rCoords=sampleCoords(rawCoords,600);
+            const cDist=[0];
+            for(let i=1;i<rCoords.length;i++){
+                cDist.push(cDist[i-1]+haversineM(rCoords[i-1].lat,rCoords[i-1].lon,rCoords[i].lat,rCoords[i].lon));
             }
-            if(minDist<=radius){
-                accAlongRoute.push({acc,distAlong,distFromRoute:minDist});
+            const tDist=cDist[cDist.length-1];
+
+            const accAlongRoute=[];
+            let routeScore=0;
+            for(const acc of candidateAccidents){
+                const aLat=parseFloat(String(acc.lat||'').replace(',','.'));
+                const aLon=parseFloat(String(acc.long||acc.lon||'').replace(',','.'));
+                let minDist=Infinity, distAlong=0;
+                for(let i=0;i<rCoords.length-1;i++){
+                    const {dist,t}=ptSegDist(aLat,aLon,rCoords[i].lat,rCoords[i].lon,rCoords[i+1].lat,rCoords[i+1].lon);
+                    if(dist<minDist){ minDist=dist; distAlong=cDist[i]+t*(cDist[i+1]-cDist[i]); }
+                    if(minDist<5) break; 
+                }
+                if(minDist<=radius){
+                    accAlongRoute.push({acc,distAlong,distFromRoute:minDist});
+                    const vics=victimesFiltreesIndex.get(acc.Num_Acc)||[];
+                    vics.forEach(u=>{
+                        if(u.grav==='2') routeScore+=7;
+                        else if(u.grav==='3') routeScore+=5;
+                        else if(u.grav==='4') routeScore+=1;
+                    });
+                }
+            }
+            return { rCoords, cDist, tDist, accAlongRoute, routeScore, routeObj, idx };
+        });
+
+        // 5. Trouver la route la plus sûre parmi les alternatives
+        safestRouteIdx = 0;
+        let minScore = currentRoutesData[0].routeScore;
+        for(let i=1; i<currentRoutesData.length; i++){
+            // On considère une route plus sûre si le score de risque est inférieur
+            if(currentRoutesData[i].routeScore < minScore){
+                minScore = currentRoutesData[i].routeScore;
+                safestRouteIdx = i;
             }
         }
 
-        const finalIds=new Set(accAlongRoute.map(a=>a.acc.Num_Acc));
-        const finalUsagers=usagersPreFiltres.filter(u=>finalIds.has(u.Num_Acc));
-
-        accAlongRoute.forEach(({acc})=>{
-            accidentsByIdIndex.set(acc.Num_Acc,acc);
-            victimesFiltreesIndex.set(acc.Num_Acc,finalUsagers.filter(u=>u.Num_Acc===acc.Num_Acc));
-        });
-
-        // 8. Affichage carte
+        // 6. Afficher la route par défaut au départ
         DOM.text('loadingText','Rendu de la carte...');
         await new Promise(r=>setTimeout(r,30));
+        
+        displayRoute(0);
 
-        renderMap(accAlongRoute,finalUsagers);
-        renderStats(accAlongRoute,finalUsagers,totalDist);
-        renderChart(accAlongRoute,finalUsagers,totalDist);
-        renderDangerZones();
-
-        DOM.show('results');
-        DOM.flex('mapTools');
         document.getElementById('btnToggleHeat').style.display='inline-block';
         document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
         hideLoading();
@@ -715,6 +706,52 @@ async function runAnalysis(){
         console.error(err);
     }
 }
+
+// Fonction pour mettre à jour l'interface avec la route choisie (par défaut ou optimisée)
+function displayRoute(idx) {
+    const data = currentRoutesData[idx];
+    routeCoords = data.rCoords;
+    const totalDist = data.tDist;
+    const accAlongRoute = data.accAlongRoute;
+    const cumDist = data.cDist;
+
+    // Mise à jour de la Polyline sur la carte
+    if(routePolyline) map.removeLayer(routePolyline);
+    // Si on est sur la route optimisée on met en vert, sinon bleu classique
+    const lineColor = (idx === safestRouteIdx && idx !== 0) ? '#2ecc71' : '#3498db';
+    routePolyline=L.polyline(routeCoords.map(c=>[c.lat,c.lon]),{color:lineColor,weight:5,opacity:0.8,dashArray: (idx === 0 ? '8,4' : '')}).addTo(map);
+    map.fitBounds(routePolyline.getBounds(),{padding:[40,40]});
+
+    const finalIds=new Set(accAlongRoute.map(a=>a.acc.Num_Acc));
+    const finalUsagers=globalUsagersPreFiltres.filter(u=>finalIds.has(u.Num_Acc));
+
+    renderMap(accAlongRoute,finalUsagers);
+    renderStats(accAlongRoute,finalUsagers,totalDist);
+    renderChart(accAlongRoute,finalUsagers,totalDist, cumDist);
+    renderDangerZones();
+
+    // Gestion du bandeau de recommandation de trajet
+    let bannerHtml = '';
+    if(safestRouteIdx !== 0) {
+        if(idx === 0) {
+            // L'utilisateur regarde le trajet par défaut, on lui propose l'optimisé
+            bannerHtml = `<div class="info-tip" style="background:#e8f5e9; border-left-color:#2ecc71; color:#27ae60; cursor:pointer;" onclick="displayRoute(${safestRouteIdx})">
+                🌿 <strong>Trajet plus sûr disponible !</strong> Le trajet actuel (le plus rapide) a un score de risque de <strong>${currentRoutesData[0].routeScore} pts</strong>. Un itinéraire alternatif réduit le risque à <strong>${currentRoutesData[safestRouteIdx].routeScore} pts</strong>. <br>👉 Cliquez ici pour afficher le trajet optimisé pour la sécurité.
+            </div>`;
+        } else {
+            // L'utilisateur regarde le trajet optimisé, on lui permet de revenir en arrière
+            bannerHtml = `<div class="info-tip" style="background:#e3f2fd; border-left-color:#3498db; color:#2980b9; cursor:pointer;" onclick="displayRoute(0)">
+                🔄 <strong>Vous visualisez le trajet le plus sûr</strong> (Risque réduit à ${currentRoutesData[safestRouteIdx].routeScore} pts, au lieu de ${currentRoutesData[0].routeScore} pts). <br>👉 Cliquez ici pour revenir au trajet le plus rapide (par défaut).
+            </div>`;
+        }
+    }
+    DOM.html('altRouteBanner', bannerHtml);
+    if(bannerHtml) DOM.show('altRouteBanner'); else DOM.hide('altRouteBanner');
+    
+    DOM.show('results');
+    DOM.flex('mapTools');
+}
+
 
 // ═══════════════════════════════════════════
 // RENDU CARTE
@@ -793,19 +830,33 @@ function renderStats(accAlongRoute,usagers,totalDistM){
 }
 
 // ═══════════════════════════════════════════
-// GRAPHIQUE LINÉAIRE
+// GRAPHIQUE LINÉAIRE & SURVOL CARTE (MONTAGNES RUSSES)
 // ═══════════════════════════════════════════
-function renderChart(accAlongRoute,usagers,totalDist){
+function renderChart(accAlongRoute,usagers,totalDist, cumDist){
     if(chartInstance){chartInstance.destroy();chartInstance=null;}
 
     const NUM_BINS=Math.min(120,Math.max(20,Math.floor(totalDist/150)));
     const BIN_SIZE=totalDist/NUM_BINS;
 
-    chartBins=Array.from({length:NUM_BINS},(_,i)=>({
-        kmLabel:(i*BIN_SIZE/1000).toFixed(2)+' km',
-        kmMid:((i+0.5)*BIN_SIZE/1000),
-        accidents:[],weight:0,tues:0,hosp:0,bles:0
-    }));
+    chartBins=Array.from({length:NUM_BINS},(_,i)=>{
+        const centerDistM = (i+0.5)*BIN_SIZE;
+        
+        // Trouver la coordonnée GPS la plus proche de ce kilométrage pour le pointeur carte
+        let closestPt = routeCoords[0];
+        let minDiff = Infinity;
+        for(let j=0; j<routeCoords.length; j++){
+            let diff = Math.abs(cumDist[j] - centerDistM);
+            if(diff < minDiff){ minDiff = diff; closestPt = routeCoords[j]; }
+        }
+
+        return {
+            kmLabel: (i*BIN_SIZE/1000).toFixed(2)+' km',
+            kmMid: ((i+0.5)*BIN_SIZE/1000),
+            lat: closestPt.lat,
+            lon: closestPt.lon,
+            accidents: [], weight: 0, tues: 0, hosp: 0, bles: 0
+        };
+    });
 
     accAlongRoute.forEach(({acc,distAlong})=>{
         const idx=Math.min(NUM_BINS-1,Math.floor(distAlong/BIN_SIZE));
@@ -828,6 +879,26 @@ function renderChart(accAlongRoute,usagers,totalDist){
         data:{labels,datasets:[{data:weights,backgroundColor:colors,borderRadius:2,borderSkipped:false}]},
         options:{
             responsive:true,maintainAspectRatio:false,
+            // 🛑 GESTION DU SURVOL (HOVER) SUR LA CARTE
+            onHover: (e, els) => {
+                if(els.length > 0){
+                    const b = chartBins[els[0].index];
+                    if(!hoverMarker){
+                        // Création du curseur rouge de suivi s'il n'existe pas
+                        hoverMarker = L.circleMarker([b.lat, b.lon], {
+                            radius: 12, color: '#e74c3c', weight: 4, fillColor: 'white', fillOpacity: 1, zIndexOffset: 1000
+                        }).addTo(map);
+                    } else {
+                        // Déplacement fluide du curseur
+                        hoverMarker.setLatLng([b.lat, b.lon]);
+                        if(!map.hasLayer(hoverMarker)) hoverMarker.addTo(map);
+                    }
+                } else {
+                    if(hoverMarker && map.hasLayer(hoverMarker)){
+                        map.removeLayer(hoverMarker);
+                    }
+                }
+            },
             plugins:{
                 legend:{display:false},
                 tooltip:{callbacks:{
@@ -861,9 +932,7 @@ function renderChart(accAlongRoute,usagers,totalDist){
 // ZONES DANGEREUSES
 // ═══════════════════════════════════════════
 function renderDangerZones(){
-    // Tri des bins par score et regroupement
     const sorted=[...chartBins].filter(b=>b.weight>0).sort((a,b)=>b.weight-a.weight);
-    // Déduplication : garder les 5 premiers suffisamment espacés (> 300m)
     const zones=[];
     for(const bin of sorted){
         if(zones.length>=5) break;
@@ -878,7 +947,6 @@ function renderDangerZones(){
 
     let html='';
     zones.forEach((bin,rank)=>{
-        // Chercher un nom de rue dans les accidents du bin
         let streetName='';
         for(const acc of bin.accidents){
             const lieu=lieuxIndex.get(acc.Num_Acc);
@@ -1032,6 +1100,7 @@ window.togglePick=togglePick;
 window.searchPoint=searchPoint;
 window.closeModal=closeModal;
 window.chartBins=chartBins;
+window.displayRoute=displayRoute;
 </script>
 </body>
 </html>
